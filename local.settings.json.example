@@ -1,0 +1,14 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AZURE_OPENAI_ENDPOINT": "https://<your-openai-resource>.openai.azure.com",
+    "GPT4O_DEPLOYMENT_NAME": "gpt-4o",
+    "EMBEDDING_DEPLOYMENT_NAME": "text-embedding-3-large",
+    "AZURE_AI_SEARCH_ENDPOINT": "https://<your-search-resource>.search.windows.net",
+    "COSMOS_DB_ENDPOINT": "https://<your-cosmos-account>.documents.azure.com:443",
+    "STORAGE_ACCOUNT_URL": "https://<your-storage-account>.blob.core.windows.net",
+    "BING_NEWS_SEARCH_KEY_VAULT_URL": "https://<your-keyvault>.vault.azure.net"
+  }
+}
