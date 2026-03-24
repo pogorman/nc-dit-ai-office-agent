@@ -79,6 +79,18 @@ Uncertain corrections are flagged with `[?]` — review these before publishing.
 
 ---
 
+## Web Demo (Alternative)
+
+If you don't have access to Teams or want to test outside of Copilot Studio, a standalone browser-based demo is available:
+
+1. Ask your admin to start the demo server (`node demo-server.js`)
+2. Open **http://localhost:9090** in your browser
+3. Use the same natural language queries described above
+
+> **Note:** The web demo routes through the same APIM gateway and backend functions as the Teams agent.
+
+---
+
 ## Tips
 
 - **Be specific** — "clips about clean energy this week" works better than "show me stuff"

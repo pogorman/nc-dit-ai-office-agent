@@ -22,7 +22,7 @@ Through Microsoft Teams — search for the agent by name in the Teams chat, or i
 The system checks for new articles every 15 minutes.
 
 ### What sources does it monitor?
-The system scrapes the Governor's official press releases page (governor.nc.gov/news/press-releases) directly. It checks the first 2 pages (~20 articles) every 15 minutes. Additional sources (Bing News Search, curated RSS feeds) can be added.
+The system scrapes the Governor's official press releases page (governor.nc.gov/news/press-releases) directly. It checks the first 2 pages (~20 articles) every 15 minutes. Additional sources (curated RSS feeds) can be added. Bing Search API is retired and no longer available for new deployments.
 
 ### Can I get a daily email summary?
 Not yet — the daily digest HTML generation is built, but email delivery is not yet wired up. This will require a Logic App or SendGrid integration.
@@ -58,7 +58,7 @@ The system is conservative — it fixes obvious errors and flags anything uncert
 A Power Platform custom connector bridges Copilot Studio and the APIM gateway. The connector is deployed to the GCC (Government Community Cloud) Power Platform environment (`og-ai`). It exposes three tools — QueryClips, QueryRemarks, and ProofreadTranscript — and authenticates with an APIM subscription key. The agent uses **generative orchestration**, so it automatically selects the right tool based on the user's intent — no manual topic configuration needed.
 
 ### Is my data secure?
-All data stays within the NC DIT Azure tenant. Authentication is via Entra ID (SSO). The only external call is to governor.nc.gov to scrape press releases — no internal data leaves the environment. All service-to-service auth uses managed identity — no API keys or connection strings in application code. The Power Platform connector runs in a GCC environment, meeting government compliance requirements. Blob Storage has public network access disabled and is only accessible via a VNet private endpoint.
+All data stays within the NC DIT Azure tenant. Authentication is via Entra ID (SSO). The only external call is to governor.nc.gov to scrape press releases — no internal data leaves the environment. All service-to-service auth uses managed identity — no API keys or connection strings in application code. The Power Platform connector runs in a GCC environment, meeting government compliance requirements. Both Blob Storage and Cosmos DB have public network access disabled and are only accessible via VNet private endpoints.
 
 ### What does it cost to run?
 Approximately $120–195/month at steady state (includes always-ready instances to eliminate cold starts). See [ARCHITECTURE.md](./ARCHITECTURE.md#cost-estimate-monthly-steady-state) for the breakdown.
@@ -76,3 +76,9 @@ All requests require an `Ocp-Apim-Subscription-Key` header.
 
 ### What happens if the news ingestion fails?
 The system processes articles individually. If one article fails to process, it logs the error and continues with the rest. Failed articles will be retried on the next 15-minute cycle since the scraper re-checks the same press release pages.
+
+### Is there a known issue with clips ingestion?
+Yes — the timer function successfully scrapes new articles from governor.nc.gov but currently fails silently when writing to Cosmos DB. This is under investigation and likely related to Cosmos write permissions or VNet outbound routing after the Cosmos DB private endpoint was added. The 10 seeded clips are unaffected and fully searchable. Application Insights needs to be configured for diagnostics.
+
+### Is there a web demo outside of Teams?
+Yes — `demo.html` + `demo-server.js` provide a standalone browser-based demo. Run `node demo-server.js` (port 9090) with the `APIM_SUBSCRIPTION_KEY` environment variable set. This is useful for testing and demos outside of the Copilot Studio / Teams environment.

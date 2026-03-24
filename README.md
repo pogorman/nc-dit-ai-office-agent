@@ -8,7 +8,7 @@ AI-powered tool for the North Carolina Governor's Communications Office that aut
 |---|---|---|
 | **Transcript Proofreading** | AI-powered cleanup of faulty ASR/OCR transcripts | Fully implemented |
 | **Remarks Search** | Semantic search + RAG synthesis across the Governor's remarks corpus | Implemented (`.txt` ingestion; `.docx`/`.pdf` stubbed) |
-| **News Clips** | Automated monitoring of Governor press releases via governor.nc.gov scraping | Implemented |
+| **News Clips** | Automated monitoring of Governor press releases via governor.nc.gov scraping | Implemented (ingestion has open bug — scrapes OK but Cosmos write fails silently; 10 seeded clips working) |
 | **Daily Digest** | Weekday morning email summary of new clips | Stubbed (email sending TBD) |
 
 ## Architecture
@@ -21,9 +21,9 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for full system design, data models, Co
 - **Search:** Azure AI Search (Basic, hybrid vector + BM25)
 - **AI:** Azure OpenAI (GPT-4o + text-embedding-3-large)
 - **Storage:** Cosmos DB (Serverless) for clips/metadata, Blob Storage for remarks uploads
-- **Secrets:** Azure Key Vault (RBAC mode)
+- **Secrets:** Azure Key Vault (RBAC mode) — Function host key for APIM (no external API keys needed)
 - **Agent:** Microsoft Copilot Studio (Teams / web / SharePoint embed)
-- **Networking:** VNet with private endpoint for Blob Storage; Function App VNet integration
+- **Networking:** VNet with private endpoints for Blob Storage and Cosmos DB; Function App VNet integration
 - **Connector:** Power Platform custom connector (OpenAPI 2.0, deployed to GCC environment)
 - **IaC:** Bicep (modular, 9 resource modules)
 - **Reference Guides:** [Architecture Cheat Sheet](./architecture-cheat-sheet.html) | [How It Works (ELI5)](./how-it-works-guide.html)
@@ -67,7 +67,7 @@ az deployment group create \
 ```
 
 > **Post-deploy:** The APIM named value `function-host-key` is already configured with the Function App host key.
-> **Networking:** Storage has `publicNetworkAccess: Disabled`. Deployments go through VNet — `func azure functionapp publish` works via Kudu over the private endpoint. No need to toggle public access.
+> **Networking:** Both Storage and Cosmos DB have `publicNetworkAccess: Disabled` with private endpoints. Deployments go through VNet — `func azure functionapp publish` works via Kudu over the private endpoint. No need to toggle public access.
 
 ## Project Structure
 
@@ -90,6 +90,8 @@ az deployment group create \
 │   ├── apiDefinition.swagger.json   OpenAPI 2.0 spec (3 actions)
 │   └── apiProperties.json           Connector metadata + auth config
 ├── seed/                     Data seeding & index creation scripts
+├── demo.html                 SPA demo UI
+├── demo-server.js            Express proxy for SPA → APIM (port 9090)
 ├── package.json
 ├── tsconfig.json
 ├── host.json
@@ -107,6 +109,19 @@ All endpoints are live and tested through the APIM gateway:
 | `https://nc-comms-agent-dev-apim.azure-api.net/comms/proofread` | POST | Transcript proofreading |
 
 Auth: `Ocp-Apim-Subscription-Key` header with APIM subscription key.
+
+## SPA Demo
+
+A standalone browser-based demo (`demo.html` + `demo-server.js`) is available for testing outside of Copilot Studio. The server proxies requests to APIM and injects the subscription key from the `APIM_SUBSCRIPTION_KEY` environment variable.
+
+```bash
+# Set your APIM subscription key
+export APIM_SUBSCRIPTION_KEY=your-key-here
+
+# Start the demo server
+node demo-server.js
+# Open http://localhost:9090 in your browser
+```
 
 ## Copilot Studio Agent
 

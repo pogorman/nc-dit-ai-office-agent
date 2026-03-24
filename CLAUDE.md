@@ -14,9 +14,9 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 - **Search:** Azure AI Search (Basic tier, hybrid vector + keyword)
 - **AI:** Azure OpenAI (GPT-4o for synthesis/proofread, text-embedding-3-large for vectors)
 - **Storage:** Cosmos DB (serverless) for clips + remarks metadata, Blob Storage for remarks doc uploads
-- **Secrets:** Azure Key Vault (RBAC mode)
+- **Secrets:** Azure Key Vault (RBAC mode) — stores Function host key for APIM only (no external API keys needed)
 - **Agent:** Copilot Studio with custom connector to APIM
-- **Networking:** VNet with private endpoint for blob storage; Function App VNet integration
+- **Networking:** VNet with private endpoints for Blob Storage and Cosmos DB; Function App VNet integration
 - **IaC:** Bicep (modular, under `/infra`)
 - **Auth SDK:** `@azure/identity` DefaultAzureCredential, `openai` package with `getBearerTokenProvider`
 
@@ -26,7 +26,8 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 - Copilot Studio connects via Streamable HTTP through APIM custom connector
 - Environment variables for all configuration (endpoints only, no secrets)
 - Consumption/serverless tier for everything (except always-ready=1 on HTTP triggers to avoid cold starts)
-- VNet + private endpoint for blob storage; Function App uses VNet integration (WEBSITE_CONTENTOVERVNET=1)
+- VNet + private endpoints for Blob Storage and Cosmos DB; Function App uses VNet integration (WEBSITE_CONTENTOVERVNET=1)
+- Function timeout set to 10 minutes in host.json for ingestion workload
 - Singleton pattern for OpenAI, Cosmos, and Search clients in shared modules
 - Index signature `[key: string]: unknown` on types used with AI Search generics
 - Cosmos DB uses its own native RBAC (`sqlRoleAssignments`), not ARM role assignments
@@ -43,7 +44,7 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
     function-app.bicep          — Function App (Flex Consumption)
     key-vault.bicep             — Key Vault (RBAC mode)
     openai.bicep                — Azure OpenAI + deployments
-    networking.bicep             — VNet, subnets, private endpoint for blob, private DNS zone
+    networking.bicep             — VNet, subnets, private endpoint for blob, private DNS zone (Cosmos PE not yet added — CLI-only)
     role-assignments.bicep      — All managed identity RBAC grants
     storage.bicep               — Blob Storage (publicNetworkAccess: Disabled)
 /src
@@ -73,8 +74,10 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 ```
 
 ## Known TODOs
+- clips-ingest timer finds new articles on governor.nc.gov but silently fails to write them to Cosmos DB — needs Application Insights to diagnose (likely Cosmos write permission or VNet outbound routing issue). Currently still have 10 seeded clips.
+- Cosmos DB private endpoint was added via CLI — needs to be codified in `infra/modules/networking.bicep` (currently CLI-only)
+- Need more remarks seeded for richer demos (only State of the State currently indexed)
 - `.docx` extraction in remarks-ingest.ts (needs `mammoth` package)
 - `.pdf` extraction in remarks-ingest.ts (needs `pdf-parse` package)
 - Blob trigger for remarks-ingest not firing reliably on Flex Consumption (use `seed/load-remarks.ts` as workaround)
 - Daily digest email sending stubbed (needs Logic App or SendGrid integration)
-- SPA (demo.html + demo-server.js) needs updating to match current API surface

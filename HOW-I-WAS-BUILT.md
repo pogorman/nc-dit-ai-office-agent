@@ -39,7 +39,7 @@ With the architecture locked, we scaffolded everything in one pass using three p
 Created 10 files under `/infra` — a main orchestrator and 8 resource modules. Key decisions:
 - **Key Vault uses RBAC mode** (not access policies) — avoids a circular dependency where Key Vault would need the Function App's principal ID at creation time, but the Function App doesn't exist yet
 - **Cosmos DB native RBAC** — Cosmos DB data-plane access requires its own `sqlRoleAssignments` resource type, not the standard ARM `roleAssignments`. This is a common gotcha.
-- **No secrets in app settings** — every Function App setting is an endpoint URL. The only secret (Bing API key) lives in Key Vault and is fetched at runtime via the SDK.
+- **No secrets in app settings** — every Function App setting is an endpoint URL. Originally the Bing API key was stored in Key Vault, but clips ingestion was later rewritten to scrape governor.nc.gov directly (see Chapter 8), eliminating the need for external API keys entirely.
 - **Post-deploy manual step** — the Function host key has to be copied into Key Vault after the first deployment so APIM can inject it
 
 ### Workstream 2: Function App Core + Proofread
@@ -49,7 +49,7 @@ Key pattern: `AzureOpenAI` is imported from the `openai` package (not `@azure/op
 
 ### Workstream 3: Clips + Remarks Functions
 Built all five remaining functions:
-- `clips-ingest.ts` — Timer-triggered Bing News Search with SHA-256 dedup
+- `clips-ingest.ts` — Timer-triggered press release scraping with SHA-256 dedup (originally Bing News Search, later rewritten to scrape governor.nc.gov directly — see Chapter 8)
 - `clips-query.ts` — Hybrid search with a "latest" mode fallback
 - `clips-digest.ts` — Daily digest HTML generation (email sending stubbed)
 - `remarks-ingest.ts` — Blob-triggered chunking pipeline with paragraph-aware splitting
@@ -119,7 +119,6 @@ Both modes working with the 10 seeded clips.
 
 - **Blob trigger not firing:** The remarks-ingest blob trigger doesn't fire reliably on Flex Consumption. This is a known limitation with Flex Consumption + blob triggers. Workaround: use `seed/load-remarks.ts` directly.
 - **APIM function key:** The placeholder key in APIM needs to be replaced with the real Function host key from Key Vault after deployment. This is a manual step.
-- **Bing News API key:** Clips timer ingestion is deployed but won't run until a Bing News Search API key is added to Key Vault.
 
 ### Result
 
@@ -273,6 +272,59 @@ Rewrote `clips-ingest.ts` to scrape `governor.nc.gov/news/press-releases` direct
 - `host.json`: Added `functionTimeout: "00:10:00"` — the scraping function needs more than the default 5-minute timeout since it fetches and parses ~20 full articles sequentially
 - Added `architecture-cheat-sheet.html` — one-pager explaining why each Azure service was chosen, with cost comparisons and "vs." alternatives
 - Added `how-it-works-guide.html` — ELI5 guide with flow diagrams, analogies, chat bubble examples, and talk-track FAQ for narrating the architecture to non-technical audiences
+
+---
+
+## Chapter 9: Cosmos DB Private Endpoint + Open Bug
+
+**Date:** 2026-03-24
+
+### Cosmos DB Private Endpoint
+
+Azure policy compliance required Cosmos DB to also have `publicNetworkAccess: Disabled`, matching the existing Storage lockdown. A private endpoint was added via Azure CLI:
+
+- **Private endpoint** in the `private-endpoints` subnet (10.0.2.0/24)
+- **Private DNS zone:** `privatelink.documents.azure.com` linked to the VNet
+- Cosmos DB `publicNetworkAccess` set to `Disabled`
+
+This was done via CLI rather than Bicep as a quick fix. It needs to be codified in `infra/modules/networking.bicep` alongside the existing blob storage private endpoint.
+
+### The Open Bug
+
+After the Cosmos DB private endpoint was added, `clips-ingest.ts` started silently failing to write new clips to Cosmos DB. The timer function runs, scrapes governor.nc.gov, finds new articles, but the Cosmos write never completes. No error is surfaced in the function logs.
+
+**Probable causes (need App Insights to confirm):**
+1. **Cosmos RBAC permissions** — The Function App's managed identity may not have the correct `sqlRoleAssignment` for the new private endpoint connection path
+2. **VNet outbound routing** — The Function App's VNet integration subnet may not have the correct route to the Cosmos private endpoint
+3. **DNS resolution** — The private DNS zone may not be resolving correctly from the Function App's VNet integration subnet
+
+The 10 seeded clips continue to work fine for queries. This bug only affects new clip ingestion.
+
+---
+
+## Chapter 10: SPA Demo
+
+**Date:** 2026-03-24
+
+### Why a SPA
+
+Copilot Studio is the production agent experience, but for demos and testing it's useful to have a standalone browser-based interface that doesn't require Teams or a Power Platform license.
+
+### What Was Built
+
+Two files:
+- **`demo.html`** — Single-page app with a chat-style UI for all three capabilities (clips, remarks, proofreading)
+- **`demo-server.js`** — Express server (port 9090) that proxies requests to APIM, injecting the subscription key from the `APIM_SUBSCRIPTION_KEY` environment variable. This keeps the APIM key out of the browser.
+
+### How to Run
+
+```bash
+export APIM_SUBSCRIPTION_KEY=your-key-here
+node demo-server.js
+# Open http://localhost:9090
+```
+
+The SPA hits the same APIM endpoints as Copilot Studio, so it's a faithful representation of the backend capabilities.
 
 ---
 
