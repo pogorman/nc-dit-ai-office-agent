@@ -99,6 +99,46 @@ resource ingestionStateContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatab
   }
 }
 
+resource remarksChunksContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-11-15' = {
+  parent: database
+  name: 'remarks-chunks'
+  properties: {
+    resource: {
+      id: 'remarks-chunks'
+      partitionKey: {
+        paths: ['/id']
+        kind: 'Hash'
+        version: 2
+      }
+      indexingPolicy: {
+        indexingMode: 'consistent'
+        automatic: true
+        includedPaths: [
+          { path: '/*' }
+        ]
+        excludedPaths: [
+          { path: '/"_etag"/?' }
+        ]
+      }
+    }
+  }
+}
+
+resource remarksMetadataContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-11-15' = {
+  parent: database
+  name: 'remarks-metadata'
+  properties: {
+    resource: {
+      id: 'remarks-metadata'
+      partitionKey: {
+        paths: ['/id']
+        kind: 'Hash'
+        version: 2
+      }
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Outputs
 // ---------------------------------------------------------------------------
