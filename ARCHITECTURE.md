@@ -47,17 +47,16 @@ A serverless AI platform for the North Carolina Governor's Communications Office
 #### Data Flow
 
 1. **Timer-triggered Azure Function** runs every 15 minutes
-2. Queries **Bing News Search API** (via Azure Cognitive Services) for:
-   - `"Governor Stein"`, `"Gov. Stein"`, `"Josh Stein"`
-   - Scoped to NC regional outlets + national sources
-3. For each new article, extracts:
-   - **Outlet** (source name)
+2. Scrapes **governor.nc.gov/news/press-releases** (first 2 pages, ~20 articles) using `fetch` + `JSDOM`
+3. For each new press release, follows the link and extracts full text via **Mozilla Readability**:
    - **Title**
    - **First paragraph** (lede)
    - **First mention context** (sentence/paragraph containing the Governor's name)
-4. Deduplicates on URL and stores structured clip in **Cosmos DB**
-5. Indexes clip text into **Azure AI Search** for later retrieval
-6. Optionally sends a **daily digest** via Logic App + Outlook connector
+   - **Full article text**
+4. Generates a vector embedding via **Azure OpenAI text-embedding-3-large**
+5. Deduplicates on URL (SHA-256 hash) and stores structured clip in **Cosmos DB**
+6. Indexes clip + embedding into **Azure AI Search** for hybrid retrieval
+7. Optionally sends a **daily digest** via Logic App + Outlook connector
 
 #### Copilot Studio Interactions
 
@@ -174,8 +173,7 @@ The orchestrator maps user intent to the correct tool automatically:
 | **Azure AI Search** | Basic (B) | Hybrid vector + keyword indexes for clips and remarks |
 | **Azure OpenAI** | Standard (East US 2) | GPT-4o (30K TPM) for synthesis/proofread, text-embedding-3-large (120K TPM) for vectors |
 | **Azure Cosmos DB** | Serverless (NoSQL) | `clips`, `ingestion-state`, `remarks-metadata`, `remarks-chunks` containers |
-| **Azure Key Vault** | Standard (RBAC mode) | Bing News Search API key, Function host key for APIM |
-| **Bing News Search** | S1 | News article discovery |
+| **Azure Key Vault** | Standard (RBAC mode) | Function host key for APIM |
 | **Azure Blob Storage** | Standard LRS (public access disabled) | `remarks-uploads` container for document staging |
 | **VNet** | 10.0.0.0/16 | Network isolation for storage; Function App VNet integration |
 | **Private Endpoint** | Blob Storage | Private connectivity to storage via `privatelink.blob.core.windows.net` |
@@ -187,7 +185,7 @@ The orchestrator maps user intent to the correct tool automatically:
 
 ## Identity & Auth
 
-All service-to-service authentication uses **managed identity** and **DefaultAzureCredential**. No connection strings or API keys in application code. Key Vault uses **RBAC authorization mode** (not access policies).
+All service-to-service authentication uses **managed identity** and **DefaultAzureCredential**. No connection strings or API keys in application code. Key Vault uses **RBAC authorization mode** (not access policies). Clips ingestion scrapes governor.nc.gov directly — no external API keys required.
 
 | Caller | Target | Auth mechanism | Role |
 |---|---|---|---|
@@ -200,7 +198,6 @@ All service-to-service authentication uses **managed identity** and **DefaultAzu
 | Azure Functions | Cosmos DB | Managed identity (native RBAC) | `Cosmos DB Built-in Data Contributor` (via `sqlRoleAssignments`) |
 | Azure Functions | Blob Storage | Managed identity (via VNet private endpoint) | `Storage Blob Data Reader` |
 | Azure Functions | Key Vault | Managed identity | `Key Vault Secrets User` |
-| Timer Function | Bing News Search | API key from Key Vault (runtime) | — |
 
 > **Note:** Cosmos DB data-plane access uses its own native RBAC system (`sqlRoleAssignments`), not ARM `roleAssignments`. This is handled in `infra/modules/role-assignments.bicep`.
 
@@ -318,10 +315,9 @@ Storage is locked down with `publicNetworkAccess: Disabled` for policy complianc
 | Azure AI Search (Basic) | ~$70 |
 | Azure OpenAI (GPT-4o + embeddings) | ~$30–80 (usage-dependent) |
 | Cosmos DB (Serverless) | ~$5–20 |
-| Bing News Search (S1) | ~$7 |
 | Blob Storage + VNet/Private Endpoint | ~$5 |
 | Copilot Studio | Per-tenant (likely already licensed) |
-| **Total** | **~$155–230/mo** |
+| **Total** | **~$120–195/mo** |
 
 ---
 
@@ -332,7 +328,7 @@ Storage is locked down with `publicNetworkAccess: Disabled` for policy complianc
 | Bicep IaC (all resources) | Deployed | 9 modules in `rg-nc-comms-agent-dev`, all RBAC grants active |
 | VNet + Private Endpoint | Deployed | VNet 10.0.0.0/16, func-integration subnet (10.0.1.0/24), private-endpoints subnet (10.0.2.0/24), blob private endpoint + DNS zone |
 | Transcript Proofread Function | Deployed & tested | POST `/api/proofread` — structured JSON with changes + confidence |
-| Clips Ingestion Function | Deployed | Timer trigger registered; needs Bing News API key in Key Vault to run |
+| Clips Ingestion Function | Deployed & working | Timer trigger (every 15 min), scrapes governor.nc.gov press releases directly — no external API keys needed |
 | Clips Query Function | Deployed & tested | POST `/api/clips/query` — "latest" mode (AI Search wildcard + orderBy) + hybrid search. 10 real clips seeded. |
 | Clips Digest Function | Deployed (stub) | HTML generation done, email sending TBD (needs Logic App or SendGrid) |
 | Remarks Ingestion Function | Deployed (partial) | Blob trigger registered but not firing reliably on Flex Consumption; use `seed/load-remarks.ts` as workaround. `.docx`/`.pdf` extraction still stubbed. |
@@ -348,7 +344,7 @@ Storage is locked down with `publicNetworkAccess: Disabled` for policy complianc
 
 ## Open Questions
 
-1. **News source scope** — NC outlets only, or national? Bing News Search vs. a curated RSS list?
+1. ~~**News source scope**~~ — Resolved: scraping governor.nc.gov press releases directly. Can add Bing News Search or RSS feeds later for broader coverage.
 2. **Remarks corpus format** — Are existing remarks in Word docs, PDFs, or a CMS? This affects the ingestion pipeline.
 3. **Access control** — Should all comms staff see all clips/remarks, or are there sensitivity tiers?
 4. **Retention** — How long to keep clips? Archive after 90 days?

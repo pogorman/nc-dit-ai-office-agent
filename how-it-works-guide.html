@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NC AI Office Agent — How It Works (ELI5)</title>
+<style>
+  @page { size: letter; margin: 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+    max-width: 8in;
+    margin: 0 auto;
+    padding: 0.5in;
+    background: #fff;
+  }
+
+  h1 {
+    font-size: 18pt;
+    color: #0078d4;
+    margin-bottom: 4px;
+  }
+  .tagline {
+    font-size: 11pt;
+    color: #555;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+
+  /* --- Big Picture --- */
+  .big-picture {
+    background: #f0f6ff;
+    border: 2px solid #0078d4;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+  .big-picture h2 {
+    font-size: 13pt;
+    color: #0078d4;
+    margin-bottom: 8px;
+  }
+  .big-picture p {
+    margin-bottom: 6px;
+  }
+  .elevator {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #333;
+    border-left: 4px solid #0078d4;
+    padding-left: 12px;
+    margin: 12px 0;
+  }
+
+  /* --- Capability Sections --- */
+  .capability {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .capability-header {
+    padding: 10px 16px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .capability-header h2 { font-size: 13pt; margin: 0; }
+  .capability-header .emoji { font-size: 20pt; }
+  .cap-clips .capability-header { background: #0078d4; }
+  .cap-remarks .capability-header { background: #107c10; }
+  .cap-proofread .capability-header { background: #d83b01; }
+
+  .capability-body { padding: 14px 16px; }
+  .oneliner {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+  }
+
+  /* --- Flow Diagrams --- */
+  .flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 12px 0;
+    flex-wrap: nowrap;
+  }
+  .flow-step {
+    flex: 1;
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 10px;
+    text-align: center;
+    position: relative;
+    min-width: 0;
+  }
+  .flow-step .step-num {
+    display: inline-block;
+    background: #0078d4;
+    color: #fff;
+    font-size: 8pt;
+    font-weight: 700;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    border-radius: 50%;
+    margin-bottom: 4px;
+  }
+  .cap-clips .flow-step .step-num { background: #0078d4; }
+  .cap-remarks .flow-step .step-num { background: #107c10; }
+  .cap-proofread .flow-step .step-num { background: #d83b01; }
+
+  .flow-step .step-title {
+    display: block;
+    font-weight: 700;
+    font-size: 9pt;
+    color: #333;
+    margin-bottom: 2px;
+  }
+  .flow-step .step-detail {
+    font-size: 8.5pt;
+    color: #555;
+  }
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    font-size: 16pt;
+    color: #999;
+    flex-shrink: 0;
+  }
+
+  /* --- Analogy boxes --- */
+  .analogy {
+    background: #fff8e1;
+    border-left: 4px solid #f9a825;
+    padding: 8px 12px;
+    margin: 10px 0;
+    font-size: 9.5pt;
+  }
+  .analogy strong { color: #e65100; }
+
+  /* --- How they ask section --- */
+  .user-experience {
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .user-experience h2 {
+    font-size: 13pt;
+    color: #0078d4;
+    margin-bottom: 8px;
+  }
+  .chat-bubbles {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 10px 0;
+  }
+  .bubble {
+    padding: 8px 14px;
+    border-radius: 16px;
+    max-width: 80%;
+    font-size: 9.5pt;
+    line-height: 1.4;
+  }
+  .bubble-user {
+    background: #0078d4;
+    color: #fff;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .bubble-bot {
+    background: #e8e8e8;
+    color: #333;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+
+  /* --- Security / Trust section --- */
+  .trust-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin: 12px 0;
+  }
+  .trust-card {
+    background: #f0faf0;
+    border: 1px solid #107c10;
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+  }
+  .trust-card .trust-icon { font-size: 20pt; display: block; margin-bottom: 4px; }
+  .trust-card .trust-title { font-weight: 700; font-size: 9.5pt; color: #107c10; display: block; margin-bottom: 2px; }
+  .trust-card .trust-detail { font-size: 8.5pt; color: #555; }
+
+  /* --- FAQ Section --- */
+  .faq { margin-bottom: 20px; }
+  .faq h2 { font-size: 13pt; color: #0078d4; margin-bottom: 10px; }
+  .faq-item { margin-bottom: 10px; }
+  .faq-q { font-weight: 700; color: #333; }
+  .faq-a { color: #555; margin-left: 12px; }
+
+  /* --- Data flow summary --- */
+  .data-flow-summary {
+    border: 2px solid #0078d4;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .data-flow-summary h2 { font-size: 13pt; color: #0078d4; margin-bottom: 8px; }
+  .data-flow-summary table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+  .data-flow-summary th {
+    background: #0078d4;
+    color: #fff;
+    padding: 6px 8px;
+    text-align: left;
+    font-size: 9pt;
+  }
+  .data-flow-summary td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #eee;
+  }
+  .data-flow-summary tr:nth-child(even) td { background: #f9f9f9; }
+
+  .footer {
+    margin-top: 16px;
+    font-size: 8pt;
+    color: #999;
+    text-align: center;
+    border-top: 1px solid #eee;
+    padding-top: 6px;
+  }
+
+  @media print {
+    body { padding: 0; }
+    .capability { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>NC AI Office Agent — How It Works</h1>
+<div class="tagline">A plain-English guide to what the system does, how data flows, and why it's built this way.</div>
+
+<!-- ===== BIG PICTURE ===== -->
+<div class="big-picture">
+  <h2>The 30-Second Pitch</h2>
+  <div class="elevator">
+    The Governor's comms staff open a <strong>Microsoft Copilot Studio</strong> chatbot in <strong>Teams</strong> and ask questions in plain English.
+    Behind the scenes, <strong>Azure Functions</strong> call <strong>Azure OpenAI (GPT-4o)</strong> and <strong>Azure AI Search</strong> to find the right information, summarize it, and send back an answer — all in a few seconds.
+  </div>
+  <p>The system does <strong>three things</strong>:</p>
+  <p><strong>1. News Clips</strong> — Automatically collects press releases mentioning the Governor, so staff can ask "What's in the news today?"</p>
+  <p><strong>2. Remarks Search</strong> — Lets staff search the Governor's past speeches by topic, so they can ask "What has the Governor said about education?"</p>
+  <p><strong>3. Transcript Proofreading</strong> — Cleans up rough transcripts (from voice-to-text or scanned docs), fixing typos and formatting.</p>
+</div>
+
+<!-- ===== USER EXPERIENCE ===== -->
+<div class="user-experience">
+  <h2>What Staff Actually See</h2>
+  <p>Staff never see Cosmos DB, Azure Functions, or APIM. They see a <strong>Copilot Studio</strong> chatbot in <strong>Microsoft Teams</strong> (or embedded on a web page). It works like texting a very knowledgeable assistant. <strong>Entra ID SSO</strong> handles auth — if they can open Teams, they're already signed in.</p>
+  <div class="chat-bubbles">
+    <div class="bubble bubble-user">What news clips came in today about the Governor?</div>
+    <div class="bubble bubble-bot">Here are today's 4 press releases: 1) Governor Stein Announces $50M Rural Broadband Investment... 2) Governor Signs Executive Order on Clean Energy...</div>
+  </div>
+  <div class="chat-bubbles">
+    <div class="bubble bubble-user">What has the Governor said about teacher pay?</div>
+    <div class="bubble bubble-bot">In his State of the State address (March 12), Governor Stein said: "We will raise starting teacher salaries to $40,000..." He also referenced this in his Feb 28 press conference at UNC...</div>
+  </div>
+  <div class="chat-bubbles">
+    <div class="bubble bubble-user">Can you clean up this transcript? [pastes messy text]</div>
+    <div class="bubble bubble-bot">Here's the corrected version. I fixed 12 issues: 3 misspellings, 5 punctuation errors, 2 wrong proper nouns, and 2 number formatting issues.</div>
+  </div>
+</div>
+
+<!-- ===== CAPABILITY 1: NEWS CLIPS ===== -->
+<div class="capability cap-clips">
+  <div class="capability-header">
+    <span class="emoji">📰</span>
+    <h2>Capability 1: News Clips</h2>
+  </div>
+  <div class="capability-body">
+    <div class="oneliner">Automatically collects Governor press releases, then lets staff search or browse them instantly.</div>
+
+    <strong>How data gets in (runs automatically every 15 minutes):</strong>
+    <div class="flow">
+      <div class="flow-step">
+        <span class="step-num">1</span>
+        <span class="step-title">Fetch</span>
+        <span class="step-detail">An <strong>Azure Function</strong> (a small piece of serverless code) wakes up on a 15-minute timer. It scrapes <em>governor.nc.gov/news/press-releases</em> and reads new articles using Mozilla Readability to extract clean text.</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <span class="step-num">2</span>
+        <span class="step-title">Read & Understand</span>
+        <span class="step-detail"><strong>Azure OpenAI</strong> (text-embedding-3-large model) converts each article's title + lede into a vector embedding — a long number sequence that captures its <em>meaning</em>, not just keywords.</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <span class="step-num">3</span>
+        <span class="step-title">Store</span>
+        <span class="step-detail">The article + its embedding are saved in two places: <strong>Cosmos DB</strong> (the NoSQL database — for browsing "latest clips") and <strong>Azure AI Search</strong> (the search index — for hybrid keyword + semantic search).</span>
+      </div>
+    </div>
+
+    <div class="analogy"><strong>Analogy:</strong> Imagine a news intern who checks the Governor's website every 15 minutes, reads every new article, summarizes it on a card, and files it in both a filing cabinet (for "show me everything") and a magic Rolodex (for "find me articles about X").</div>
+
+    <strong>How staff ask questions:</strong>
+    <div class="flow">
+      <div class="flow-step">
+        <span class="step-num">1</span>
+        <span class="step-title">Staff Asks</span>
+        <span class="step-detail">Staff asks in <strong>Copilot Studio</strong> (Teams chatbot): "What clips came in today?" or "Find clips about broadband"</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <span class="step-num">2</span>
+        <span class="step-title">Hybrid Search</span>
+        <span class="step-detail"><strong>Azure OpenAI</strong> converts the question into an embedding. <strong>Azure AI Search</strong> runs a hybrid query — matching by both vector similarity (meaning) and BM25 (keywords) — then re-ranks with its semantic ranker.</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <span class="step-num">3</span>
+        <span class="step-title">Results</span>
+        <span class="step-detail">Top matching clips flow back through <strong>APIM</strong> → <strong>Copilot Studio</strong> → the user's Teams window, with title, date, source, and the key quote.</span>
+      </div>
+    </div>
+
+    <div class="analogy"><strong>Key insight:</strong> Searching for "internet access in rural areas" will find an article titled "Broadband Investment for Underserved Communities" even though they share zero words — because the <em>meaning</em> matches. This is what makes it smarter than a simple keyword search.</div>
+  </div>
+</div>
+
+<!-- ===== CAPABILITY 2: REMARKS ===== -->
+<div class="capability cap-remarks">
+  <div class="capability-header">
+    <span class="emoji">🎤</span>
+    <h2>Capability 2: Remarks Search</h2>
+  </div>
+  <div class="capability-body">
+    <div class="oneliner">Upload the Governor's speeches and search them by topic. The AI reads all matching passages and writes a summary with direct quotes.</div>
+
+    <strong>How speeches get in (happens when a file is uploaded):</strong>
+    <div class="flow">
+      <div class="flow-step">
+        <span class="step-num">1</span>
+        <span class="step-title">Upload</span>
+        <span class="step-detail">A staff member drops a speech file (.txt) into a <strong>Blob Storage</strong> container (<code>remarks-uploads</code>). This automatically triggers an <strong>Azure Function</strong> (blob trigger).</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <span class="step-num">2</span>
+        <span class="step-title">Chop Into Pieces</span>
+        <span class="step-detail">The <strong>Azure Function</strong> splits the speech into paragraph-sized chunks (~200–1,000 chars each) so the search can pinpoint exactly where a topic is discussed. Metadata (date, event, venue) is parsed from the filename.</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <span class="step-num">3</span>
+        <span class="step-title">Understand & Index</span>
+        <span class="step-detail"><strong>Azure OpenAI</strong> (text-embedding-3-large) generates an embedding for each chunk. Chunks are stored in <strong>Cosmos DB</strong> and indexed in <strong>Azure AI Search</strong>, tagged with date, event, and venue.</span>
+      </div>
+    </div>
+
+    <div class="analogy"><strong>Analogy:</strong> Imagine highlighting every paragraph of every speech the Governor has ever given, writing a one-line summary of what it's <em>about</em> on a sticky note, and putting every sticky note in a searchable binder sorted by topic. That's what the system builds automatically.</div>
+
+    <strong>How staff ask questions:</strong>
+    <div class="flow">
+      <div class="flow-step">
+        <span class="step-num">1</span>
+        <span class="step-title">Staff Asks</span>
+        <span class="step-detail">Staff asks in <strong>Copilot Studio</strong>: "What has the Governor said about teacher pay?" — routed through <strong>APIM</strong> to the remarks <strong>Azure Function</strong>.</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <span class="step-num">2</span>
+        <span class="step-title">Hybrid Search</span>
+        <span class="step-detail"><strong>Azure OpenAI</strong> embeds the question. <strong>Azure AI Search</strong> runs a hybrid query (vector + BM25 + semantic reranking) and returns the top 10 most relevant speech chunks across all speeches.</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <span class="step-num">3</span>
+        <span class="step-title">GPT-4o Synthesizes</span>
+        <span class="step-detail">The <strong>Azure Function</strong> sends those chunks to <strong>Azure OpenAI (GPT-4o)</strong>, which writes a synthesis with direct quotes, citations (date, event), and notes on how messaging evolved over time.</span>
+      </div>
+    </div>
+
+    <div class="analogy"><strong>This is the RAG pattern</strong> (Retrieval-Augmented Generation): instead of asking AI to make something up, we <em>retrieve</em> real source material first, then ask AI to <em>summarize only what it found</em>. The AI never invents quotes — it cites real text from real speeches.</div>
+  </div>
+</div>
+
+<!-- ===== CAPABILITY 3: PROOFREAD ===== -->
+<div class="capability cap-proofread">
+  <div class="capability-header">
+    <span class="emoji">✍️</span>
+    <h2>Capability 3: Transcript Proofreading</h2>
+  </div>
+  <div class="capability-body">
+    <div class="oneliner">Paste a rough transcript, get back a clean version with every change explained.</div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <span class="step-num">1</span>
+        <span class="step-title">Staff Pastes Text</span>
+        <span class="step-detail">Staff pastes a raw transcript in <strong>Copilot Studio</strong> — from voice-to-text software or a scanned doc. Routed through <strong>APIM</strong> to the proofread <strong>Azure Function</strong>.</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <span class="step-num">2</span>
+        <span class="step-title">GPT-4o Proofreads</span>
+        <span class="step-detail">The <strong>Azure Function</strong> sends the text to <strong>Azure OpenAI (GPT-4o)</strong> with a specialized proofreading prompt. GPT-4o fixes ASR/OCR errors, punctuation, proper nouns — but never changes meaning or speaking style.</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <span class="step-num">3</span>
+        <span class="step-title">Structured Output</span>
+        <span class="step-detail">GPT-4o returns structured JSON: the corrected text, a list of every change with a reason, and a confidence level (high/medium/low). No data is stored — nothing touches <strong>Cosmos DB</strong> or <strong>Blob Storage</strong>.</span>
+      </div>
+    </div>
+
+    <div class="analogy"><strong>Analogy:</strong> Like handing a rough draft to the best copy editor in the building — except they work instantly and show you every single red-pen mark with an explanation of why they changed it.</div>
+  </div>
+</div>
+
+<!-- ===== DATA FLOW SUMMARY ===== -->
+<div class="data-flow-summary">
+  <h2>Where Does Data Live?</h2>
+  <table>
+    <tr>
+      <th>What</th>
+      <th>Where It's Stored</th>
+      <th>Why There</th>
+    </tr>
+    <tr>
+      <td>News articles (full text, dates, sources)</td>
+      <td>Cosmos DB (database)</td>
+      <td>Fast lookups, browsing "latest clips," flexible schema</td>
+    </tr>
+    <tr>
+      <td>News article meaning-codes (embeddings)</td>
+      <td>Azure AI Search (search index)</td>
+      <td>Powers "find clips <em>about</em> X" — semantic + keyword hybrid search</td>
+    </tr>
+    <tr>
+      <td>Speech chunks (paragraphs + metadata)</td>
+      <td>Cosmos DB + Azure AI Search</td>
+      <td>Database for storage, search index for smart retrieval</td>
+    </tr>
+    <tr>
+      <td>Original speech files (.txt, .docx, .pdf)</td>
+      <td>Azure Blob Storage (file storage)</td>
+      <td>Cheap, durable file storage — uploading here triggers processing</td>
+    </tr>
+    <tr>
+      <td>Transcripts (proofread)</td>
+      <td>Nowhere — processed in real time</td>
+      <td>Text goes in, clean text comes back. Nothing is saved.</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ===== HOW THE PIECES CONNECT ===== -->
+<div class="big-picture" style="background: #fff9f0; border-color: #d83b01;">
+  <h2 style="color: #d83b01;">How the Pieces Connect (The Plumbing)</h2>
+  <p>You don't need to explain this to most audiences, but here's the short version if asked:</p>
+  <p><strong>1. Microsoft Copilot Studio</strong> (the chatbot in Teams) receives the user's question. Its built-in intent recognition figures out which capability to call (clips, remarks, or proofread).</p>
+  <p><strong>2.</strong> Copilot Studio sends the request through a <strong>Power Platform custom connector</strong> to <strong>Azure API Management (APIM)</strong> — the gateway. APIM validates the subscription key, enforces the 60 req/min rate limit, injects the Azure Function key, and routes to the correct endpoint.</p>
+  <p><strong>3. Azure Functions (Flex Consumption, Node.js 20)</strong> — small TypeScript functions that wake up on demand — do the actual work. There are separate functions for clips-query, remarks-query, and proofread, plus timer/blob-triggered functions for ingestion.</p>
+  <p><strong>4.</strong> The query functions call <strong>Azure OpenAI (East US 2)</strong> — specifically <strong>text-embedding-3-large</strong> to embed the question, and <strong>GPT-4o</strong> to synthesize answers or proofread text.</p>
+  <p><strong>5.</strong> The query functions call <strong>Azure AI Search (Basic tier)</strong> for hybrid vector + keyword search with semantic reranking, and <strong>Cosmos DB (Serverless)</strong> for direct lookups and browsing.</p>
+  <p><strong>6.</strong> The answer flows back: Azure Function → APIM → Custom Connector → Copilot Studio → the user's Teams chat window.</p>
+  <p style="margin-top: 8px; font-size: 9.5pt; color: #555;">The entire round trip — question in, answer out — takes <strong>3–8 seconds</strong>. All compute is <strong>serverless</strong> (Azure Functions Flex Consumption): when nobody is asking questions, Functions scale to zero and cost almost nothing. <strong>Cosmos DB</strong> is also serverless (pay-per-request). The only fixed-cost service is <strong>AI Search Basic</strong> at ~$70/mo.</p>
+</div>
+
+<!-- ===== TRUST & SECURITY ===== -->
+<div style="margin-bottom: 20px;">
+  <h2 style="font-size: 13pt; color: #0078d4; margin-bottom: 10px;">Trust & Security (The Non-Negotiables)</h2>
+  <div class="trust-grid">
+    <div class="trust-card">
+      <span class="trust-icon">🔐</span>
+      <span class="trust-title">No Passwords in Code</span>
+      <span class="trust-detail">Every service authenticates via <strong>Azure Managed Identity</strong> + <strong>DefaultAzureCredential</strong>. Functions connect to Cosmos DB, AI Search, OpenAI, and Key Vault without a single password or connection string in the code.</span>
+    </div>
+    <div class="trust-card">
+      <span class="trust-icon">🏛️</span>
+      <span class="trust-title">Data Stays in Azure</span>
+      <span class="trust-detail">All data is processed within the state's Azure tenant. Nothing leaves to third-party services. Azure OpenAI runs inside the same cloud boundary.</span>
+    </div>
+    <div class="trust-card">
+      <span class="trust-icon">🛡️</span>
+      <span class="trust-title">AI Content Filters</span>
+      <span class="trust-detail">Azure OpenAI has built-in responsible AI filters. The AI can only summarize what's in the real data — it's grounded, not generative.</span>
+    </div>
+    <div class="trust-card">
+      <span class="trust-icon">👤</span>
+      <span class="trust-title">Entra ID SSO</span>
+      <span class="trust-detail">Staff log in with their existing state credentials. No new accounts. No extra passwords. If they can access Teams, they can access the agent.</span>
+    </div>
+    <div class="trust-card">
+      <span class="trust-icon">🚦</span>
+      <span class="trust-title">Rate Limiting</span>
+      <span class="trust-detail"><strong>APIM (Consumption tier)</strong> enforces a 60 req/min rate limit per subscription key. Prevents runaway Azure OpenAI token costs and protects against abuse.</span>
+    </div>
+    <div class="trust-card">
+      <span class="trust-icon">🔒</span>
+      <span class="trust-title">Private Networking</span>
+      <span class="trust-detail"><strong>Blob Storage</strong> (where speech files are uploaded) is locked behind a <strong>VNet private endpoint</strong> — no public internet access. Azure Functions reach it via <strong>VNet integration</strong>.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TALK TRACK FAQ ===== -->
+<div class="faq">
+  <h2>Talk Track — Common Questions</h2>
+
+  <div class="faq-item">
+    <div class="faq-q">Q: Is the AI making things up?</div>
+    <div class="faq-a">No. For clips and remarks, the AI only summarizes real documents that are already in the system. It shows its sources with dates and direct quotes. This is called "grounded generation" — the AI is a research assistant, not a content creator.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q">Q: What happens if nobody uses it for a week?</div>
+    <div class="faq-a">Azure Functions scale to zero — they essentially sleep. Cosmos DB is serverless too (pay-per-request). You pay almost nothing when idle. The clips-ingest timer Function still fires every 15 minutes to check governor.nc.gov, but each run costs fractions of a penny. The only fixed cost is AI Search Basic (~$70/mo).</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q">Q: How is this different from just Googling?</div>
+    <div class="faq-a">Three ways: (1) Azure AI Search uses <em>hybrid search</em> — vector embeddings (meaning) + BM25 (keywords) + a semantic reranker — so "rural internet access" finds "broadband investment." (2) GPT-4o reads all matching results and writes a synthesis with direct quotes. (3) For remarks, it searches the Governor's <em>own speeches</em> stored in our Cosmos DB and AI Search index, which aren't on Google.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q">Q: What if the AI gets something wrong?</div>
+    <div class="faq-a">Every answer includes its sources — staff can click through to the original article or speech chunk. For proofreading, every change is listed with a confidence level and a reason. Low-confidence corrections are flagged with [?].</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q">Q: How much does this cost to run?</div>
+    <div class="faq-a">About $120–195/month for the whole platform — less than a single software license. Everything is serverless and consumption-based, so costs scale with actual usage.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q">Q: Can this be extended to other offices?</div>
+    <div class="faq-a">Yes. Each capability is a separate Azure Function with its own APIM route. You add a new capability by writing a new Function and adding a Copilot Studio topic. The entire infrastructure is defined in Bicep (infrastructure-as-code under <code>/infra</code>) — you can spin up a copy for another office with a parameter change and a 15-minute deploy.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q">Q: Why Teams and not a custom app?</div>
+    <div class="faq-a">Staff already live in Teams. No new app to install, no new password to remember, no training required. They just type a question like they're messaging a colleague. Copilot Studio handles the UI, auth, and deployment — zero frontend code needed.</div>
+  </div>
+</div>
+
+<div class="footer">NC DIT AI Office Agent — How It Works Guide v1.0 — March 2026</div>
+
+</body>
+</html>

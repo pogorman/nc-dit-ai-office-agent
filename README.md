@@ -8,7 +8,7 @@ AI-powered tool for the North Carolina Governor's Communications Office that aut
 |---|---|---|
 | **Transcript Proofreading** | AI-powered cleanup of faulty ASR/OCR transcripts | Fully implemented |
 | **Remarks Search** | Semantic search + RAG synthesis across the Governor's remarks corpus | Implemented (`.txt` ingestion; `.docx`/`.pdf` stubbed) |
-| **News Clips** | Automated monitoring for Governor Stein mentions via Bing News Search | Implemented |
+| **News Clips** | Automated monitoring of Governor press releases via governor.nc.gov scraping | Implemented |
 | **Daily Digest** | Weekday morning email summary of new clips | Stubbed (email sending TBD) |
 
 ## Architecture
@@ -26,6 +26,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for full system design, data models, Co
 - **Networking:** VNet with private endpoint for Blob Storage; Function App VNet integration
 - **Connector:** Power Platform custom connector (OpenAPI 2.0, deployed to GCC environment)
 - **IaC:** Bicep (modular, 9 resource modules)
+- **Reference Guides:** [Architecture Cheat Sheet](./architecture-cheat-sheet.html) | [How It Works (ELI5)](./how-it-works-guide.html)
 
 ## Prerequisites
 
@@ -75,7 +76,7 @@ az deployment group create \
 ├── src/
 │   ├── functions/            Azure Functions (6 functions)
 │   │   ├── proofread.ts          POST /api/proofread
-│   │   ├── clips-ingest.ts       Timer (every 15 min)
+│   │   ├── clips-ingest.ts       Timer (every 15 min) — scrapes governor.nc.gov
 │   │   ├── clips-query.ts        POST /api/clips/query
 │   │   ├── clips-digest.ts       Timer (8 AM weekdays)
 │   │   ├── remarks-ingest.ts     Blob trigger (remarks-uploads)
@@ -126,3 +127,5 @@ The Power Platform custom connector (`/connector/`) bridges Copilot Studio to AP
 | [FAQ.md](./FAQ.md) | Frequently asked questions (stakeholder + technical) |
 | [USER-GUIDE.md](./USER-GUIDE.md) | End-user guide for comms staff |
 | [HOW-I-WAS-BUILT.md](./HOW-I-WAS-BUILT.md) | Build journal with prompts and decisions |
+| [Architecture Cheat Sheet](./architecture-cheat-sheet.html) | One-pager: why each Azure service was chosen |
+| [How It Works Guide](./how-it-works-guide.html) | ELI5 guide for narrating the architecture to non-technical audiences |

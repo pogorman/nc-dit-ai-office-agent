@@ -239,4 +239,41 @@ Copilot Studio has a ~30-second timeout for tool calls. Flex Consumption cold st
 
 ---
 
+## Chapter 8: Clips Ingestion Rewrite — Bing News → Direct Scraping
+
+**Date:** 2026-03-24
+
+### Why the Change
+
+The original clips-ingest function used Bing News Search API to find articles mentioning Governor Stein. This worked but had downsides:
+- Required a Bing News Search API key stored in Key Vault (~$7/month)
+- Added `@azure/keyvault-secrets` and `@azure/identity` as direct dependencies in the function
+- Bing results were sometimes noisy (irrelevant articles) or incomplete (missing NC-specific press releases)
+- External API dependency added a failure mode
+
+### What Changed
+
+Rewrote `clips-ingest.ts` to scrape `governor.nc.gov/news/press-releases` directly:
+- Fetches the first 2 pages of press releases (~20 articles per run)
+- Parses listing pages with `JSDOM` to extract title, URL, date, and summary
+- Follows each link and extracts full article text using Mozilla **Readability**
+- Generates embeddings via Azure OpenAI `text-embedding-3-large`
+- Stores in **Cosmos DB** and indexes directly into **Azure AI Search** (previously only Cosmos)
+- Deduplicates on URL (SHA-256 hash of URL as document ID)
+
+### What Was Removed
+
+- Bing News Search API integration (entire `fetchBingNews` function, `getBingApiKey`, `BingNewsArticle`/`BingNewsResponse` interfaces)
+- `@azure/keyvault-secrets` dependency in this function (Key Vault is still used by APIM)
+- `KEY_VAULT_URL` and `BING_SECRET_NAME` environment variables
+- Bing News Search resource can be deprovisioned (~$7/month savings)
+
+### Also in This Commit
+
+- `host.json`: Added `functionTimeout: "00:10:00"` — the scraping function needs more than the default 5-minute timeout since it fetches and parses ~20 full articles sequentially
+- Added `architecture-cheat-sheet.html` — one-pager explaining why each Azure service was chosen, with cost comparisons and "vs." alternatives
+- Added `how-it-works-guide.html` — ELI5 guide with flow diagrams, analogies, chat bubble examples, and talk-track FAQ for narrating the architecture to non-technical audiences
+
+---
+
 *More chapters will be added as implementation progresses.*

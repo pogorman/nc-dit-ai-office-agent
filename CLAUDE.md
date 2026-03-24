@@ -14,7 +14,7 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 - **Search:** Azure AI Search (Basic tier, hybrid vector + keyword)
 - **AI:** Azure OpenAI (GPT-4o for synthesis/proofread, text-embedding-3-large for vectors)
 - **Storage:** Cosmos DB (serverless) for clips + remarks metadata, Blob Storage for remarks doc uploads
-- **Secrets:** Azure Key Vault (RBAC mode) for Bing News Search API key
+- **Secrets:** Azure Key Vault (RBAC mode)
 - **Agent:** Copilot Studio with custom connector to APIM
 - **Networking:** VNet with private endpoint for blob storage; Function App VNet integration
 - **IaC:** Bicep (modular, under `/infra`)
@@ -48,7 +48,7 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
     storage.bicep               — Blob Storage (publicNetworkAccess: Disabled)
 /src
   /functions
-    clips-ingest.ts             — Timer: Bing News → Cosmos DB (every 15 min)
+    clips-ingest.ts             — Timer: governor.nc.gov scrape → Cosmos DB + AI Search (every 15 min)
     clips-query.ts              — HTTP POST: search/browse clips
     clips-digest.ts             — Timer: daily email digest (8 AM weekdays, stub)
     remarks-ingest.ts           — Blob trigger: upload → chunk → embed → index
@@ -77,5 +77,4 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 - `.pdf` extraction in remarks-ingest.ts (needs `pdf-parse` package)
 - Blob trigger for remarks-ingest not firing reliably on Flex Consumption (use `seed/load-remarks.ts` as workaround)
 - Daily digest email sending stubbed (needs Logic App or SendGrid integration)
-- Clips timer ingestion needs Bing News API key in Key Vault to run
 - SPA (demo.html + demo-server.js) needs updating to match current API surface

@@ -22,7 +22,7 @@ Through Microsoft Teams — search for the agent by name in the Teams chat, or i
 The system checks for new articles every 15 minutes.
 
 ### What sources does it monitor?
-Bing News Search, which covers major national outlets and NC regional sources. The source list can be expanded with curated RSS feeds.
+The system scrapes the Governor's official press releases page (governor.nc.gov/news/press-releases) directly. It checks the first 2 pages (~20 articles) every 15 minutes. Additional sources (Bing News Search, curated RSS feeds) can be added.
 
 ### Can I get a daily email summary?
 Not yet — the daily digest HTML generation is built, but email delivery is not yet wired up. This will require a Logic App or SendGrid integration.
@@ -58,10 +58,10 @@ The system is conservative — it fixes obvious errors and flags anything uncert
 A Power Platform custom connector bridges Copilot Studio and the APIM gateway. The connector is deployed to the GCC (Government Community Cloud) Power Platform environment (`og-ai`). It exposes three tools — QueryClips, QueryRemarks, and ProofreadTranscript — and authenticates with an APIM subscription key. The agent uses **generative orchestration**, so it automatically selects the right tool based on the user's intent — no manual topic configuration needed.
 
 ### Is my data secure?
-All data stays within the NC DIT Azure tenant. Authentication is via Entra ID (SSO). No data leaves the Azure environment except for Bing News Search queries (which are search terms only, not internal data). All service-to-service auth uses managed identity — no API keys or connection strings in application code. The only secret (Bing News API key) is stored in Azure Key Vault. The Power Platform connector runs in a GCC environment, meeting government compliance requirements. Blob Storage has public network access disabled and is only accessible via a VNet private endpoint.
+All data stays within the NC DIT Azure tenant. Authentication is via Entra ID (SSO). The only external call is to governor.nc.gov to scrape press releases — no internal data leaves the environment. All service-to-service auth uses managed identity — no API keys or connection strings in application code. The Power Platform connector runs in a GCC environment, meeting government compliance requirements. Blob Storage has public network access disabled and is only accessible via a VNet private endpoint.
 
 ### What does it cost to run?
-Approximately $155–230/month at steady state (includes always-ready instances to eliminate cold starts). See [ARCHITECTURE.md](./ARCHITECTURE.md#cost-estimate-monthly-steady-state) for the breakdown.
+Approximately $120–195/month at steady state (includes always-ready instances to eliminate cold starts). See [ARCHITECTURE.md](./ARCHITECTURE.md#cost-estimate-monthly-steady-state) for the breakdown.
 
 ### What file formats can I upload for remarks?
 Currently `.txt` files are fully supported. `.docx` (Word) and `.pdf` support is planned — the ingestion pipeline is built but the text extraction libraries need to be wired in.
@@ -75,4 +75,4 @@ All three endpoints are live and tested through the APIM gateway at `https://nc-
 All requests require an `Ocp-Apim-Subscription-Key` header.
 
 ### What happens if the news ingestion fails?
-The system processes articles individually. If one article fails to process, it logs the error and continues with the rest. Failed articles will be retried on the next 15-minute cycle if they're still in the Bing results.
+The system processes articles individually. If one article fails to process, it logs the error and continues with the rest. Failed articles will be retried on the next 15-minute cycle since the scraper re-checks the same press release pages.

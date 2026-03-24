@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NC DIT AI Office Agent — Architecture Decision Cheat Sheet</title>
+<style>
+  @page { size: letter; margin: 0.4in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+    font-size: 9pt;
+    line-height: 1.35;
+    color: #1a1a1a;
+    max-width: 7.5in;
+    margin: 0 auto;
+    padding: 0.4in;
+  }
+  h1 {
+    font-size: 14pt;
+    color: #0078d4;
+    border-bottom: 2px solid #0078d4;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    font-size: 9pt;
+    color: #555;
+    margin-bottom: 10px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .card {
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 6px 8px;
+    background: #fafafa;
+  }
+  .card h2 {
+    font-size: 9.5pt;
+    color: #0078d4;
+    margin-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .card h2 .tier {
+    font-size: 7.5pt;
+    font-weight: normal;
+    color: #888;
+  }
+  .card .why { font-weight: 600; color: #333; margin-bottom: 2px; }
+  .card ul { padding-left: 14px; margin: 0; }
+  .card li { margin-bottom: 1px; }
+  .vs { color: #c00; font-weight: 600; }
+  .cost { color: #107c10; font-weight: 600; }
+  .section-title {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #333;
+    margin: 8px 0 4px 0;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 2px;
+  }
+  .full-width { grid-column: 1 / -1; }
+  .principles {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .principle {
+    background: #e8f4fd;
+    border-left: 3px solid #0078d4;
+    padding: 4px 6px;
+    font-size: 8.5pt;
+  }
+  .principle strong { display: block; font-size: 9pt; }
+  .cost-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .cost-box {
+    border: 1px solid #107c10;
+    border-radius: 4px;
+    padding: 5px 8px;
+    background: #f0faf0;
+  }
+  .cost-box h3 { font-size: 9pt; color: #107c10; margin-bottom: 2px; }
+  .footer {
+    margin-top: 6px;
+    font-size: 7.5pt;
+    color: #999;
+    text-align: center;
+    border-top: 1px solid #eee;
+    padding-top: 3px;
+  }
+</style>
+</head>
+<body>
+
+<h1>NC DIT AI Office Agent — Architecture Decision Cheat Sheet</h1>
+<div class="subtitle">Why each Azure service was chosen, what it replaced, and why it's the right call for this workload.</div>
+
+<div class="section-title">Guiding Principles</div>
+<div class="principles">
+  <div class="principle"><strong>Serverless-First</strong>Scale to zero. Pay only when staff use it. No VMs, no idle compute.</div>
+  <div class="principle"><strong>Managed Identity Everywhere</strong>Zero secrets in code. DefaultAzureCredential + RBAC. Audit-friendly.</div>
+  <div class="principle"><strong>Consumption Tiers</strong>Right-size for a small team (~20 comms staff). Upgrade tiers if demand grows.</div>
+</div>
+
+<div class="section-title">Service-by-Service Justification</div>
+<div class="grid">
+
+  <div class="card">
+    <h2>Cosmos DB (NoSQL) <span class="tier">Serverless</span></h2>
+    <div class="why">Why Cosmos DB and not SQL or Table Storage?</div>
+    <ul>
+      <li><strong>Serverless billing</strong> — pay per request, not per hour. <span class="cost">~$5-20/mo</span> for this workload vs. $24+/mo minimum for provisioned Cosmos or $5+/mo for SQL Basic</li>
+      <li><strong>Schema flexibility</strong> — clips and remarks have different shapes; no rigid table schemas or migrations needed</li>
+      <li><strong>Sub-10ms reads</strong> — instant response when Copilot Studio queries "today's clips"</li>
+      <li><strong>Native RBAC</strong> — managed identity auth via <code>sqlRoleAssignments</code>; no connection strings</li>
+      <li><span class="vs">vs. SQL Server:</span> overkill — no joins, no transactions, no relational needs</li>
+      <li><span class="vs">vs. Table Storage:</span> no query flexibility, no indexing policy, no change feed</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Azure AI Search <span class="tier">Basic (B)</span></h2>
+    <div class="why">Why a separate search service?</div>
+    <ul>
+      <li><strong>Vector search</strong> — semantic similarity over embeddings; Cosmos DB can't do this</li>
+      <li><strong>Hybrid search</strong> — combines vector (meaning) + BM25 (keywords) for best relevance</li>
+      <li><strong>RAG pattern</strong> — purpose-built to feed top-K chunks to GPT-4o for grounded answers</li>
+      <li><strong>Semantic ranker</strong> — ML re-ranking on top of hybrid results (available at Basic+)</li>
+      <li><span class="vs">vs. Cosmos full-text:</span> no vector support, no hybrid ranking, no semantic reranker</li>
+      <li><span class="vs">vs. pgvector/PostgreSQL:</span> always-on compute; AI Search Basic is fixed-cost, simpler ops</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Azure Functions <span class="tier">Flex Consumption</span></h2>
+    <div class="why">Why Functions, and why Flex specifically?</div>
+    <ul>
+      <li><strong>Scale to zero</strong> — no cost when nobody's asking questions; <span class="cost">~$5-15/mo</span></li>
+      <li><strong>Native triggers</strong> — timer (clips ingestion), blob (remarks upload), HTTP (queries) all built-in</li>
+      <li><strong>Flex Consumption</strong> — adds VNet integration (required for private endpoints) that classic Consumption lacks</li>
+      <li><strong>TypeScript/Node 20</strong> — fast cold starts (~200ms), same language across entire stack</li>
+      <li><span class="vs">vs. App Service:</span> always-on minimum cost ($13+/mo B1), no timer/blob triggers</li>
+      <li><span class="vs">vs. Container Apps:</span> more ops overhead, ~$5/mo minimum even scaled to zero</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>API Management (APIM) <span class="tier">Consumption</span></h2>
+    <div class="why">Why put a gateway in front of Functions?</div>
+    <ul>
+      <li><strong>Auth boundary</strong> — Copilot Studio sends one subscription key; APIM injects function keys internally</li>
+      <li><strong>Single endpoint</strong> — one base URL for all 3 capabilities (clips, remarks, proofread)</li>
+      <li><strong>Rate limiting</strong> — 60 req/min cap protects against runaway costs on OpenAI/Search</li>
+      <li><strong>Custom connector</strong> — Power Platform connector points to APIM, not raw Function URLs</li>
+      <li><span class="vs">vs. no gateway:</span> would expose function keys to Copilot Studio; no rate limiting; harder to audit</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Azure OpenAI <span class="tier">Standard (East US 2)</span></h2>
+    <div class="why">Why Azure OpenAI vs. OpenAI directly?</div>
+    <ul>
+      <li><strong>Data residency</strong> — data stays in the Azure tenant; required for government workloads</li>
+      <li><strong>Managed identity</strong> — <code>Cognitive Services OpenAI User</code> role; no API keys</li>
+      <li><strong>Content filtering</strong> — built-in responsible AI filters (required for state government use)</li>
+      <li><strong>GPT-4o</strong> at 30K TPM for synthesis/proofreading; <strong>text-embedding-3-large</strong> at 120K TPM for vectors</li>
+      <li><span class="vs">vs. OpenAI direct:</span> API key auth, data leaves tenant, no Azure RBAC integration</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Copilot Studio <span class="tier">Per-tenant license</span></h2>
+    <div class="why">Why not build a custom web app?</div>
+    <ul>
+      <li><strong>Zero frontend code</strong> — ships in Teams, web, SharePoint embed instantly</li>
+      <li><strong>Entra ID SSO</strong> — no auth plumbing; staff sign in with their existing credentials</li>
+      <li><strong>Topic routing</strong> — built-in intent recognition maps user questions to the right backend action</li>
+      <li><strong>Already licensed</strong> — most E3/E5 tenants include Copilot Studio per-tenant</li>
+      <li><span class="vs">vs. custom React app:</span> months of frontend/auth work; ongoing maintenance; separate hosting cost</li>
+    </ul>
+  </div>
+
+</div>
+
+<div class="cost-row">
+  <div class="cost-box">
+    <h3>Total Monthly Cost: ~$120-195/mo</h3>
+    Functions ~$10 | APIM ~$4 | AI Search ~$70 | OpenAI ~$50 | Cosmos ~$12 | Bing ~$7 | Storage &lt;$1 | KV &lt;$1
+  </div>
+  <div class="cost-box">
+    <h3>Key Comparison Points</h3>
+    A custom-built equivalent (App Service + SQL + React + auth) would cost <strong>$200-400/mo</strong> in compute alone, plus <strong>months of dev time</strong> on frontend, auth, and DevOps. This stack is <strong>fully IaC (Bicep)</strong> — teardown and redeploy in 15 minutes.
+  </div>
+</div>
+
+<div class="footer">NC DIT AI Office Agent &mdash; Architecture v1.0 &mdash; All resources deployed to <code>rg-nc-comms-agent-dev</code> (East US 2) &mdash; Bicep IaC under <code>/infra</code></div>
+
+</body>
+</html>
