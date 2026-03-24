@@ -173,4 +173,70 @@ The custom connector is live. The next step is configuring the Copilot Studio ag
 
 ---
 
+## Chapter 5: Copilot Studio Agent — Generative Orchestration
+
+**Date:** 2026-03-24
+
+With the custom connector deployed, the next step was configuring the Copilot Studio agent. Originally we planned to build manual topics for each capability (Clips Browse, Clips Search, Remarks Search, Transcript Proofread) with explicit trigger phrases.
+
+### The Discovery
+
+Copilot Studio now supports **generative orchestration** — the orchestrator reads the OpenAPI operation descriptions from the custom connector and automatically selects the right tool based on user intent. No manual topic configuration needed at all. The quality of the OpenAPI operation `description` and `summary` fields in the connector spec drives tool selection accuracy.
+
+### Result
+
+All three tools — QueryClips, QueryRemarks, and ProofreadTranscript — are working in the GCC `og-ai` environment. The agent correctly routes:
+- "Show me today's clips" → QueryClips
+- "What language have we used on education?" → QueryRemarks
+- "Proofread this transcript" → ProofreadTranscript
+
+This was a significant simplification. Instead of building and maintaining 5-6 topic definitions with trigger phrases and response formatting, the generative orchestrator handles everything from the OpenAPI spec descriptions.
+
+---
+
+## Chapter 6: VNet + Private Endpoint for Storage
+
+**Date:** 2026-03-24
+
+Azure policy compliance required that the Storage Account have `publicNetworkAccess: Disabled`. This meant adding network isolation.
+
+### What Was Built
+
+Created `infra/modules/networking.bicep` with:
+- **VNet** — `10.0.0.0/16` address space
+- **func-integration subnet** — `10.0.1.0/24` for Function App VNet integration
+- **private-endpoints subnet** — `10.0.2.0/24` for the blob storage private endpoint
+- **Private endpoint** for blob storage
+- **Private DNS zone** — `privatelink.blob.core.windows.net` linked to the VNet
+
+### Function App Changes
+
+- Added `vnetSubnetId` parameter to the Function App Flex Consumption plan, pointing to the func-integration subnet
+- Set `WEBSITE_CONTENTOVERVNET=1` in app settings to enable deployment content upload through the VNet
+- Storage account set to `publicNetworkAccess: 'Disabled'`
+
+### Deployment Validation
+
+`func azure functionapp publish` works through the VNet — Kudu uploads to blob via the private endpoint. No need to temporarily toggle public access on/off during deployments.
+
+---
+
+## Chapter 7: Clips Query Fix + Always-Ready Instances
+
+**Date:** 2026-03-24
+
+### Clips Query Fix
+
+The `clips-query.ts` "latest" mode was originally querying Cosmos DB with an `ORDER BY publishedAt DESC` clause. This required a composite index in Cosmos DB that didn't exist and would have needed manual configuration.
+
+**Fix:** Rewrote the latest mode to use AI Search instead — a wildcard query (`*`) with `orderBy: "publishedAt desc"`. AI Search already has the `publishedAt` field as sortable, so this works out of the box. One fewer Cosmos DB dependency.
+
+### Always-Ready Instances
+
+Copilot Studio has a ~30-second timeout for tool calls. Flex Consumption cold starts were hitting this limit. Added `always-ready=1` for HTTP triggers, which keeps one warm instance available at all times.
+
+**Cost:** ~$34/month — worth it to prevent timeout failures in the agent experience.
+
+---
+
 *More chapters will be added as implementation progresses.*

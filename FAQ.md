@@ -55,13 +55,13 @@ The system is conservative — it fixes obvious errors and flags anything uncert
 ## Technical
 
 ### How does Copilot Studio connect to the backend?
-A Power Platform custom connector bridges Copilot Studio and the APIM gateway. The connector is deployed to the GCC (Government Community Cloud) Power Platform environment (`og-ai`). It exposes three actions — QueryClips, QueryRemarks, and ProofreadTranscript — and authenticates with an APIM subscription key.
+A Power Platform custom connector bridges Copilot Studio and the APIM gateway. The connector is deployed to the GCC (Government Community Cloud) Power Platform environment (`og-ai`). It exposes three tools — QueryClips, QueryRemarks, and ProofreadTranscript — and authenticates with an APIM subscription key. The agent uses **generative orchestration**, so it automatically selects the right tool based on the user's intent — no manual topic configuration needed.
 
 ### Is my data secure?
-All data stays within the NC DIT Azure tenant. Authentication is via Entra ID (SSO). No data leaves the Azure environment except for Bing News Search queries (which are search terms only, not internal data). All service-to-service auth uses managed identity — no API keys or connection strings in application code. The only secret (Bing News API key) is stored in Azure Key Vault. The Power Platform connector runs in a GCC environment, meeting government compliance requirements.
+All data stays within the NC DIT Azure tenant. Authentication is via Entra ID (SSO). No data leaves the Azure environment except for Bing News Search queries (which are search terms only, not internal data). All service-to-service auth uses managed identity — no API keys or connection strings in application code. The only secret (Bing News API key) is stored in Azure Key Vault. The Power Platform connector runs in a GCC environment, meeting government compliance requirements. Blob Storage has public network access disabled and is only accessible via a VNet private endpoint.
 
 ### What does it cost to run?
-Approximately $120–195/month at steady state. See [ARCHITECTURE.md](./ARCHITECTURE.md#cost-estimate-monthly-steady-state) for the breakdown.
+Approximately $155–230/month at steady state (includes always-ready instances to eliminate cold starts). See [ARCHITECTURE.md](./ARCHITECTURE.md#cost-estimate-monthly-steady-state) for the breakdown.
 
 ### What file formats can I upload for remarks?
 Currently `.txt` files are fully supported. `.docx` (Word) and `.pdf` support is planned — the ingestion pipeline is built but the text extraction libraries need to be wired in.

@@ -23,8 +23,9 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for full system design, data models, Co
 - **Storage:** Cosmos DB (Serverless) for clips/metadata, Blob Storage for remarks uploads
 - **Secrets:** Azure Key Vault (RBAC mode)
 - **Agent:** Microsoft Copilot Studio (Teams / web / SharePoint embed)
+- **Networking:** VNet with private endpoint for Blob Storage; Function App VNet integration
 - **Connector:** Power Platform custom connector (OpenAPI 2.0, deployed to GCC environment)
-- **IaC:** Bicep (modular, 8 resource modules)
+- **IaC:** Bicep (modular, 9 resource modules)
 
 ## Prerequisites
 
@@ -65,11 +66,12 @@ az deployment group create \
 ```
 
 > **Post-deploy:** The APIM named value `function-host-key` is already configured with the Function App host key.
+> **Networking:** Storage has `publicNetworkAccess: Disabled`. Deployments go through VNet — `func azure functionapp publish` works via Kudu over the private endpoint. No need to toggle public access.
 
 ## Project Structure
 
 ```
-├── infra/                    Bicep IaC (8 resource modules)
+├── infra/                    Bicep IaC (9 resource modules)
 ├── src/
 │   ├── functions/            Azure Functions (6 functions)
 │   │   ├── proofread.ts          POST /api/proofread
@@ -105,12 +107,16 @@ All endpoints are live and tested through the APIM gateway:
 
 Auth: `Ocp-Apim-Subscription-Key` header with APIM subscription key.
 
-## Custom Connector
+## Copilot Studio Agent
 
-A Power Platform custom connector (`/connector/`) is deployed to the GCC Power Platform environment (`og-ai`) for use with Copilot Studio. It exposes three actions:
+The Copilot Studio agent is **fully working** in the GCC Power Platform environment (`og-ai`). It uses **generative orchestration** — no manual topic configuration needed. The agent selects the right tool based on the operation descriptions in the OpenAPI spec.
+
+Three tools are deployed:
 - **QueryClips** — search/browse news clips
 - **QueryRemarks** — semantic search over remarks with RAG synthesis
 - **ProofreadTranscript** — AI-powered transcript cleanup
+
+The Power Platform custom connector (`/connector/`) bridges Copilot Studio to APIM.
 
 ## Project Documentation
 

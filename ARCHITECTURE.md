@@ -126,40 +126,42 @@ A serverless AI platform for the North Carolina Governor's Communications Office
 
 ### Agent Topology
 
+The agent uses **generative orchestration** — no manual topics are needed. The orchestrator reads the OpenAPI operation descriptions from the custom connector and selects the right tool based on user intent.
+
 ```
 ┌──────────────────────────────────────────────┐
 │              Copilot Studio Agent             │
+│         (Generative Orchestration)           │
 │                                              │
-│  ┌──────────┐ ┌──────────┐ ┌──────────────┐ │
-│  │  Clips   │ │ Remarks  │ │ Transcript   │ │
-│  │  Topic   │ │ Topic    │ │ Proofread    │ │
-│  │          │ │          │ │ Topic        │ │
-│  └────┬─────┘ └────┬─────┘ └──────┬───────┘ │
-│       │             │              │         │
-│       ▼             ▼              ▼         │
+│  ┌──────────────────────────────────────┐    │
+│  │  Orchestrator selects tool based on  │    │
+│  │  OpenAPI operation descriptions:     │    │
+│  │                                      │    │
+│  │  • QueryClips                        │    │
+│  │  • QueryRemarks                      │    │
+│  │  • ProofreadTranscript               │    │
+│  └────────────────┬─────────────────────┘    │
+│                   │                          │
+│                   ▼                          │
 │  ┌──────────────────────────────────────┐    │
 │  │  Power Platform Custom Connector     │    │
 │  │  OpenAPI 2.0 → APIM → Functions      │    │
 │  │  (deployed to GCC env: og-ai)        │    │
 │  └──────────────────────────────────────┘    │
-│                                              │
-│  ┌──────────────────────────────────────┐    │
-│  │   Generative Answers (fallback)      │    │
-│  │   Grounded on AI Search indexes      │    │
-│  └──────────────────────────────────────┘    │
 └──────────────────────────────────────────────┘
 ```
 
-### Topics
+### Tool Selection
 
-| Topic | Trigger phrases | Action |
+The orchestrator maps user intent to the correct tool automatically:
+
+| User intent | Example utterance | Tool selected |
 |---|---|---|
-| **Clips — Browse** | "today's clips", "latest mentions", "what's in the news" | Call Clips Function → return Adaptive Card carousel |
-| **Clips — Search** | "clips about [topic]", "news on [topic]" | Call Clips Function with search query |
-| **Remarks — Search** | "what have we said about [topic]", "language on [topic]" | Call Remarks Function → return synthesis + quotes |
-| **Remarks — Quote** | "find the quote about [topic] from [event]" | Call Remarks Function with filters |
-| **Transcript — Proofread** | "proofread this transcript", "clean up this transcript" | Call Transcript Function with payload |
-| **Fallback** | Anything else | Generative Answers grounded on both indexes |
+| Browse today's clips | "Show me today's clips" | QueryClips (mode: latest) |
+| Search clips by topic | "Any clips about clean energy this week?" | QueryClips (mode: search) |
+| Search remarks by topic | "What language have we used on clean tech?" | QueryRemarks |
+| Find a specific quote | "Find the quote about broadband from the State of the State" | QueryRemarks (with filters) |
+| Proofread a transcript | "Proofread this transcript" | ProofreadTranscript |
 
 ---
 
@@ -167,15 +169,17 @@ A serverless AI platform for the North Carolina Governor's Communications Office
 
 | Resource | SKU / Tier | Purpose |
 |---|---|---|
-| **Azure Functions** (Function App) | Flex Consumption (FC1, Linux) | 6 functions — clips ingestion/query/digest, remarks ingestion/query, proofread |
+| **Azure Functions** (Function App) | Flex Consumption (FC1, Linux), always-ready=1 for HTTP | 6 functions — clips ingestion/query/digest, remarks ingestion/query, proofread |
 | **Azure API Management** | Consumption | Auth boundary, rate limiting (60/min), function key injection |
 | **Azure AI Search** | Basic (B) | Hybrid vector + keyword indexes for clips and remarks |
 | **Azure OpenAI** | Standard (East US 2) | GPT-4o (30K TPM) for synthesis/proofread, text-embedding-3-large (120K TPM) for vectors |
 | **Azure Cosmos DB** | Serverless (NoSQL) | `clips`, `ingestion-state`, `remarks-metadata`, `remarks-chunks` containers |
 | **Azure Key Vault** | Standard (RBAC mode) | Bing News Search API key, Function host key for APIM |
 | **Bing News Search** | S1 | News article discovery |
-| **Azure Blob Storage** | Standard LRS | `remarks-uploads` container for document staging |
-| **Copilot Studio** | Per-tenant license | Agent experience — Teams, web, SharePoint |
+| **Azure Blob Storage** | Standard LRS (public access disabled) | `remarks-uploads` container for document staging |
+| **VNet** | 10.0.0.0/16 | Network isolation for storage; Function App VNet integration |
+| **Private Endpoint** | Blob Storage | Private connectivity to storage via `privatelink.blob.core.windows.net` |
+| **Copilot Studio** | Per-tenant license | Agent experience — Teams, web, SharePoint (fully working, generative orchestration) |
 | **Power Platform Custom Connector** | GCC environment (`og-ai`) | OpenAPI 2.0 bridge between Copilot Studio and APIM (3 actions) |
 | **Logic App** (optional, future) | Consumption | Daily digest email delivery |
 
@@ -194,11 +198,38 @@ All service-to-service authentication uses **managed identity** and **DefaultAzu
 | Azure Functions | Azure OpenAI | Managed identity | `Cognitive Services OpenAI User` |
 | Azure Functions | Azure AI Search | Managed identity | `Search Index Data Reader` + `Search Index Data Contributor` |
 | Azure Functions | Cosmos DB | Managed identity (native RBAC) | `Cosmos DB Built-in Data Contributor` (via `sqlRoleAssignments`) |
-| Azure Functions | Blob Storage | Managed identity | `Storage Blob Data Reader` |
+| Azure Functions | Blob Storage | Managed identity (via VNet private endpoint) | `Storage Blob Data Reader` |
 | Azure Functions | Key Vault | Managed identity | `Key Vault Secrets User` |
 | Timer Function | Bing News Search | API key from Key Vault (runtime) | — |
 
 > **Note:** Cosmos DB data-plane access uses its own native RBAC system (`sqlRoleAssignments`), not ARM `roleAssignments`. This is handled in `infra/modules/role-assignments.bicep`.
+
+---
+
+## Networking
+
+Storage is locked down with `publicNetworkAccess: Disabled` for policy compliance. All blob access goes through a private endpoint.
+
+```
+┌─────────────────────────────────────────────────┐
+│               VNet  10.0.0.0/16                 │
+│                                                 │
+│  ┌──────────────────────┐  ┌─────────────────┐  │
+│  │  func-integration    │  │ private-endpoints│  │
+│  │  10.0.1.0/24         │  │ 10.0.2.0/24     │  │
+│  │                      │  │                 │  │
+│  │  Function App        │  │  Private EP     │  │
+│  │  (VNet integration)  │──│  → Blob Storage │  │
+│  └──────────────────────┘  └─────────────────┘  │
+│                                                 │
+│  Private DNS Zone: privatelink.blob.core.windows.net
+└─────────────────────────────────────────────────┘
+```
+
+- **Function App VNet integration** via `vnetSubnetId` parameter on the Flex Consumption plan
+- **`WEBSITE_CONTENTOVERVNET=1`** enables deployment content upload over VNet
+- **`func azure functionapp publish`** works through the VNet — Kudu uploads to blob via private endpoint, no need to toggle public access
+- **Always-ready=1** on HTTP triggers eliminates cold start timeouts (~$34/month additional)
 
 ---
 
@@ -282,15 +313,15 @@ All service-to-service authentication uses **managed identity** and **DefaultAzu
 
 | Resource | Estimated monthly cost |
 |---|---|
-| Azure Functions (Consumption) | ~$5–15 |
+| Azure Functions (Flex Consumption + always-ready=1) | ~$34–45 |
 | APIM (Consumption) | ~$3.50 per million calls |
 | Azure AI Search (Basic) | ~$70 |
 | Azure OpenAI (GPT-4o + embeddings) | ~$30–80 (usage-dependent) |
 | Cosmos DB (Serverless) | ~$5–20 |
 | Bing News Search (S1) | ~$7 |
-| Blob Storage | <$1 |
+| Blob Storage + VNet/Private Endpoint | ~$5 |
 | Copilot Studio | Per-tenant (likely already licensed) |
-| **Total** | **~$120–195/mo** |
+| **Total** | **~$155–230/mo** |
 
 ---
 
@@ -298,10 +329,11 @@ All service-to-service authentication uses **managed identity** and **DefaultAzu
 
 | Component | Status | Notes |
 |---|---|---|
-| Bicep IaC (all resources) | Deployed | 8 modules in `rg-nc-comms-agent-dev`, all RBAC grants active |
+| Bicep IaC (all resources) | Deployed | 9 modules in `rg-nc-comms-agent-dev`, all RBAC grants active |
+| VNet + Private Endpoint | Deployed | VNet 10.0.0.0/16, func-integration subnet (10.0.1.0/24), private-endpoints subnet (10.0.2.0/24), blob private endpoint + DNS zone |
 | Transcript Proofread Function | Deployed & tested | POST `/api/proofread` — structured JSON with changes + confidence |
 | Clips Ingestion Function | Deployed | Timer trigger registered; needs Bing News API key in Key Vault to run |
-| Clips Query Function | Deployed & tested | POST `/api/clips/query` — "latest" mode (Cosmos) + hybrid search (AI Search). 10 real clips seeded. |
+| Clips Query Function | Deployed & tested | POST `/api/clips/query` — "latest" mode (AI Search wildcard + orderBy) + hybrid search. 10 real clips seeded. |
 | Clips Digest Function | Deployed (stub) | HTML generation done, email sending TBD (needs Logic App or SendGrid) |
 | Remarks Ingestion Function | Deployed (partial) | Blob trigger registered but not firing reliably on Flex Consumption; use `seed/load-remarks.ts` as workaround. `.docx`/`.pdf` extraction still stubbed. |
 | Remarks Query Function | Deployed & tested | POST `/api/remarks/query` — hybrid search + GPT-4o RAG synthesis with direct quotes and citations. 2025 State of the State seeded (17 chunks). |
@@ -311,7 +343,8 @@ All service-to-service authentication uses **managed identity** and **DefaultAzu
 | Power Platform custom connector | Deployed | OpenAPI 2.0 spec with 3 actions (QueryClips, QueryRemarks, ProofreadTranscript), deployed to GCC environment (`og-ai`) |
 | APIM function key | Configured | Named value `function-host-key` set with actual Function App host key |
 | APIM endpoints | Tested | All 3 endpoints verified: `/comms/clips/query`, `/comms/remarks/query`, `/comms/proofread` |
-| Copilot Studio agent | Not started | Custom connector is deployed; agent topic configuration is next |
+| Copilot Studio agent | Deployed & working | Generative orchestration — all 3 tools (QueryClips, QueryRemarks, ProofreadTranscript) active, no manual topics needed |
+| Always-ready instances | Configured | HTTP triggers set to always-ready=1 to eliminate cold start timeouts (~$34/month) |
 
 ## Open Questions
 
@@ -320,3 +353,4 @@ All service-to-service authentication uses **managed identity** and **DefaultAzu
 3. **Access control** — Should all comms staff see all clips/remarks, or are there sensitivity tiers?
 4. **Retention** — How long to keep clips? Archive after 90 days?
 5. ~~**Existing Copilot Studio environment**~~ — Resolved: using GCC Power Platform environment (`og-ai`). Custom connector deployed.
+6. ~~**Copilot Studio agent configuration**~~ — Resolved: generative orchestration selects tools automatically from OpenAPI descriptions. No manual topics needed.

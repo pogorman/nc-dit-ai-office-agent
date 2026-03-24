@@ -16,6 +16,7 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 - **Storage:** Cosmos DB (serverless) for clips + remarks metadata, Blob Storage for remarks doc uploads
 - **Secrets:** Azure Key Vault (RBAC mode) for Bing News Search API key
 - **Agent:** Copilot Studio with custom connector to APIM
+- **Networking:** VNet with private endpoint for blob storage; Function App VNet integration
 - **IaC:** Bicep (modular, under `/infra`)
 - **Auth SDK:** `@azure/identity` DefaultAzureCredential, `openai` package with `getBearerTokenProvider`
 
@@ -24,7 +25,8 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 - Managed identity + DefaultAzureCredential everywhere — no keys in code
 - Copilot Studio connects via Streamable HTTP through APIM custom connector
 - Environment variables for all configuration (endpoints only, no secrets)
-- Consumption/serverless tier for everything
+- Consumption/serverless tier for everything (except always-ready=1 on HTTP triggers to avoid cold starts)
+- VNet + private endpoint for blob storage; Function App uses VNet integration (WEBSITE_CONTENTOVERVNET=1)
 - Singleton pattern for OpenAI, Cosmos, and Search clients in shared modules
 - Index signature `[key: string]: unknown` on types used with AI Search generics
 - Cosmos DB uses its own native RBAC (`sqlRoleAssignments`), not ARM role assignments
@@ -41,8 +43,9 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
     function-app.bicep          — Function App (Flex Consumption)
     key-vault.bicep             — Key Vault (RBAC mode)
     openai.bicep                — Azure OpenAI + deployments
+    networking.bicep             — VNet, subnets, private endpoint for blob, private DNS zone
     role-assignments.bicep      — All managed identity RBAC grants
-    storage.bicep               — Blob Storage
+    storage.bicep               — Blob Storage (publicNetworkAccess: Disabled)
 /src
   /functions
     clips-ingest.ts             — Timer: Bing News → Cosmos DB (every 15 min)
@@ -75,4 +78,4 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 - Blob trigger for remarks-ingest not firing reliably on Flex Consumption (use `seed/load-remarks.ts` as workaround)
 - Daily digest email sending stubbed (needs Logic App or SendGrid integration)
 - Clips timer ingestion needs Bing News API key in Key Vault to run
-- Custom connector deployed to GCC Power Platform environment (`og-ai`) — Copilot Studio agent topic configuration is next
+- SPA (demo.html + demo-server.js) needs updating to match current API surface

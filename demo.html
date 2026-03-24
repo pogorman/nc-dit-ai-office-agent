@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NC Comms Agent — Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+    header { background: #0a2463; color: white; padding: 1.5rem 2rem; }
+    header h1 { font-size: 1.4rem; font-weight: 600; }
+    header p { font-size: 0.85rem; opacity: 0.8; margin-top: 0.25rem; }
+    .tabs { display: flex; gap: 0; background: #fff; border-bottom: 2px solid #e0e0e0; padding: 0 2rem; }
+    .tab { padding: 0.75rem 1.5rem; cursor: pointer; font-size: 0.9rem; font-weight: 500; border-bottom: 3px solid transparent; color: #666; transition: all 0.2s; }
+    .tab:hover { color: #0a2463; }
+    .tab.active { color: #0a2463; border-bottom-color: #0a2463; }
+    .panel { display: none; padding: 2rem; max-width: 900px; }
+    .panel.active { display: block; }
+    textarea, input[type="text"] { width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; font-size: 0.9rem; resize: vertical; }
+    textarea { min-height: 120px; }
+    input[type="text"] { min-height: 44px; }
+    button { background: #0a2463; color: white; border: none; padding: 0.65rem 1.5rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; margin-top: 0.75rem; transition: background 0.2s; }
+    button:hover { background: #1e3a8a; }
+    button:disabled { background: #999; cursor: not-allowed; }
+    .result { margin-top: 1.5rem; background: #fff; border-radius: 8px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .result h3 { font-size: 1rem; margin-bottom: 0.75rem; color: #0a2463; }
+    .clip-card { border: 1px solid #e0e0e0; border-radius: 6px; padding: 1rem; margin-bottom: 0.75rem; }
+    .clip-card h4 { font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .clip-card .meta { font-size: 0.8rem; color: #666; margin-bottom: 0.5rem; }
+    .clip-card .lede { font-size: 0.85rem; line-height: 1.5; }
+    .clip-card .mention { font-size: 0.85rem; line-height: 1.5; margin-top: 0.5rem; padding: 0.5rem; background: #f8f9fa; border-left: 3px solid #0a2463; }
+    .synthesis { font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap; }
+    .sources { margin-top: 1rem; }
+    .source-chip { display: inline-block; font-size: 0.75rem; background: #e8eaf6; color: #0a2463; padding: 0.25rem 0.5rem; border-radius: 4px; margin: 0.15rem; }
+    .change-row { display: flex; gap: 1rem; padding: 0.4rem 0; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
+    .change-row .original { color: #c62828; text-decoration: line-through; flex: 1; }
+    .change-row .corrected { color: #2e7d32; flex: 1; }
+    .change-row .reason { color: #666; flex: 2; }
+    .corrected-text { font-size: 0.9rem; line-height: 1.7; padding: 1rem; background: #f1f8e9; border-radius: 6px; white-space: pre-wrap; }
+    .summary-text { font-size: 0.85rem; color: #555; margin-top: 0.75rem; font-style: italic; }
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 0.5rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { color: #c62828; font-size: 0.9rem; margin-top: 1rem; }
+    label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.35rem; color: #333; }
+    .field { margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>NC Governor's Communications Agent</h1>
+  <p>AI-powered news clips, remarks search, and transcript proofreading</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-panel="clips">News Clips</div>
+  <div class="tab" data-panel="remarks">Remarks Search</div>
+  <div class="tab" data-panel="proofread">Transcript Proofread</div>
+</div>
+
+<!-- CLIPS -->
+<div class="panel active" id="clips">
+  <div class="field">
+    <label>Search clips (or leave empty for latest)</label>
+    <input type="text" id="clips-query" placeholder='e.g. "broadband rural internet" or "teacher pay"' />
+  </div>
+  <button id="clips-btn" onclick="searchClips()">Search Clips</button>
+  <div id="clips-result"></div>
+</div>
+
+<!-- REMARKS -->
+<div class="panel" id="remarks">
+  <div class="field">
+    <label>What language has the Governor used about...</label>
+    <input type="text" id="remarks-query" placeholder='e.g. "clean energy" or "education funding" or "Hurricane Helene recovery"' />
+  </div>
+  <button id="remarks-btn" onclick="searchRemarks()">Search Remarks</button>
+  <div id="remarks-result"></div>
+</div>
+
+<!-- PROOFREAD -->
+<div class="panel" id="proofread">
+  <div class="field">
+    <label>Paste a transcript to proofread</label>
+    <textarea id="proofread-input" placeholder="Paste a transcript with errors here...">The Governer said we need too invest in broadeband acros the state. He also mentoined that North Carolinas teachers deserv a pay raise. Gov Stien emphasized the importnace of Medicade funding for the states most vunerable residents.</textarea>
+  </div>
+  <button id="proofread-btn" onclick="proofreadTranscript()">Proofread</button>
+  <div id="proofread-result"></div>
+</div>
+
+<script>
+// When served by demo-server.js, calls go to /api/* which proxies to Azure (no CORS issues)
+const BASE = '/api';
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.panel).classList.add('active');
+  });
+});
+
+async function apiFetch(path, body) {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Working...';
+  } else {
+    btn.disabled = false;
+    btn.textContent = btn.id.replace('-btn', '') === 'clips' ? 'Search Clips'
+      : btn.id.replace('-btn', '') === 'remarks' ? 'Search Remarks' : 'Proofread';
+  }
+}
+
+async function searchClips() {
+  const query = document.getElementById('clips-query').value.trim() || 'latest';
+  const resultDiv = document.getElementById('clips-result');
+  setLoading('clips-btn', true);
+  resultDiv.innerHTML = '';
+
+  try {
+    const data = await apiFetch('/clips/query', { query, top: 10 });
+    if (!data.clips || data.clips.length === 0) {
+      resultDiv.innerHTML = '<p class="error">No clips found.</p>';
+      return;
+    }
+    resultDiv.innerHTML = `<div class="result"><h3>${data.count} clip${data.count !== 1 ? 's' : ''} found</h3>` +
+      data.clips.map(c => `
+        <div class="clip-card">
+          <h4>${esc(c.title)}</h4>
+          <div class="meta">${esc(c.outlet)} &middot; ${c.publishedAt?.slice(0,10) ?? 'Unknown date'}</div>
+          <div class="lede">${esc(c.lede)}</div>
+          ${c.mentionContext ? `<div class="mention">${esc(c.mentionContext)}</div>` : ''}
+        </div>`).join('') + '</div>';
+  } catch (e) {
+    resultDiv.innerHTML = `<p class="error">Error: ${esc(e.message)}</p>`;
+  } finally {
+    setLoading('clips-btn', false);
+  }
+}
+
+async function searchRemarks() {
+  const query = document.getElementById('remarks-query').value.trim();
+  const resultDiv = document.getElementById('remarks-result');
+  if (!query) { resultDiv.innerHTML = '<p class="error">Enter a topic to search.</p>'; return; }
+
+  setLoading('remarks-btn', true);
+  resultDiv.innerHTML = '';
+
+  try {
+    const data = await apiFetch('/remarks/query', { query, synthesize: true, top: 10 });
+    let html = '<div class="result">';
+    if (data.synthesis) {
+      html += `<h3>Synthesis</h3><div class="synthesis">${esc(data.synthesis)}</div>`;
+    }
+    if (data.sources && data.sources.length > 0) {
+      html += `<div class="sources"><h3>Sources (${data.count} chunks)</h3>`;
+      html += data.sources.map(s =>
+        `<span class="source-chip">${esc(s.event)} — ${s.date} (chunk ${s.chunkIndex})</span>`
+      ).join('');
+      html += '</div>';
+    }
+    if (!data.synthesis && (!data.sources || data.sources.length === 0)) {
+      html += '<p>No matching remarks found.</p>';
+    }
+    html += '</div>';
+    resultDiv.innerHTML = html;
+  } catch (e) {
+    resultDiv.innerHTML = `<p class="error">Error: ${esc(e.message)}</p>`;
+  } finally {
+    setLoading('remarks-btn', false);
+  }
+}
+
+async function proofreadTranscript() {
+  const transcript = document.getElementById('proofread-input').value.trim();
+  const resultDiv = document.getElementById('proofread-result');
+  if (!transcript) { resultDiv.innerHTML = '<p class="error">Paste a transcript first.</p>'; return; }
+
+  setLoading('proofread-btn', true);
+  resultDiv.innerHTML = '';
+
+  try {
+    const data = await apiFetch('/proofread', { transcript, speakerLabels: false });
+    let html = '<div class="result">';
+    html += `<h3>Corrected Transcript</h3><div class="corrected-text">${esc(data.corrected)}</div>`;
+    if (data.summary) {
+      html += `<div class="summary-text">${esc(data.summary)}</div>`;
+    }
+    if (data.changes && data.changes.length > 0) {
+      html += `<h3 style="margin-top:1rem">Changes (${data.changes.length})</h3>`;
+      html += data.changes.map(ch => `
+        <div class="change-row">
+          <span class="original">${esc(ch.original)}</span>
+          <span class="corrected">${esc(ch.corrected)}</span>
+          <span class="reason">${esc(ch.reason)}</span>
+        </div>`).join('');
+    }
+    html += '</div>';
+    resultDiv.innerHTML = html;
+  } catch (e) {
+    resultDiv.innerHTML = `<p class="error">Error: ${esc(e.message)}</p>`;
+  } finally {
+    setLoading('proofread-btn', false);
+  }
+}
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+</script>
+
+</body>
+</html>
