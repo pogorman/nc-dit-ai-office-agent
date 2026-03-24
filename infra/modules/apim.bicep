@@ -78,7 +78,7 @@ resource api 'Microsoft.ApiManagement/service/apis@2023-09-01-preview' = {
       header: 'Ocp-Apim-Subscription-Key'
       query: 'subscription-key'
     }
-    serviceUrl: functionAppBaseUrl
+    serviceUrl: '${functionAppBaseUrl}/api'
   }
   dependsOn: [namedValueFunctionBaseUrl, namedValueFunctionKey]
 }

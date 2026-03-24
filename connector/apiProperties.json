@@ -1,0 +1,21 @@
+{
+  "properties": {
+    "connectionParameters": {
+      "api_key": {
+        "type": "securestring",
+        "uiDefinition": {
+          "displayName": "APIM Subscription Key",
+          "description": "The Ocp-Apim-Subscription-Key for the NC Comms Agent API",
+          "tooltip": "Enter your APIM subscription key",
+          "constraints": {
+            "required": "true",
+            "tabIndex": 1
+          }
+        }
+      }
+    },
+    "iconBrandColor": "#0078D4",
+    "capabilities": [],
+    "policyTemplateInstances": []
+  }
+}

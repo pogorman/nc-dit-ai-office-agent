@@ -54,14 +54,25 @@ The system is conservative — it fixes obvious errors and flags anything uncert
 
 ## Technical
 
+### How does Copilot Studio connect to the backend?
+A Power Platform custom connector bridges Copilot Studio and the APIM gateway. The connector is deployed to the GCC (Government Community Cloud) Power Platform environment (`og-ai`). It exposes three actions — QueryClips, QueryRemarks, and ProofreadTranscript — and authenticates with an APIM subscription key.
+
 ### Is my data secure?
-All data stays within the NC DIT Azure tenant. Authentication is via Entra ID (SSO). No data leaves the Azure environment except for Bing News Search queries (which are search terms only, not internal data). All service-to-service auth uses managed identity — no API keys or connection strings in application code. The only secret (Bing News API key) is stored in Azure Key Vault.
+All data stays within the NC DIT Azure tenant. Authentication is via Entra ID (SSO). No data leaves the Azure environment except for Bing News Search queries (which are search terms only, not internal data). All service-to-service auth uses managed identity — no API keys or connection strings in application code. The only secret (Bing News API key) is stored in Azure Key Vault. The Power Platform connector runs in a GCC environment, meeting government compliance requirements.
 
 ### What does it cost to run?
 Approximately $120–195/month at steady state. See [ARCHITECTURE.md](./ARCHITECTURE.md#cost-estimate-monthly-steady-state) for the breakdown.
 
 ### What file formats can I upload for remarks?
 Currently `.txt` files are fully supported. `.docx` (Word) and `.pdf` support is planned — the ingestion pipeline is built but the text extraction libraries need to be wired in.
+
+### What are the API endpoints?
+All three endpoints are live and tested through the APIM gateway at `https://nc-comms-agent-dev-apim.azure-api.net/comms`:
+- `POST /clips/query` — search/browse news clips
+- `POST /remarks/query` — semantic search over remarks (with RAG synthesis)
+- `POST /proofread` — transcript proofreading
+
+All requests require an `Ocp-Apim-Subscription-Key` header.
 
 ### What happens if the news ingestion fails?
 The system processes articles individually. If one article fails to process, it logs the error and continues with the rest. Failed articles will be retried on the next 15-minute cycle if they're still in the Bing results.

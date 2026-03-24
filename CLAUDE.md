@@ -56,6 +56,9 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
     openai-client.ts            — Azure OpenAI singleton + helpers
     search-client.ts            — AI Search factory + hybridSearch<T> helper
     cosmos-client.ts            — Cosmos DB singleton + getContainer helper
+/connector                      — Power Platform custom connector for Copilot Studio
+  apiDefinition.swagger.json    — OpenAPI 2.0 spec (3 actions: QueryClips, QueryRemarks, ProofreadTranscript)
+  apiProperties.json            — Connector metadata (API key auth via APIM subscription key)
 /seed                           — Data seeding & index creation tooling
   clips.json                    — 10 real Governor Stein clips (March 2026 press releases)
   load-clips.ts                 — Loads clips into Cosmos DB with embeddings
@@ -71,6 +74,5 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 - `.pdf` extraction in remarks-ingest.ts (needs `pdf-parse` package)
 - Blob trigger for remarks-ingest not firing reliably on Flex Consumption (use `seed/load-remarks.ts` as workaround)
 - Daily digest email sending stubbed (needs Logic App or SendGrid integration)
-- APIM function key is a placeholder — needs manual Key Vault setup post-deploy
 - Clips timer ingestion needs Bing News API key in Key Vault to run
-- Copilot Studio agent not yet configured (topics, custom connector, Adaptive Cards)
+- Custom connector deployed to GCC Power Platform environment (`og-ai`) — Copilot Studio agent topic configuration is next

@@ -2,7 +2,9 @@
 
 ## Getting Started
 
-The AI Office Agent lives in Microsoft Teams. You interact with it by typing natural language questions — no special commands needed.
+The AI Office Agent lives in Microsoft Teams via Copilot Studio. You interact with it by typing natural language questions — no special commands needed.
+
+> **Status:** The backend API is fully deployed and tested. A Power Platform custom connector has been deployed to the GCC environment (`og-ai`). Copilot Studio agent topic configuration is the next step — once complete, the agent will be available in Teams.
 
 ### Finding the Agent
 

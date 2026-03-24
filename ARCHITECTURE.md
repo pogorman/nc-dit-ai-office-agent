@@ -13,10 +13,12 @@ A serverless AI platform for the North Carolina Governor's Communications Office
 │                     Copilot Studio Agent                    │
 │              (Teams / Web / SharePoint embed)               │
 └──────────────────────────┬──────────────────────────────────┘
-                           │  Streamable HTTP
+                           │  Custom Connector (GCC: og-ai)
+                           │  Ocp-Apim-Subscription-Key
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                Azure API Management (APIM)                  │
+│  https://nc-comms-agent-dev-apim.azure-api.net/comms        │
 │           Auth boundary · Rate limiting · Logging           │
 └────┬──────────────┬──────────────┬──────────────────────────┘
      │              │              │
@@ -136,8 +138,9 @@ A serverless AI platform for the North Carolina Governor's Communications Office
 │       │             │              │         │
 │       ▼             ▼              ▼         │
 │  ┌──────────────────────────────────────┐    │
-│  │     Custom Connector (APIM base)     │    │
-│  │   Streamable HTTP → Azure Functions  │    │
+│  │  Power Platform Custom Connector     │    │
+│  │  OpenAPI 2.0 → APIM → Functions      │    │
+│  │  (deployed to GCC env: og-ai)        │    │
 │  └──────────────────────────────────────┘    │
 │                                              │
 │  ┌──────────────────────────────────────┐    │
@@ -173,6 +176,7 @@ A serverless AI platform for the North Carolina Governor's Communications Office
 | **Bing News Search** | S1 | News article discovery |
 | **Azure Blob Storage** | Standard LRS | `remarks-uploads` container for document staging |
 | **Copilot Studio** | Per-tenant license | Agent experience — Teams, web, SharePoint |
+| **Power Platform Custom Connector** | GCC environment (`og-ai`) | OpenAPI 2.0 bridge between Copilot Studio and APIM (3 actions) |
 | **Logic App** (optional, future) | Consumption | Daily digest email delivery |
 
 ---
@@ -183,8 +187,9 @@ All service-to-service authentication uses **managed identity** and **DefaultAzu
 
 | Caller | Target | Auth mechanism | Role |
 |---|---|---|---|
-| Copilot Studio | APIM | Entra ID OAuth (user SSO passthrough) | — |
-| APIM | Azure Functions | Function key injected at gateway policy | — |
+| Copilot Studio | Custom Connector | APIM subscription key (securestring) | — |
+| Custom Connector | APIM | `Ocp-Apim-Subscription-Key` header | — |
+| APIM | Azure Functions | Function host key injected at gateway policy | — |
 | APIM | Key Vault | Managed identity | `Key Vault Secrets User` |
 | Azure Functions | Azure OpenAI | Managed identity | `Cognitive Services OpenAI User` |
 | Azure Functions | Azure AI Search | Managed identity | `Search Index Data Reader` + `Search Index Data Contributor` |
@@ -303,7 +308,10 @@ All service-to-service authentication uses **managed identity** and **DefaultAzu
 | Shared clients (OpenAI, Search, Cosmos) | Deployed | Singleton pattern, DefaultAzureCredential, all auth working |
 | AI Search indexes | Created | `clips` index (11 fields) and `remarks` index (10 fields), both with HNSW vector search + semantic config |
 | Seed tooling | Built | `seed/` directory with data loading scripts for clips, remarks, and search indexes |
-| Copilot Studio agent | Not started | Topics, custom connector, Adaptive Cards |
+| Power Platform custom connector | Deployed | OpenAPI 2.0 spec with 3 actions (QueryClips, QueryRemarks, ProofreadTranscript), deployed to GCC environment (`og-ai`) |
+| APIM function key | Configured | Named value `function-host-key` set with actual Function App host key |
+| APIM endpoints | Tested | All 3 endpoints verified: `/comms/clips/query`, `/comms/remarks/query`, `/comms/proofread` |
+| Copilot Studio agent | Not started | Custom connector is deployed; agent topic configuration is next |
 
 ## Open Questions
 
@@ -311,4 +319,4 @@ All service-to-service authentication uses **managed identity** and **DefaultAzu
 2. **Remarks corpus format** — Are existing remarks in Word docs, PDFs, or a CMS? This affects the ingestion pipeline.
 3. **Access control** — Should all comms staff see all clips/remarks, or are there sensitivity tiers?
 4. **Retention** — How long to keep clips? Archive after 90 days?
-5. **Existing Copilot Studio environment** — Does NC DIT already have a Copilot Studio tenant, or does this need provisioning?
+5. ~~**Existing Copilot Studio environment**~~ — Resolved: using GCC Power Platform environment (`og-ai`). Custom connector deployed.

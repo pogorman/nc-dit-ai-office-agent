@@ -127,4 +127,50 @@ All 3 capabilities tested and working end-to-end through APIM. The platform is r
 
 ---
 
+## Chapter 4: Custom Connector & APIM Fixes
+
+**Date:** 2026-03-23
+
+With all three backend capabilities tested and working, the next step was bridging Copilot Studio to the APIM gateway via a Power Platform custom connector.
+
+### APIM Fixes
+
+Two issues were discovered and resolved:
+
+1. **Service URL missing `/api` suffix** — The APIM backend service URL was pointing to the Function App root, but Azure Functions uses `/api` as the default route prefix. Routes like `/clips/query` were resolving to the Function App as `/clips/query` instead of `/api/clips/query`. Fixed by updating the APIM service URL to include the `/api` suffix.
+
+2. **Function host key placeholder** — The APIM named value `function-host-key` was a placeholder from the Bicep deployment. Replaced it with the actual Function App host key so APIM can authenticate to the Functions backend.
+
+After these fixes, all three APIM endpoints were verified working:
+- `POST https://nc-comms-agent-dev-apim.azure-api.net/comms/clips/query`
+- `POST https://nc-comms-agent-dev-apim.azure-api.net/comms/remarks/query`
+- `POST https://nc-comms-agent-dev-apim.azure-api.net/comms/proofread`
+
+### Building the Custom Connector
+
+Created a Power Platform custom connector in `/connector/` with two files:
+
+1. **`apiDefinition.swagger.json`** — OpenAPI 2.0 spec defining three operations:
+   - **QueryClips** (`POST /clips/query`) — search or browse news clips with optional date filters
+   - **QueryRemarks** (`POST /remarks/query`) — semantic search over remarks with RAG synthesis toggle
+   - **ProofreadTranscript** (`POST /proofread`) — AI-powered transcript cleanup
+
+   The spec includes full request/response schemas matching the Function signatures, so Copilot Studio can auto-generate input forms and parse responses.
+
+2. **`apiProperties.json`** — Connector metadata with API key auth. The connection parameter prompts for the APIM subscription key (`Ocp-Apim-Subscription-Key` header), which gets injected into every request.
+
+### Deploying to GCC
+
+The connector was deployed to the GCC (Government Community Cloud) Power Platform environment (`og-ai`). GCC is required because this is a state government workload. The deployment was done through the Power Platform maker portal — import the two JSON files as a custom connector, configure the connection with the APIM subscription key, and test each action.
+
+### What's Next
+
+The custom connector is live. The next step is configuring the Copilot Studio agent:
+- Create topics for each capability (Clips Browse, Clips Search, Remarks Search, Transcript Proofread)
+- Map trigger phrases to connector actions
+- Format responses with Adaptive Cards
+- Configure Generative Answers fallback grounded on both search indexes
+
+---
+
 *More chapters will be added as implementation progresses.*

@@ -23,6 +23,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for full system design, data models, Co
 - **Storage:** Cosmos DB (Serverless) for clips/metadata, Blob Storage for remarks uploads
 - **Secrets:** Azure Key Vault (RBAC mode)
 - **Agent:** Microsoft Copilot Studio (Teams / web / SharePoint embed)
+- **Connector:** Power Platform custom connector (OpenAPI 2.0, deployed to GCC environment)
 - **IaC:** Bicep (modular, 8 resource modules)
 
 ## Prerequisites
@@ -63,7 +64,7 @@ az deployment group create \
   --parameters infra/main.bicepparam
 ```
 
-> **Post-deploy:** Copy the Function App host key into Key Vault as `function-host-key` so APIM can inject it at the gateway.
+> **Post-deploy:** The APIM named value `function-host-key` is already configured with the Function App host key.
 
 ## Project Structure
 
@@ -82,11 +83,34 @@ az deployment group create \
 │       ├── openai-client.ts
 │       ├── search-client.ts
 │       └── cosmos-client.ts
+├── connector/                Power Platform custom connector
+│   ├── apiDefinition.swagger.json   OpenAPI 2.0 spec (3 actions)
+│   └── apiProperties.json           Connector metadata + auth config
+├── seed/                     Data seeding & index creation scripts
 ├── package.json
 ├── tsconfig.json
 ├── host.json
 └── .env.example
 ```
+
+## APIM Endpoints
+
+All endpoints are live and tested through the APIM gateway:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `https://nc-comms-agent-dev-apim.azure-api.net/comms/clips/query` | POST | Search/browse news clips |
+| `https://nc-comms-agent-dev-apim.azure-api.net/comms/remarks/query` | POST | Semantic search over remarks (RAG) |
+| `https://nc-comms-agent-dev-apim.azure-api.net/comms/proofread` | POST | Transcript proofreading |
+
+Auth: `Ocp-Apim-Subscription-Key` header with APIM subscription key.
+
+## Custom Connector
+
+A Power Platform custom connector (`/connector/`) is deployed to the GCC Power Platform environment (`og-ai`) for use with Copilot Studio. It exposes three actions:
+- **QueryClips** — search/browse news clips
+- **QueryRemarks** — semantic search over remarks with RAG synthesis
+- **ProofreadTranscript** — AI-powered transcript cleanup
 
 ## Project Documentation
 
