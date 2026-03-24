@@ -72,4 +72,59 @@ After fixes: **clean TypeScript compile, strict mode, zero errors**.
 
 ---
 
+## Chapter 3: Deployment, Seeding, and End-to-End Testing
+
+**Date:** 2026-03-23
+
+With the code compiling cleanly, the next step was deploying to Azure, seeding real data, and validating all three capabilities end-to-end.
+
+### Deploying to Azure
+
+Deployed all Bicep infrastructure to resource group `rg-nc-comms-agent-dev`. 8 Azure resources provisioned:
+- Function App (Flex Consumption, Linux, Node.js 20)
+- APIM (Consumption tier)
+- AI Search (Basic)
+- Azure OpenAI (GPT-4o + text-embedding-3-large deployments)
+- Cosmos DB (Serverless, 4 containers: `clips`, `ingestion-state`, `remarks-chunks`, `remarks-metadata`)
+- Storage Account (`remarks-uploads` + `deployments` containers)
+- Key Vault (RBAC mode)
+
+All managed identity role assignments were applied. Function App deployed with 6 registered functions (3 HTTP, 2 timer, 1 blob).
+
+### Building the Seed Tooling
+
+AI Search indexes can't be defined in Bicep (Bicep provisions the service, not the indexes). We built a `seed/` directory with standalone TypeScript scripts that run via `npx tsx`:
+
+1. **`create-search-indexes.ts`** — Creates both AI Search indexes programmatically. The clips index has 11 fields and the remarks index has 10 fields. Both use HNSW vector search profiles (1536-dimension vectors for text-embedding-3-large) and semantic search configurations.
+
+2. **`clips.json` + `load-clips.ts`** — 10 real Governor Stein clips sourced from March 2026 press releases. The load script generates embeddings via Azure OpenAI, writes to Cosmos DB, and stores the embedding vectors. Full article text was extracted from source URLs using Mozilla Readability (the `@mozilla/readability` + `jsdom` packages).
+
+3. **`index-clips-to-search.ts`** — Reads clips from Cosmos DB and pushes them into the AI Search clips index. Separated from the Cosmos load step so each can be re-run independently.
+
+4. **`load-remarks.ts`** — Takes `.txt` files from `seed/remarks/`, chunks them into ~500-word paragraphs, generates embeddings, and loads into both Cosmos DB (`remarks-chunks` + `remarks-metadata` containers) and the AI Search remarks index. The 2025 State of the State address was seeded as the first remark (17 chunks).
+
+### Testing All Three Capabilities
+
+**Transcript Proofread (POST /api/proofread):** Sent a garbled transcript through APIM. GPT-4o returned structured JSON with corrected text, a list of changes, and confidence levels. Fully working.
+
+**Clips Query (POST /api/clips/query):** Tested both modes:
+- `"mode": "latest"` — browses Cosmos DB, returns recent clips sorted by date
+- `"mode": "search", "query": "clean energy"` — hybrid vector + keyword search via AI Search, returns relevant clips with scores
+
+Both modes working with the 10 seeded clips.
+
+**Remarks Query (POST /api/remarks/query):** Sent `"query": "education"` and received a GPT-4o-synthesized response with direct quotes from the State of the State address, complete with citations (date, event name). The hybrid search correctly retrieved relevant chunks from the 17 indexed.
+
+### Issues Discovered
+
+- **Blob trigger not firing:** The remarks-ingest blob trigger doesn't fire reliably on Flex Consumption. This is a known limitation with Flex Consumption + blob triggers. Workaround: use `seed/load-remarks.ts` directly.
+- **APIM function key:** The placeholder key in APIM needs to be replaced with the real Function host key from Key Vault after deployment. This is a manual step.
+- **Bing News API key:** Clips timer ingestion is deployed but won't run until a Bing News Search API key is added to Key Vault.
+
+### Result
+
+All 3 capabilities tested and working end-to-end through APIM. The platform is ready for Copilot Studio integration (Phase 4).
+
+---
+
 *More chapters will be added as implementation progresses.*

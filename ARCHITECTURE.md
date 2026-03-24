@@ -293,15 +293,16 @@ All service-to-service authentication uses **managed identity** and **DefaultAzu
 
 | Component | Status | Notes |
 |---|---|---|
-| Bicep IaC (all resources) | Built | 8 modules, dev params, all RBAC grants |
-| Transcript Proofread Function | Fully implemented | Input validation, structured JSON response |
-| Clips Ingestion Function | Built | Bing News → dedup → Cosmos DB, per-article error handling |
-| Clips Query Function | Built | Latest mode + hybrid search mode |
-| Clips Digest Function | Stubbed | HTML generation done, email sending TBD |
-| Remarks Ingestion Function | Built | `.txt` works; `.docx`/`.pdf` extraction stubbed |
-| Remarks Query Function | Built | Hybrid search + GPT-4o synthesis with citations |
-| Shared clients (OpenAI, Search, Cosmos) | Built | Singleton pattern, DefaultAzureCredential |
-| AI Search index schemas | Not started | Bicep provisions the service; indexes need separate definition |
+| Bicep IaC (all resources) | Deployed | 8 modules in `rg-nc-comms-agent-dev`, all RBAC grants active |
+| Transcript Proofread Function | Deployed & tested | POST `/api/proofread` — structured JSON with changes + confidence |
+| Clips Ingestion Function | Deployed | Timer trigger registered; needs Bing News API key in Key Vault to run |
+| Clips Query Function | Deployed & tested | POST `/api/clips/query` — "latest" mode (Cosmos) + hybrid search (AI Search). 10 real clips seeded. |
+| Clips Digest Function | Deployed (stub) | HTML generation done, email sending TBD (needs Logic App or SendGrid) |
+| Remarks Ingestion Function | Deployed (partial) | Blob trigger registered but not firing reliably on Flex Consumption; use `seed/load-remarks.ts` as workaround. `.docx`/`.pdf` extraction still stubbed. |
+| Remarks Query Function | Deployed & tested | POST `/api/remarks/query` — hybrid search + GPT-4o RAG synthesis with direct quotes and citations. 2025 State of the State seeded (17 chunks). |
+| Shared clients (OpenAI, Search, Cosmos) | Deployed | Singleton pattern, DefaultAzureCredential, all auth working |
+| AI Search indexes | Created | `clips` index (11 fields) and `remarks` index (10 fields), both with HNSW vector search + semantic config |
+| Seed tooling | Built | `seed/` directory with data loading scripts for clips, remarks, and search indexes |
 | Copilot Studio agent | Not started | Topics, custom connector, Adaptive Cards |
 
 ## Open Questions

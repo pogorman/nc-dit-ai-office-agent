@@ -25,7 +25,7 @@ The system checks for new articles every 15 minutes.
 Bing News Search, which covers major national outlets and NC regional sources. The source list can be expanded with curated RSS feeds.
 
 ### Can I get a daily email summary?
-Yes — a daily digest is sent via Outlook each morning with the previous day's clips.
+Not yet — the daily digest HTML generation is built, but email delivery is not yet wired up. This will require a Logic App or SendGrid integration.
 
 ---
 

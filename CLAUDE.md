@@ -56,11 +56,21 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
     openai-client.ts            — Azure OpenAI singleton + helpers
     search-client.ts            — AI Search factory + hybridSearch<T> helper
     cosmos-client.ts            — Cosmos DB singleton + getContainer helper
+/seed                           — Data seeding & index creation tooling
+  clips.json                    — 10 real Governor Stein clips (March 2026 press releases)
+  load-clips.ts                 — Loads clips into Cosmos DB with embeddings
+  create-search-indexes.ts      — Creates both AI Search indexes (clips + remarks)
+  index-clips-to-search.ts      — Pushes clips from Cosmos to AI Search
+  load-remarks.ts               — Chunks, embeds, and indexes remarks into Cosmos + AI Search
+  /remarks
+    2025-03-12_state-of-the-state_nc-general-assembly.txt
 ```
 
 ## Known TODOs
 - `.docx` extraction in remarks-ingest.ts (needs `mammoth` package)
 - `.pdf` extraction in remarks-ingest.ts (needs `pdf-parse` package)
-- AI Search index schemas not yet defined (Bicep provisions the service, not indexes)
+- Blob trigger for remarks-ingest not firing reliably on Flex Consumption (use `seed/load-remarks.ts` as workaround)
 - Daily digest email sending stubbed (needs Logic App or SendGrid integration)
-- Function host key must be manually added to Key Vault after first deployment
+- APIM function key is a placeholder — needs manual Key Vault setup post-deploy
+- Clips timer ingestion needs Bing News API key in Key Vault to run
+- Copilot Studio agent not yet configured (topics, custom connector, Adaptive Cards)
