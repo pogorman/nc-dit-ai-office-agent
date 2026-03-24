@@ -8,14 +8,8 @@ param name string
 @description('Azure region')
 param location string
 
-@description('Function App resource name (used to look up function key)')
-param functionAppName string
-
 @description('Function App base URL (https://...azurewebsites.net)')
 param functionAppBaseUrl string
-
-@description('Key Vault URI where the Function host key is stored')
-param keyVaultUri string
 
 // ---------------------------------------------------------------------------
 // APIM Instance — Consumption tier
@@ -51,18 +45,19 @@ resource namedValueFunctionBaseUrl 'Microsoft.ApiManagement/service/namedValues@
   }
 }
 
-// The Function host key is stored in Key Vault and referenced as a secret named value.
-// You must manually create the secret 'function-host-key' in Key Vault after initial deployment
-// and grant APIM's managed identity Key Vault Secrets User role.
+// Function host key — deployed as a placeholder initially.
+// Post-deploy steps:
+//   1. Copy the Function App host key into Key Vault as secret 'function-host-key'
+//   2. Update this named value to use Key Vault reference:
+//      az apim nv update --service-name <apim> -g <rg> --named-value-id function-host-key \
+//        --secret true --value "" --key-vault-secret-id <kv-uri>/secrets/function-host-key
 resource namedValueFunctionKey 'Microsoft.ApiManagement/service/namedValues@2023-09-01-preview' = {
   parent: apim
   name: 'function-host-key'
   properties: {
     displayName: 'function-host-key'
     secret: true
-    keyVault: {
-      secretIdentifier: '${keyVaultUri}secrets/function-host-key'
-    }
+    value: 'PLACEHOLDER-UPDATE-POST-DEPLOY'
   }
 }
 

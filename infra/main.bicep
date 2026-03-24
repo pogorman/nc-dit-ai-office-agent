@@ -90,9 +90,7 @@ module apim 'modules/apim.bicep' = {
   params: {
     name: '${namingPrefix}-apim'
     location: location
-    functionAppName: functionApp.outputs.name
     functionAppBaseUrl: functionApp.outputs.baseUrl
-    keyVaultUri: keyVault.outputs.uri
   }
 }
 

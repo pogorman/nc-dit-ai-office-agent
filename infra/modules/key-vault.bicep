@@ -24,8 +24,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     // RBAC mode — role assignments grant access, not access policies
     enableRbacAuthorization: true
     enableSoftDelete: true
-    softDeleteRetentionInDays: 7
-    enablePurgeProtection: false // Allow purge in non-prod; override for prod
+    softDeleteRetentionInDays: 90
     enabledForDeployment: false
     enabledForTemplateDeployment: false
     enabledForDiskEncryption: false

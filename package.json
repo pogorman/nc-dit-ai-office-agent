@@ -2,7 +2,7 @@
   "name": "nc-dit-ai-office-agent",
   "version": "0.1.0",
   "description": "Serverless AI platform for NC Governor's Communications Office — news clips, remarks search, transcript proofreading",
-  "main": "dist/src/functions/*.js",
+  "main": "dist/functions/*.js",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
@@ -18,12 +18,16 @@
     "@azure/openai": "2.0.0",
     "@azure/search-documents": "12.2.0",
     "@azure/storage-blob": "12.31.0",
+    "@mozilla/readability": "0.6.0",
+    "jsdom": "29.0.1",
     "openai": "6.32.0"
   },
   "devDependencies": {
+    "@types/jsdom": "28.0.1",
     "@types/node": "25.5.0",
     "azure-functions-core-tools": "4.8.0",
     "rimraf": "6.0.1",
+    "tsx": "4.21.0",
     "typescript": "6.0.2"
   }
 }

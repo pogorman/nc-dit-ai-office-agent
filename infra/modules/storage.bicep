@@ -44,6 +44,14 @@ resource remarksUploadsContainer 'Microsoft.Storage/storageAccounts/blobServices
   }
 }
 
+resource deploymentsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobService
+  name: 'deployments'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Outputs
 // ---------------------------------------------------------------------------

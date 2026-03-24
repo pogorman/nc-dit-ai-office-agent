@@ -67,8 +67,8 @@ var searchIndexDataContributorRoleId = '8ebe5a00-799e-43f5-93ac-243d3dce84a7'
 // NOTE: This is the Cosmos DB RBAC data plane role, assigned at the account scope
 var cosmosDbDataContributorRoleId = '00000000-0000-0000-0000-000000000002'
 
-// Storage Blob Data Reader — read blob content
-var storageBlobDataReaderRoleId = '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
+// Storage Blob Data Owner — read/write/delete blob content (Flex Consumption needs write for deployments container)
+var storageBlobDataOwnerRoleId = 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b'
 
 // Key Vault Secrets User — read secrets
 var keyVaultSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
@@ -134,11 +134,11 @@ resource cosmosDbRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAs
 // ---------------------------------------------------------------------------
 
 resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storageAccount.id, functionAppPrincipalId, storageBlobDataReaderRoleId)
+  name: guid(storageAccount.id, functionAppPrincipalId, storageBlobDataOwnerRoleId)
   scope: storageAccount
   properties: {
     principalId: functionAppPrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataReaderRoleId)
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataOwnerRoleId)
     principalType: 'ServicePrincipal'
   }
 }

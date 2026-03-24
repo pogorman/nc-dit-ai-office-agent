@@ -6,7 +6,7 @@
 import { CosmosClient, Container, Database } from "@azure/cosmos";
 import { DefaultAzureCredential } from "@azure/identity";
 
-const DATABASE_NAME = "ai-office-agent";
+const DATABASE_NAME = process.env.COSMOS_DB_DATABASE ?? "comms-agent";
 
 let cosmosClientInstance: CosmosClient | null = null;
 let databaseInstance: Database | null = null;

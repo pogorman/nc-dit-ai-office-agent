@@ -27,14 +27,6 @@ param cosmosDbDatabaseName string
 param keyVaultUri string
 
 // ---------------------------------------------------------------------------
-// Reference existing storage account (created by storage module)
-// ---------------------------------------------------------------------------
-
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
-  name: storageAccountName
-}
-
-// ---------------------------------------------------------------------------
 // Flex Consumption Plan
 // ---------------------------------------------------------------------------
 
@@ -65,9 +57,27 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
   properties: {
     serverFarmId: flexPlan.id
     httpsOnly: true
+    // Flex Consumption requires functionAppConfig for runtime configuration
+    functionAppConfig: {
+      deployment: {
+        storage: {
+          type: 'blobContainer'
+          value: 'https://${storageAccountName}.blob.${environment().suffixes.storage}/deployments'
+          authentication: {
+            type: 'SystemAssignedIdentity'
+          }
+        }
+      }
+      scaleAndConcurrency: {
+        maximumInstanceCount: 100
+        instanceMemoryMB: 2048
+      }
+      runtime: {
+        name: 'node'
+        version: '20'
+      }
+    }
     siteConfig: {
-      // Flex Consumption uses this property for runtime stack
-      linuxFxVersion: 'Node|20'
       appSettings: [
         // --- Function runtime ---
         {
@@ -78,26 +88,22 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
           name: 'FUNCTIONS_EXTENSION_VERSION'
           value: '~4'
         }
-        {
-          name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'node'
-        }
         // --- Azure OpenAI (endpoint only — auth via managed identity) ---
         {
           name: 'AZURE_OPENAI_ENDPOINT'
           value: openaiEndpoint
         }
         {
-          name: 'AZURE_OPENAI_DEPLOYMENT_GPT'
+          name: 'GPT4O_DEPLOYMENT_NAME'
           value: 'gpt-4o'
         }
         {
-          name: 'AZURE_OPENAI_DEPLOYMENT_EMBEDDING'
+          name: 'EMBEDDING_DEPLOYMENT_NAME'
           value: 'text-embedding-3-large'
         }
         // --- Azure AI Search (endpoint only) ---
         {
-          name: 'AZURE_SEARCH_ENDPOINT'
+          name: 'AZURE_AI_SEARCH_ENDPOINT'
           value: aiSearchEndpoint
         }
         {
@@ -119,7 +125,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         }
         // --- Key Vault ---
         {
-          name: 'KEY_VAULT_URI'
+          name: 'KEY_VAULT_URL'
           value: keyVaultUri
         }
         // --- Blob Storage (account name only — auth via managed identity) ---
