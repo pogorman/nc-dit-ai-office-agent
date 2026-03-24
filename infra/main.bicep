@@ -71,6 +71,16 @@ module keyVault 'modules/key-vault.bicep' = {
   }
 }
 
+module networking 'modules/networking.bicep' = {
+  name: 'networking-deployment'
+  params: {
+    namingPrefix: namingPrefix
+    location: location
+    storageAccountName: storage.outputs.name
+    functionAppId: '' // Resolved after function app creation; VNet integration set via subnet param
+  }
+}
+
 module functionApp 'modules/function-app.bicep' = {
   name: 'function-app-deployment'
   params: {
@@ -82,6 +92,7 @@ module functionApp 'modules/function-app.bicep' = {
     cosmosDbEndpoint: cosmosDb.outputs.endpoint
     cosmosDbDatabaseName: cosmosDb.outputs.databaseName
     keyVaultUri: keyVault.outputs.uri
+    vnetSubnetId: networking.outputs.funcIntegrationSubnetId
   }
 }
 

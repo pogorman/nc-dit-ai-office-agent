@@ -1,7 +1,6 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-import { getContainer } from "../shared/cosmos-client";
 import { getEmbedding } from "../shared/openai-client";
-import { hybridSearch } from "../shared/search-client";
+import { getSearchClient, hybridSearch } from "../shared/search-client";
 import { NewsClip } from "../shared/types";
 
 interface ClipsQueryRequest {
@@ -33,34 +32,21 @@ function buildDateFilter(dateFrom?: string, dateTo?: string): string | undefined
 }
 
 async function fetchLatestClips(top: number, dateFrom?: string, dateTo?: string): Promise<NewsClip[]> {
-  const container = getContainer("clips");
+  const client = getSearchClient<NewsClip>("clips");
+  const filter = buildDateFilter(dateFrom, dateTo);
 
-  let queryText = "SELECT TOP @top * FROM c";
-  const conditions: string[] = [];
-  const parameters: Array<{ name: string; value: string | number }> = [
-    { name: "@top", value: top },
-  ];
+  const results: NewsClip[] = [];
+  const searchResults = await client.search("*", {
+    top,
+    orderBy: ["publishedAt desc"],
+    filter,
+  });
 
-  if (dateFrom) {
-    conditions.push("c.publishedAt >= @dateFrom");
-    parameters.push({ name: "@dateFrom", value: dateFrom });
-  }
-  if (dateTo) {
-    conditions.push("c.publishedAt <= @dateTo");
-    parameters.push({ name: "@dateTo", value: dateTo });
+  for await (const result of searchResults.results) {
+    results.push(result.document);
   }
 
-  if (conditions.length > 0) {
-    queryText += ` WHERE ${conditions.join(" AND ")}`;
-  }
-
-  queryText += " ORDER BY c.publishedAt DESC";
-
-  const { resources } = await container.items
-    .query<NewsClip>({ query: queryText, parameters })
-    .fetchAll();
-
-  return resources;
+  return results;
 }
 
 async function clipsQuery(

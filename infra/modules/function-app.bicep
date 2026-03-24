@@ -26,6 +26,9 @@ param cosmosDbDatabaseName string
 @description('Key Vault URI for secret references')
 param keyVaultUri string
 
+@description('Subnet resource ID for VNet integration (optional)')
+param vnetSubnetId string = ''
+
 // ---------------------------------------------------------------------------
 // Flex Consumption Plan
 // ---------------------------------------------------------------------------
@@ -57,6 +60,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
   properties: {
     serverFarmId: flexPlan.id
     httpsOnly: true
+    virtualNetworkSubnetId: !empty(vnetSubnetId) ? vnetSubnetId : null
     // Flex Consumption requires functionAppConfig for runtime configuration
     functionAppConfig: {
       deployment: {
