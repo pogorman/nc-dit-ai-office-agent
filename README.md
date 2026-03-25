@@ -26,7 +26,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for full system design, data models, Co
 - **Networking:** VNet with private endpoints for Blob Storage and Cosmos DB; Function App VNet integration
 - **Connector:** Power Platform custom connector (OpenAPI 2.0, deployed to GCC environment)
 - **IaC:** Bicep (modular, 9 resource modules)
-- **Reference Guides:** [Architecture Cheat Sheet](./architecture-cheat-sheet.html) | [How It Works (ELI5)](./how-it-works-guide.html)
+- **Reference Guides:** [Architecture Cheat Sheet](./docs/html/architecture-cheat-sheet.html) | [How It Works (ELI5)](./docs/html/how-it-works-guide.html)
 
 ## Prerequisites
 
@@ -90,7 +90,11 @@ az deployment group create \
 │   ├── apiDefinition.swagger.json   OpenAPI 2.0 spec (3 actions)
 │   └── apiProperties.json           Connector metadata + auth config
 ├── seed/                     Data seeding & index creation scripts
-├── demo.html                 SPA demo UI
+│   └── remarks/              7 seeded remarks (State of State + 6 monthly columns)
+├── docs/
+│   ├── html/                 Printable HTML guides, presentation, talk track, demo UI
+│   ├── md/                   Markdown docs (ARCHITECTURE, FAQ, USER-GUIDE, etc.)
+│   └── pdf/                  PDF exports (for printed handouts)
 ├── demo-server.js            Express proxy for SPA → APIM (port 9090)
 ├── package.json
 ├── tsconfig.json
@@ -113,7 +117,7 @@ Auth: `Ocp-Apim-Subscription-Key` header with APIM subscription key.
 
 ## SPA Demo
 
-A standalone browser-based demo (`demo.html` + `demo-server.js`) is available for testing outside of Copilot Studio. The server proxies requests to APIM and injects the subscription key from the `APIM_SUBSCRIPTION_KEY` environment variable.
+A standalone browser-based demo (`docs/html/demo.html` + `demo-server.js`) is available for testing outside of Copilot Studio. The server proxies requests to APIM and injects the subscription key from the `APIM_SUBSCRIPTION_KEY` environment variable.
 
 ```bash
 # Set your APIM subscription key
@@ -139,9 +143,11 @@ The Power Platform custom connector (`/connector/`) bridges Copilot Studio to AP
 
 | Document | Description |
 |---|---|
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | System design, data models, auth matrix, phasing, cost estimate |
-| [FAQ.md](./FAQ.md) | Frequently asked questions (stakeholder + technical) |
-| [USER-GUIDE.md](./USER-GUIDE.md) | End-user guide for comms staff |
-| [HOW-I-WAS-BUILT.md](./HOW-I-WAS-BUILT.md) | Build journal with prompts and decisions |
-| [Architecture Cheat Sheet](./architecture-cheat-sheet.html) | One-pager: why each Azure service was chosen |
-| [How It Works Guide](./how-it-works-guide.html) | ELI5 guide for narrating the architecture to non-technical audiences |
+| [ARCHITECTURE.md](./docs/md/ARCHITECTURE.md) | System design, data models, auth matrix, phasing, cost estimate |
+| [FAQ.md](./docs/md/FAQ.md) | Frequently asked questions (stakeholder + technical) |
+| [USER-GUIDE.md](./docs/md/USER-GUIDE.md) | End-user guide for comms staff |
+| [HOW-I-WAS-BUILT.md](./docs/md/HOW-I-WAS-BUILT.md) | Build journal with prompts and decisions |
+| [Architecture Cheat Sheet](./docs/html/architecture-cheat-sheet.html) | One-pager: why each Azure service was chosen |
+| [How It Works Guide](./docs/html/how-it-works-guide.html) | ELI5 guide for narrating the architecture to non-technical audiences |
+| [Presentation](./docs/html/presentation.html) | 5-slide demo deck (open in browser, F11 fullscreen) |
+| [Talk Track](./docs/html/talk-track.html) | 1-page speaker guide with timing + demo moments |

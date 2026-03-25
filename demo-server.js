@@ -16,7 +16,7 @@ if (!APIM_KEY) {
 const server = http.createServer((req, res) => {
   // Serve demo.html
   if (req.method === "GET" && (req.url === "/" || req.url === "/demo.html")) {
-    const html = fs.readFileSync(path.join(__dirname, "demo.html"), "utf-8");
+    const html = fs.readFileSync(path.join(__dirname, "docs", "html", "demo.html"), "utf-8");
     res.writeHead(200, { "Content-Type": "text/html" });
     res.end(html);
     return;

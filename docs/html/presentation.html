@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NC Governor's Communications Agent — Presentation</title>
+<style>
+  @page { size: landscape; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; background: #222; }
+
+  .slide {
+    width: 100vw; height: 100vh;
+    padding: 60px 80px;
+    display: flex; flex-direction: column;
+    background: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Navigation hint */
+  .slide::after {
+    content: '';
+    position: absolute; bottom: 20px; right: 30px;
+    font-size: 11px; color: #bbb;
+  }
+
+  /* ===== SLIDE 1: TITLE ===== */
+  .slide-title {
+    background: linear-gradient(135deg, #0a2463 0%, #1e3a8a 100%);
+    color: #fff;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .slide-title h1 {
+    font-size: 52px; font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+  }
+  .slide-title .subtitle {
+    font-size: 24px; font-weight: 300;
+    opacity: 0.9;
+    margin-bottom: 40px;
+    max-width: 800px;
+  }
+  .slide-title .meta {
+    font-size: 16px; opacity: 0.6;
+    margin-top: 20px;
+  }
+  .slide-title .logo-row {
+    display: flex; gap: 30px; align-items: center;
+    margin-top: 30px; opacity: 0.7; font-size: 14px;
+  }
+
+  /* ===== SLIDE 2: THE ASK ===== */
+  .slide-ask { padding: 60px 80px; }
+  .slide-ask h2 {
+    font-size: 36px; color: #0a2463;
+    margin-bottom: 40px;
+  }
+  .ask-card {
+    background: #f0f6ff;
+    border-left: 6px solid #0a2463;
+    border-radius: 0 12px 12px 0;
+    padding: 30px 36px;
+    margin-bottom: 28px;
+  }
+  .ask-card .ask-label {
+    font-size: 14px; font-weight: 700;
+    color: #0a2463; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 10px;
+  }
+  .ask-card .ask-text {
+    font-size: 22px; line-height: 1.5;
+    color: #333; font-style: italic;
+  }
+  .built-badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #107c10; color: #fff;
+    padding: 14px 28px; border-radius: 8px;
+    font-size: 20px; font-weight: 600;
+    margin-top: 16px;
+  }
+
+  /* ===== CAPABILITY SLIDES ===== */
+  .slide-cap h2 {
+    font-size: 34px; margin-bottom: 8px; color: #fff;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .slide-cap .cap-bar {
+    padding: 24px 40px;
+    margin: -60px -80px 30px -80px;
+  }
+  .slide-cap .cap-oneliner {
+    font-size: 18px; color: rgba(255,255,255,0.9); margin-top: 4px;
+  }
+  .cap-blue .cap-bar { background: #0078d4; }
+  .cap-green .cap-bar { background: #107c10; }
+  .cap-orange .cap-bar { background: #d83b01; }
+
+  .flow-row {
+    display: flex; align-items: stretch; gap: 0;
+    margin: 20px 0;
+  }
+  .flow-box {
+    flex: 1; background: #fafafa;
+    border: 1px solid #ddd; border-radius: 10px;
+    padding: 20px 22px;
+    text-align: center;
+  }
+  .flow-box .flow-num {
+    display: inline-block;
+    width: 32px; height: 32px; line-height: 32px;
+    border-radius: 50%;
+    color: #fff; font-weight: 700; font-size: 15px;
+    margin-bottom: 8px;
+  }
+  .cap-blue .flow-num { background: #0078d4; }
+  .cap-green .flow-num { background: #107c10; }
+  .cap-orange .flow-num { background: #d83b01; }
+
+  .flow-box .flow-title {
+    display: block; font-weight: 700;
+    font-size: 16px; color: #333; margin-bottom: 6px;
+  }
+  .flow-box .flow-detail {
+    font-size: 14px; color: #555; line-height: 1.5;
+  }
+  .flow-arrow {
+    display: flex; align-items: center;
+    padding: 0 10px; font-size: 28px; color: #bbb;
+  }
+
+  .section-label {
+    font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: #888; margin-bottom: 8px; margin-top: 4px;
+  }
+
+  .insight-box {
+    background: #fff8e1;
+    border-left: 5px solid #f9a825;
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+    font-size: 16px; color: #333;
+    margin-top: 16px;
+    line-height: 1.5;
+  }
+  .insight-box strong { color: #e65100; }
+
+  .slide-footer {
+    position: absolute; bottom: 20px; left: 80px; right: 80px;
+    font-size: 11px; color: #bbb;
+    display: flex; justify-content: space-between;
+  }
+
+  /* Print */
+  @media print {
+    .slide { page-break-after: always; height: auto; min-height: 100vh; }
+    body { background: #fff; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== SLIDE 1: TITLE ===== -->
+<div class="slide slide-title">
+  <h1>NC Governor's<br>Communications Agent</h1>
+  <div class="subtitle">AI-powered news monitoring, remarks search, and transcript proofreading for the Governor's Communications Office</div>
+  <div class="logo-row">
+    <span>NC DIT AI Office</span>
+    <span>·</span>
+    <span>Microsoft Azure</span>
+    <span>·</span>
+    <span>Copilot Studio</span>
+  </div>
+  <div class="meta">March 2026</div>
+</div>
+
+<!-- ===== SLIDE 2: THE ASK ===== -->
+<div class="slide slide-ask">
+  <h2>What the Comms Office Asked For</h2>
+  <div class="ask-card">
+    <div class="ask-label">Request 1 — Clips + Proofreading</div>
+    <div class="ask-text">"How could we automate the process of identifying mentions of Governor Stein in the news and collecting the outlet, title, first paragraph, and first mention of Governor Stein in the article? Is there a way to use AI for proofreading of faulty transcripts?"</div>
+  </div>
+  <div class="ask-card">
+    <div class="ask-label">Request 2 — Remarks</div>
+    <div class="ask-text">"How could we create a useful search + retrieval function for existing language on a given topic? For example, what is the language we've used to talk about clean tech across a variety of remarks?"</div>
+  </div>
+  <div class="built-badge">✓ &nbsp;All three capabilities — built, deployed, and live in Teams</div>
+  <div class="slide-footer"><span>NC DIT AI Office</span><span>2 / 5</span></div>
+</div>
+
+<!-- ===== SLIDE 3: NEWS CLIPS ===== -->
+<div class="slide slide-cap cap-blue">
+  <div class="cap-bar">
+    <h2>📰 &nbsp;News Clips</h2>
+    <div class="cap-oneliner">Automatically collects Governor press releases, then lets staff search or browse them instantly.</div>
+  </div>
+
+  <div class="section-label">How data gets in — runs daily at 7 AM</div>
+  <div class="flow-row">
+    <div class="flow-box">
+      <span class="flow-num">1</span>
+      <span class="flow-title">Scrape</span>
+      <span class="flow-detail">Azure Function fetches <em>governor.nc.gov</em> press releases, extracts clean text with Mozilla Readability</span>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <span class="flow-num">2</span>
+      <span class="flow-title">Embed</span>
+      <span class="flow-detail">Azure OpenAI converts each article into a vector embedding — a numeric fingerprint of its <em>meaning</em></span>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <span class="flow-num">3</span>
+      <span class="flow-title">Store + Index</span>
+      <span class="flow-detail">Article + embedding saved in Cosmos DB (browsing) and Azure AI Search (hybrid search)</span>
+    </div>
+  </div>
+
+  <div class="section-label">How staff ask — "What's in the news about broadband?"</div>
+  <div class="flow-row">
+    <div class="flow-box">
+      <span class="flow-num">1</span>
+      <span class="flow-title">Ask in Teams</span>
+      <span class="flow-detail">Staff types a question in the Copilot Studio chatbot</span>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <span class="flow-num">2</span>
+      <span class="flow-title">Hybrid Search</span>
+      <span class="flow-detail">AI Search matches by meaning <em>and</em> keywords, then re-ranks with semantic ranker</span>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <span class="flow-num">3</span>
+      <span class="flow-title">Results</span>
+      <span class="flow-detail">Matching clips returned with title, date, outlet, and the Governor mention</span>
+    </div>
+  </div>
+
+  <div class="insight-box"><strong>Key:</strong> "rural internet access" finds an article titled "Broadband Investment for Underserved Communities" — because the <em>meaning</em> matches, not just the words.</div>
+
+  <div class="slide-footer"><span>NC DIT AI Office</span><span>3 / 5</span></div>
+</div>
+
+<!-- ===== SLIDE 4: REMARKS ===== -->
+<div class="slide slide-cap cap-green">
+  <div class="cap-bar">
+    <h2>🎤 &nbsp;Remarks Search</h2>
+    <div class="cap-oneliner">Search the Governor's speeches by topic. AI reads all matching passages and writes a summary with direct quotes.</div>
+  </div>
+
+  <div class="section-label">How speeches get in — upload triggers processing</div>
+  <div class="flow-row">
+    <div class="flow-box">
+      <span class="flow-num">1</span>
+      <span class="flow-title">Upload</span>
+      <span class="flow-detail">Drop a speech file into Blob Storage — triggers an Azure Function automatically</span>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <span class="flow-num">2</span>
+      <span class="flow-title">Chunk + Embed</span>
+      <span class="flow-detail">Function splits into paragraphs, embeds each chunk, tags with date/event/venue</span>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <span class="flow-num">3</span>
+      <span class="flow-title">Index</span>
+      <span class="flow-detail">Chunks stored in Cosmos DB + Azure AI Search for retrieval</span>
+    </div>
+  </div>
+
+  <div class="section-label">How staff ask — "What has the Governor said about teacher pay?"</div>
+  <div class="flow-row">
+    <div class="flow-box">
+      <span class="flow-num">1</span>
+      <span class="flow-title">Ask in Teams</span>
+      <span class="flow-detail">Staff types a topic question in the Copilot Studio chatbot</span>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <span class="flow-num">2</span>
+      <span class="flow-title">Hybrid Search</span>
+      <span class="flow-detail">Finds top matching speech chunks across all remarks via vector + keyword search</span>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <span class="flow-num">3</span>
+      <span class="flow-title">GPT-4o Synthesizes</span>
+      <span class="flow-detail">AI reads the chunks and writes a synthesis with <strong>direct quotes</strong>, dates, and sources</span>
+    </div>
+  </div>
+
+  <div class="insight-box"><strong>This is the RAG pattern</strong> (Retrieval-Augmented Generation): we <em>retrieve</em> real source material first, then ask AI to <em>summarize only what it found</em>. The AI never invents quotes — it cites real text from real speeches.</div>
+
+  <div class="slide-footer"><span>NC DIT AI Office</span><span>4 / 5</span></div>
+</div>
+
+<!-- ===== SLIDE 5: PROOFREAD ===== -->
+<div class="slide slide-cap cap-orange">
+  <div class="cap-bar">
+    <h2>✍️ &nbsp;Transcript Proofreading</h2>
+    <div class="cap-oneliner">Paste a rough transcript, get back a clean version with every change explained.</div>
+  </div>
+
+  <div class="section-label">How it works — one step, no data stored</div>
+  <div class="flow-row">
+    <div class="flow-box">
+      <span class="flow-num">1</span>
+      <span class="flow-title">Paste Text</span>
+      <span class="flow-detail">Staff pastes a raw transcript from voice-to-text or a scanned document into the chatbot</span>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <span class="flow-num">2</span>
+      <span class="flow-title">GPT-4o Proofreads</span>
+      <span class="flow-detail">Fixes ASR/OCR errors, punctuation, proper nouns — <strong>never changes meaning or speaking style</strong></span>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <span class="flow-num">3</span>
+      <span class="flow-title">Structured Output</span>
+      <span class="flow-detail">Returns corrected text + a list of every change with a reason and confidence level (high / medium / low)</span>
+    </div>
+  </div>
+
+  <div class="insight-box" style="margin-top: 30px;"><strong>Key:</strong> Like handing a rough draft to the best copy editor in the building — except they work instantly and show you every red-pen mark with an explanation.</div>
+
+  <div style="margin-top: 40px; display: flex; gap: 30px;">
+    <div style="flex:1; background:#fafafa; border:1px solid #ddd; border-radius:10px; padding:20px; text-align:center;">
+      <div style="font-size:28px; margin-bottom:6px;">🔒</div>
+      <div style="font-weight:700; font-size:15px; color:#333;">Nothing Stored</div>
+      <div style="font-size:13px; color:#666; margin-top:4px;">Text in, clean text out. No data touches the database.</div>
+    </div>
+    <div style="flex:1; background:#fafafa; border:1px solid #ddd; border-radius:10px; padding:20px; text-align:center;">
+      <div style="font-size:28px; margin-bottom:6px;">⚡</div>
+      <div style="font-weight:700; font-size:15px; color:#333;">~$120–195/mo</div>
+      <div style="font-size:13px; color:#666; margin-top:4px;">Total platform cost. Serverless — scales to zero when idle.</div>
+    </div>
+    <div style="flex:1; background:#fafafa; border:1px solid #ddd; border-radius:10px; padding:20px; text-align:center;">
+      <div style="font-size:28px; margin-bottom:6px;">🛡️</div>
+      <div style="font-weight:700; font-size:15px; color:#333;">Zero Passwords in Code</div>
+      <div style="font-size:13px; color:#666; margin-top:4px;">Managed identity everywhere. Data stays in the state's Azure tenant.</div>
+    </div>
+  </div>
+
+  <div class="slide-footer"><span>NC DIT AI Office</span><span>5 / 5</span></div>
+</div>
+
+</body>
+</html>

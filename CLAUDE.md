@@ -69,21 +69,42 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
   create-search-indexes.ts      — Creates both AI Search indexes (clips + remarks)
   index-clips-to-search.ts      — Pushes clips from Cosmos to AI Search
   load-remarks.ts               — Chunks, embeds, and indexes remarks into Cosmos + AI Search
-  /remarks
+  /remarks                      — 7 seeded remarks (State of State + 6 monthly columns)
     2025-03-12_state-of-the-state_nc-general-assembly.txt
+    2025-08-12_august-column-..._governors-office.txt
+    2025-09-29_september-column-..._governors-office.txt
+    2025-10-27_october-column-..._governors-office.txt
+    2025-11-24_november-column-..._governors-office.txt
+    2025-12-16_december-column-..._governors-office.txt
+    2026-01-30_january-column-..._governors-office.txt
+/docs
+  /html                         — Printable HTML guides and presentation
+    architecture-cheat-sheet.html
+    how-it-works-guide.html
+    demo.html                   — SPA demo UI (needs demo-server.js proxy)
+    presentation.html           — 5-slide demo deck (open in browser, F11 fullscreen)
+    talk-track.html             — 1-page speaker guide with timing + demo moments
+  /md                           — Markdown documentation
+    ARCHITECTURE.md
+    FAQ.md
+    HOW-I-WAS-BUILT.md
+    USER-GUIDE.md
+    talk-track.md
+  /pdf                          — PDF exports (empty, for printed handouts)
 ```
 
 ## Recent Changes (2026-03-24)
 - **Clips dedup bug fixed** — `@azure/cosmos` v4 `ErrorResponse.code` is the string `"NotFound"`, not the number `404`. The dedup check in `clips-ingest.ts` was comparing with `!== 404`, so every new clip was treated as an error. Fix: check for both `404` and `"NotFound"`.
 - **Clips schedule changed** — Timer moved from every 15 min to daily at 7 AM Eastern (`0 0 7 * * *`). `WEBSITE_TIME_ZONE=America/New_York` set on Function App so cron is DST-aware.
 - **Manual refresh endpoint added** — `POST /api/clips/refresh` runs the same ingestion logic on demand, returns `{ successCount, errorCount, totalCount }`.
-- **Demo UI updated** — Green "Refresh Clips" button added to `demo.html`.
+- **6 Governor's columns seeded** — Monthly columns (Aug 2025 – Jan 2026) scraped from governor.nc.gov and indexed into Cosmos DB + AI Search. Remarks index now has 7 documents / 26+ chunks.
+- **Docs reorganized** — HTML guides, presentation, and talk track moved to `docs/html/`; markdown docs moved to `docs/md/`; `docs/pdf/` created for printed handouts.
+- **Presentation + talk track created** — 5-slide HTML deck (`docs/html/presentation.html`) and 1-page speaker guide (`docs/html/talk-track.html`) for Thursday demo.
 - **`.funcignore` created** — Excludes `.git`, `infra/`, `seed/`, `src/`, `*.ts`, `*.md` from deploy package.
-- **Deploy process** — Storage `publicNetworkAccess` must be temporarily set to `Enabled` for `func azure functionapp publish`, then set back to `Disabled`. The `func` CLI cannot upload through the VNet from a local machine.
+- **Deploy process** — Storage and Cosmos DB `publicNetworkAccess` must be temporarily set to `Enabled` for local seeding/deploy, then set back to `Disabled`.
 
 ## Known TODOs
 - Cosmos DB private endpoint was added via CLI — needs to be codified in `infra/modules/networking.bicep` (currently CLI-only)
-- Need more remarks seeded for richer demos (only State of the State currently indexed)
 - `.docx` extraction in remarks-ingest.ts (needs `mammoth` package)
 - `.pdf` extraction in remarks-ingest.ts (needs `pdf-parse` package)
 - Blob trigger for remarks-ingest not firing reliably on Flex Consumption (use `seed/load-remarks.ts` as workaround)
