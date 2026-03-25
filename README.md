@@ -8,7 +8,7 @@ AI-powered tool for the North Carolina Governor's Communications Office that aut
 |---|---|---|
 | **Transcript Proofreading** | AI-powered cleanup of faulty ASR/OCR transcripts | Fully implemented |
 | **Remarks Search** | Semantic search + RAG synthesis across the Governor's remarks corpus | Implemented (`.txt` ingestion; `.docx`/`.pdf` stubbed) |
-| **News Clips** | Automated monitoring of Governor press releases via governor.nc.gov scraping | Implemented (ingestion has open bug — scrapes OK but Cosmos write fails silently; 10 seeded clips working) |
+| **News Clips** | Automated monitoring of Governor press releases via governor.nc.gov scraping | Implemented (dedup bug fixed 2026-03-24; runs daily at 7 AM ET + manual refresh button) |
 | **Daily Digest** | Weekday morning email summary of new clips | Stubbed (email sending TBD) |
 
 ## Architecture
@@ -67,7 +67,7 @@ az deployment group create \
 ```
 
 > **Post-deploy:** The APIM named value `function-host-key` is already configured with the Function App host key.
-> **Networking:** Both Storage and Cosmos DB have `publicNetworkAccess: Disabled` with private endpoints. Deployments go through VNet — `func azure functionapp publish` works via Kudu over the private endpoint. No need to toggle public access.
+> **Networking:** Both Storage and Cosmos DB have `publicNetworkAccess: Disabled` with private endpoints. Deploying with `func azure functionapp publish` requires temporarily setting Storage `publicNetworkAccess: Enabled`, then setting it back to `Disabled` after the deploy completes. The `func` CLI cannot upload through the VNet from a local machine.
 
 ## Project Structure
 
@@ -76,7 +76,7 @@ az deployment group create \
 ├── src/
 │   ├── functions/            Azure Functions (6 functions)
 │   │   ├── proofread.ts          POST /api/proofread
-│   │   ├── clips-ingest.ts       Timer (every 15 min) — scrapes governor.nc.gov
+│   │   ├── clips-ingest.ts       Timer (7 AM ET daily) + POST /api/clips/refresh
 │   │   ├── clips-query.ts        POST /api/clips/query
 │   │   ├── clips-digest.ts       Timer (8 AM weekdays)
 │   │   ├── remarks-ingest.ts     Blob trigger (remarks-uploads)
@@ -105,6 +105,7 @@ All endpoints are live and tested through the APIM gateway:
 | Endpoint | Method | Description |
 |---|---|---|
 | `https://nc-comms-agent-dev-apim.azure-api.net/comms/clips/query` | POST | Search/browse news clips |
+| `https://nc-comms-agent-dev-apim.azure-api.net/comms/clips/refresh` | POST | Force clips re-ingestion (TODO: add to APIM) |
 | `https://nc-comms-agent-dev-apim.azure-api.net/comms/remarks/query` | POST | Semantic search over remarks (RAG) |
 | `https://nc-comms-agent-dev-apim.azure-api.net/comms/proofread` | POST | Transcript proofreading |
 

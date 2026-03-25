@@ -25,6 +25,8 @@ The AI Office Agent lives in Microsoft Teams via Copilot Studio. You interact wi
 
 The agent returns a list of articles with outlet, title, and a brief excerpt. Click any card to see the full mention context.
 
+Clips are updated automatically every morning at 7 AM. In the web demo, you can also click the green **Refresh Clips** button to trigger an immediate re-scan of governor.nc.gov.
+
 ### Search Clips by Topic
 
 > "Any clips about clean energy this week?"

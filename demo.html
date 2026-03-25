@@ -65,6 +65,7 @@
     <input type="text" id="clips-query" placeholder='e.g. "broadband rural internet" or "teacher pay"' />
   </div>
   <button id="clips-btn" onclick="searchClips()">Search Clips</button>
+  <button id="refresh-btn" onclick="refreshClips()" style="background:#2e7d32; margin-left:0.5rem;">Refresh Clips</button>
   <div id="clips-result"></div>
 </div>
 
@@ -121,6 +122,24 @@ function setLoading(btnId, loading) {
     btn.disabled = false;
     btn.textContent = btn.id.replace('-btn', '') === 'clips' ? 'Search Clips'
       : btn.id.replace('-btn', '') === 'remarks' ? 'Search Remarks' : 'Proofread';
+  }
+}
+
+async function refreshClips() {
+  const btn = document.getElementById('refresh-btn');
+  const resultDiv = document.getElementById('clips-result');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Refreshing...';
+  resultDiv.innerHTML = '';
+
+  try {
+    const data = await apiFetch('/clips/refresh', {});
+    resultDiv.innerHTML = `<div class="result"><h3>Refresh Complete</h3><p>${data.successCount} processed, ${data.errorCount} errors, ${data.totalCount} total listings scanned.</p></div>`;
+  } catch (e) {
+    resultDiv.innerHTML = `<p class="error">Error: ${esc(e.message)}</p>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Refresh Clips';
   }
 }
 

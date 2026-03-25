@@ -328,4 +328,57 @@ The SPA hits the same APIM endpoints as Copilot Studio, so it's a faithful repre
 
 ---
 
+## Chapter 11: Clips Dedup Bug Fix + Schedule Change + Manual Refresh
+
+**Date:** 2026-03-24
+
+### The Bug
+
+The clips ingestion function was finding new articles on governor.nc.gov but never writing them to Cosmos DB. The TODO originally said "needs Application Insights to diagnose (likely Cosmos write permission or VNet outbound routing)." Turns out it was a code bug, not an infrastructure issue.
+
+The dedup logic in `clips-ingest.ts` reads from Cosmos to check if a clip already exists. For new clips, the read throws a "not found" error which should be caught and ignored. But the catch block checked:
+
+```typescript
+const statusCode = (error as { code?: number }).code;
+if (statusCode !== 404) throw error;
+```
+
+In `@azure/cosmos` v4, `ErrorResponse.code` is the **string** `"NotFound"` from the response body, not the **number** `404`. So `"NotFound" !== 404` was always `true`, and the error was re-thrown. Every new clip failed at dedup.
+
+The seeded clips worked fine because they already existed — the `.read()` succeeded and returned early, never hitting the broken catch block.
+
+**The clue:** The TODO said "finds new articles but silently fails to write." If networking was the problem, it couldn't read existing clips either. The fact that reads worked meant the issue was in the code path between "check if exists" and "write."
+
+### The Fix
+
+One line: check for both the string and number forms:
+
+```typescript
+const code = (error as { code?: number | string }).code;
+if (code !== 404 && code !== "NotFound") throw error;
+```
+
+### Schedule Change
+
+Moved from every 15 minutes (`0 */15 * * * *`) to daily at 7 AM Eastern (`0 0 7 * * *`). The Governor's press office publishes a few times a week — checking every 15 minutes was wasteful. Added `WEBSITE_TIME_ZONE=America/New_York` as a Function App setting so the cron is DST-aware.
+
+### Manual Refresh
+
+Extracted the core ingestion logic into a shared `runIngestion()` function called by both:
+- The timer trigger (daily at 7 AM)
+- A new HTTP trigger at `POST /api/clips/refresh` for on-demand refresh
+
+Added a green "Refresh Clips" button to `demo.html` that calls the refresh endpoint. Returns `{ successCount, errorCount, totalCount }`.
+
+### Deploy Process Discovery
+
+Discovered that `func azure functionapp publish` cannot upload through the VNet from a local machine — Storage's `publicNetworkAccess: Disabled` blocks it. The deploy process requires:
+1. `az storage account update --public-network-access Enabled`
+2. `func azure functionapp publish nc-comms-agent-dev-func`
+3. `az storage account update --public-network-access Disabled`
+
+Also created `.funcignore` to exclude `.git`, `infra/`, `seed/`, `src/`, `*.ts`, `*.md` from the deploy package — without it the archive was too large and uploads would hang.
+
+---
+
 *More chapters will be added as implementation progresses.*

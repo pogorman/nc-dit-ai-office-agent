@@ -49,7 +49,7 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
     storage.bicep               — Blob Storage (publicNetworkAccess: Disabled)
 /src
   /functions
-    clips-ingest.ts             — Timer: governor.nc.gov scrape → Cosmos DB + AI Search (every 15 min)
+    clips-ingest.ts             — Timer: governor.nc.gov scrape → Cosmos DB + AI Search (7 AM ET daily) + HTTP POST: manual refresh
     clips-query.ts              — HTTP POST: search/browse clips
     clips-digest.ts             — Timer: daily email digest (8 AM weekdays, stub)
     remarks-ingest.ts           — Blob trigger: upload → chunk → embed → index
@@ -73,11 +73,19 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
     2025-03-12_state-of-the-state_nc-general-assembly.txt
 ```
 
+## Recent Changes (2026-03-24)
+- **Clips dedup bug fixed** — `@azure/cosmos` v4 `ErrorResponse.code` is the string `"NotFound"`, not the number `404`. The dedup check in `clips-ingest.ts` was comparing with `!== 404`, so every new clip was treated as an error. Fix: check for both `404` and `"NotFound"`.
+- **Clips schedule changed** — Timer moved from every 15 min to daily at 7 AM Eastern (`0 0 7 * * *`). `WEBSITE_TIME_ZONE=America/New_York` set on Function App so cron is DST-aware.
+- **Manual refresh endpoint added** — `POST /api/clips/refresh` runs the same ingestion logic on demand, returns `{ successCount, errorCount, totalCount }`.
+- **Demo UI updated** — Green "Refresh Clips" button added to `demo.html`.
+- **`.funcignore` created** — Excludes `.git`, `infra/`, `seed/`, `src/`, `*.ts`, `*.md` from deploy package.
+- **Deploy process** — Storage `publicNetworkAccess` must be temporarily set to `Enabled` for `func azure functionapp publish`, then set back to `Disabled`. The `func` CLI cannot upload through the VNet from a local machine.
+
 ## Known TODOs
-- clips-ingest timer finds new articles on governor.nc.gov but silently fails to write them to Cosmos DB — needs Application Insights to diagnose (likely Cosmos write permission or VNet outbound routing issue). Currently still have 10 seeded clips.
 - Cosmos DB private endpoint was added via CLI — needs to be codified in `infra/modules/networking.bicep` (currently CLI-only)
 - Need more remarks seeded for richer demos (only State of the State currently indexed)
 - `.docx` extraction in remarks-ingest.ts (needs `mammoth` package)
 - `.pdf` extraction in remarks-ingest.ts (needs `pdf-parse` package)
 - Blob trigger for remarks-ingest not firing reliably on Flex Consumption (use `seed/load-remarks.ts` as workaround)
 - Daily digest email sending stubbed (needs Logic App or SendGrid integration)
+- Add `clips/refresh` route to APIM and custom connector so it's callable from Copilot Studio and the SPA through APIM

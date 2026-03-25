@@ -46,7 +46,7 @@ A serverless AI platform for the North Carolina Governor's Communications Office
 
 #### Data Flow
 
-1. **Timer-triggered Azure Function** runs every 15 minutes
+1. **Timer-triggered Azure Function** runs daily at 7 AM Eastern (also available as on-demand HTTP trigger at `POST /api/clips/refresh`)
 2. Scrapes **governor.nc.gov/news/press-releases** (first 2 pages, ~20 articles) using `fetch` + `JSDOM`
 3. For each new press release, follows the link and extracts full text via **Mozilla Readability**:
    - **Title**
@@ -168,7 +168,7 @@ The orchestrator maps user intent to the correct tool automatically:
 
 | Resource | SKU / Tier | Purpose |
 |---|---|---|
-| **Azure Functions** (Function App) | Flex Consumption (FC1, Linux), always-ready=1 for HTTP | 6 functions — clips ingestion/query/digest, remarks ingestion/query, proofread |
+| **Azure Functions** (Function App) | Flex Consumption (FC1, Linux), always-ready=1 for HTTP | 7 functions — clips ingestion/query/refresh/digest, remarks ingestion/query, proofread |
 | **Azure API Management** | Consumption | Auth boundary, rate limiting (60/min), function key injection |
 | **Azure AI Search** | Basic (B) | Hybrid vector + keyword indexes for clips and remarks |
 | **Azure OpenAI** | Standard (East US 2) | GPT-4o (30K TPM) for synthesis/proofread, text-embedding-3-large (120K TPM) for vectors |
@@ -231,7 +231,7 @@ Both Storage and Cosmos DB are locked down with `publicNetworkAccess: Disabled` 
 
 - **Function App VNet integration** via `vnetSubnetId` parameter on the Flex Consumption plan
 - **`WEBSITE_CONTENTOVERVNET=1`** enables deployment content upload over VNet
-- **`func azure functionapp publish`** works through the VNet — Kudu uploads to blob via private endpoint, no need to toggle public access
+- **`func azure functionapp publish`** requires temporarily setting Storage `publicNetworkAccess: Enabled`, then back to `Disabled` after deploy. The `func` CLI cannot upload through the VNet from a local machine.
 - **Always-ready=1** on HTTP triggers eliminates cold start timeouts (~$34/month additional)
 
 ---
@@ -334,7 +334,7 @@ Both Storage and Cosmos DB are locked down with `publicNetworkAccess: Disabled` 
 | Bicep IaC (all resources) | Deployed | 9 modules in `rg-nc-comms-agent-dev`, all RBAC grants active |
 | VNet + Private Endpoints | Deployed | VNet 10.0.0.0/16, func-integration subnet (10.0.1.0/24), private-endpoints subnet (10.0.2.0/24), blob PE + DNS zone (in Bicep), Cosmos DB PE + DNS zone (CLI-only, needs Bicep codification) |
 | Transcript Proofread Function | Deployed & tested | POST `/api/proofread` — structured JSON with changes + confidence |
-| Clips Ingestion Function | Deployed (open bug) | Timer trigger (every 15 min), scrapes governor.nc.gov press releases directly — no external API keys needed. Finds new articles but silently fails to write to Cosmos DB. Needs App Insights to diagnose (likely Cosmos write permission or VNet outbound routing). 10 seeded clips still working. |
+| Clips Ingestion Function | Deployed & fixed | Timer trigger (7 AM ET daily) + manual HTTP refresh (`POST /api/clips/refresh`). Scrapes governor.nc.gov press releases directly — no external API keys needed. Dedup bug fixed 2026-03-24 (`@azure/cosmos` v4 `ErrorResponse.code` is string `"NotFound"`, not number `404`). `WEBSITE_TIME_ZONE=America/New_York` for DST-aware scheduling. |
 | Clips Query Function | Deployed & tested | POST `/api/clips/query` — "latest" mode (AI Search wildcard + orderBy) + hybrid search. 10 real clips seeded. |
 | Clips Digest Function | Deployed (stub) | HTML generation done, email sending TBD (needs Logic App or SendGrid) |
 | Remarks Ingestion Function | Deployed (partial) | Blob trigger registered but not firing reliably on Flex Consumption; use `seed/load-remarks.ts` as workaround. `.docx`/`.pdf` extraction still stubbed. |

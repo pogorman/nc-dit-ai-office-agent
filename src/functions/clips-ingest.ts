@@ -1,4 +1,4 @@
-import { app, InvocationContext, Timer } from "@azure/functions";
+import { app, HttpRequest, HttpResponseInit, InvocationContext, Timer } from "@azure/functions";
 import { Readability } from "@mozilla/readability";
 import * as crypto from "crypto";
 import { JSDOM } from "jsdom";
@@ -164,8 +164,8 @@ async function processRelease(
     context.log(`Clip already exists: ${listing.title}`);
     return;
   } catch (error: unknown) {
-    const statusCode = (error as { code?: number }).code;
-    if (statusCode !== 404) throw error;
+    const code = (error as { code?: number | string }).code;
+    if (code !== 404 && code !== "NotFound") throw error;
   }
 
   // Fetch and parse the full article
@@ -219,19 +219,13 @@ async function processRelease(
   context.log(`Ingested clip: ${clip.title}`);
 }
 
-async function clipsIngest(timer: Timer, context: InvocationContext): Promise<void> {
-  context.log(`Clips ingestion triggered at ${new Date().toISOString()}`);
-
-  if (timer.isPastDue) {
-    context.log("Timer is past due — running anyway");
-  }
-
+async function runIngestion(context: InvocationContext): Promise<{ successCount: number; errorCount: number; totalCount: number }> {
   let listings: PressReleaseListing[];
   try {
     listings = await fetchPressReleaseListings(PAGES_TO_SCRAPE, context);
   } catch (error) {
     context.error(`Failed to fetch press release listings: ${error}`);
-    return;
+    return { successCount: 0, errorCount: 0, totalCount: 0 };
   }
 
   context.log(`Found ${listings.length} press releases to process`);
@@ -252,9 +246,34 @@ async function clipsIngest(timer: Timer, context: InvocationContext): Promise<vo
   context.log(
     `Clips ingestion complete: ${successCount} processed, ${errorCount} errors, ${listings.length} total`
   );
+
+  return { successCount, errorCount, totalCount: listings.length };
+}
+
+async function clipsIngest(timer: Timer, context: InvocationContext): Promise<void> {
+  context.log(`Clips ingestion triggered at ${new Date().toISOString()}`);
+
+  if (timer.isPastDue) {
+    context.log("Timer is past due — running anyway");
+  }
+
+  await runIngestion(context);
+}
+
+async function clipsRefresh(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  context.log(`Manual clips refresh triggered at ${new Date().toISOString()}`);
+  const result = await runIngestion(context);
+  return { jsonBody: result };
 }
 
 app.timer("clips-ingest", {
-  schedule: "0 */15 * * * *",
+  schedule: "0 0 7 * * *",
   handler: clipsIngest,
+});
+
+app.http("clips-refresh", {
+  methods: ["POST"],
+  authLevel: "function",
+  route: "clips/refresh",
+  handler: clipsRefresh,
 });

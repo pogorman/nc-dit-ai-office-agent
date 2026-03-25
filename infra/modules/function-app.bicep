@@ -137,6 +137,11 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
           name: 'STORAGE_ACCOUNT_NAME'
           value: storageAccountName
         }
+        // --- Timezone (Eastern for cron schedules) ---
+        {
+          name: 'WEBSITE_TIME_ZONE'
+          value: 'America/New_York'
+        }
       ]
       cors: {
         // Allow local dev and Copilot Studio origins

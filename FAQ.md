@@ -19,10 +19,10 @@ Through Microsoft Teams — search for the agent by name in the Teams chat, or i
 ## News Clips
 
 ### How often are clips updated?
-The system checks for new articles every 15 minutes.
+The system checks for new articles daily at 7 AM Eastern. You can also force an immediate refresh using the "Refresh Clips" button in the web demo.
 
 ### What sources does it monitor?
-The system scrapes the Governor's official press releases page (governor.nc.gov/news/press-releases) directly. It checks the first 2 pages (~20 articles) every 15 minutes. Additional sources (curated RSS feeds) can be added. Bing Search API is retired and no longer available for new deployments.
+The system scrapes the Governor's official press releases page (governor.nc.gov/news/press-releases) directly. It checks the first 2 pages (~20 articles) on each run. Additional sources (curated RSS feeds) can be added. Bing Search API is retired and no longer available for new deployments.
 
 ### Can I get a daily email summary?
 Not yet — the daily digest HTML generation is built, but email delivery is not yet wired up. This will require a Logic App or SendGrid integration.
@@ -75,10 +75,10 @@ All three endpoints are live and tested through the APIM gateway at `https://nc-
 All requests require an `Ocp-Apim-Subscription-Key` header.
 
 ### What happens if the news ingestion fails?
-The system processes articles individually. If one article fails to process, it logs the error and continues with the rest. Failed articles will be retried on the next 15-minute cycle since the scraper re-checks the same press release pages.
+The system processes articles individually. If one article fails to process, it logs the error and continues with the rest. Failed articles will be retried on the next scheduled run (or via manual refresh) since the scraper re-checks the same press release pages.
 
-### Is there a known issue with clips ingestion?
-Yes — the timer function successfully scrapes new articles from governor.nc.gov but currently fails silently when writing to Cosmos DB. This is under investigation and likely related to Cosmos write permissions or VNet outbound routing after the Cosmos DB private endpoint was added. The 10 seeded clips are unaffected and fully searchable. Application Insights needs to be configured for diagnostics.
+### Was there a known issue with clips ingestion?
+Yes — **fixed 2026-03-24**. The `@azure/cosmos` v4 SDK returns `"NotFound"` (string) on `ErrorResponse.code`, but the dedup check was comparing against `404` (number). Every new clip was treated as an unexpected error and skipped. The fix checks for both values. Seeded clips were unaffected because they already existed in Cosmos (the read succeeded, bypassing the broken error check).
 
 ### Is there a web demo outside of Teams?
 Yes — `demo.html` + `demo-server.js` provide a standalone browser-based demo. Run `node demo-server.js` (port 9090) with the `APIM_SUBSCRIPTION_KEY` environment variable set. This is useful for testing and demos outside of the Copilot Studio / Teams environment.
