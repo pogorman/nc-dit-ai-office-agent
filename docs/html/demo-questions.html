@@ -175,7 +175,7 @@
       <span class="q-num q-blue">1</span>
       <div class="q-text">
         <div class="q-prompt">What clips came in this week about broadband?</div>
-        <div class="q-why">Starter question from the talk track. Shows basic semantic search.</div>
+        <div class="q-why">Starter question. Hits the $26M Stop-Gap Solutions press release about connecting 5,161 rural homes.</div>
       </div>
       <span class="label label-starter">Starter</span>
     </li>
@@ -190,32 +190,24 @@
     <li>
       <span class="q-num q-blue">3</span>
       <div class="q-text">
-        <div class="q-prompt">Has the Governor said anything about rural internet access?</div>
-        <div class="q-why">Demonstrates semantic matching — finds "broadband" articles even though the words don't overlap.</div>
+        <div class="q-prompt">Any press releases about Hurricane Helene recovery?</div>
+        <div class="q-why">Hits the $8.5M small business infrastructure grants and WNC recovery clips.</div>
       </div>
       <span class="label label-semantic">Semantic</span>
     </li>
     <li>
       <span class="q-num q-blue">4</span>
       <div class="q-text">
-        <div class="q-prompt">Any press releases about economic development or jobs?</div>
-        <div class="q-why">Broad topic query. Shows how hybrid search combines meaning and keyword matching.</div>
+        <div class="q-prompt">What has the Governor said about law enforcement pay?</div>
+        <div class="q-why">Hits the Charlotte law enforcement raises clip and the $1.4B Critical Needs Budget (49th in trooper pay).</div>
       </div>
       <span class="label label-semantic">Semantic</span>
     </li>
     <li>
       <span class="q-num q-blue">5</span>
       <div class="q-text">
-        <div class="q-prompt">What's in the news about Hurricane Helene recovery?</div>
-        <div class="q-why">Timely topic. Matches press releases about western NC disaster recovery efforts.</div>
-      </div>
-      <span class="label label-semantic">Semantic</span>
-    </li>
-    <li>
-      <span class="q-num q-blue">6</span>
-      <div class="q-text">
-        <div class="q-prompt">Are there any clips about education or schools?</div>
-        <div class="q-why">Broader query. Could match teacher pay, school safety, student wellbeing topics.</div>
+        <div class="q-prompt">Any news about jobs or economic development?</div>
+        <div class="q-why">Broad query. Hits PSA Airlines (400 jobs), rural listening tour, Students@Work, and Critical Needs Budget.</div>
       </div>
       <span class="label label-semantic">Semantic</span>
     </li>
@@ -232,7 +224,7 @@
       <span class="q-num q-green">1</span>
       <div class="q-text">
         <div class="q-prompt">What has the Governor said about mental health and public safety?</div>
-        <div class="q-why">Starter question from the talk track. Hits the October column hard — mental health as public safety.</div>
+        <div class="q-why">Starter question. Hits the October column ($195M public safety package, 1.8M adults with mental health conditions).</div>
       </div>
       <span class="label label-starter">Starter</span>
     </li>
@@ -240,49 +232,33 @@
       <span class="q-num q-green">2</span>
       <div class="q-text">
         <div class="q-prompt">What language has the Governor used about keeping kids safe online?</div>
-        <div class="q-why">Direct hit on the September column. Shows retrieval of specific policy language and the Student Safety Task Force.</div>
+        <div class="q-why">Direct hit on the September column — Student Safety Task Force, cell phone legislation, 3+ hours social media risk.</div>
       </div>
       <span class="label label-rag">RAG</span>
     </li>
     <li>
       <span class="q-num q-green">3</span>
       <div class="q-text">
-        <div class="q-prompt">How has the Governor talked about emergency preparedness and hurricane recovery?</div>
-        <div class="q-why">Pulls from the August column (hurricane prep) and November column (Helene recovery gratitude). Shows cross-speech synthesis.</div>
+        <div class="q-prompt">How has the Governor talked about hurricane recovery?</div>
+        <div class="q-why">Pulls from State of the State ($60B damages, 1,300 roads), August (preparedness), and November (98% roads reopened). Cross-speech synthesis.</div>
       </div>
       <span class="label label-evolution">Cross-speech</span>
     </li>
     <li>
       <span class="q-num q-green">4</span>
       <div class="q-text">
-        <div class="q-prompt">What has the Governor said about law enforcement and supporting police?</div>
-        <div class="q-why">Matches October column ($195M public safety package, raising officer salaries) and State of the State.</div>
+        <div class="q-prompt">What has the Governor said about food banks and hunger?</div>
+        <div class="q-why">Hits December column (MANNA Food Bank, Second Harvest, SNAP cuts) and November (food banks in thankful list).</div>
       </div>
-      <span class="label label-rag">RAG</span>
+      <span class="label label-evolution">Cross-speech</span>
     </li>
     <li>
       <span class="q-num q-green">5</span>
       <div class="q-text">
         <div class="q-prompt">How does the Governor talk about North Carolina's history and democracy?</div>
-        <div class="q-why">Hits the January column about America 250, Halifax Resolves, and the Bill of Rights. Good for showing rich synthesis.</div>
+        <div class="q-why">Hits the January column — America 250, Halifax Resolves, Moores Creek Bridge, and the Bill of Rights.</div>
       </div>
       <span class="label label-rag">RAG</span>
-    </li>
-    <li>
-      <span class="q-num q-green">6</span>
-      <div class="q-text">
-        <div class="q-prompt">What has the Governor said about food insecurity and food banks?</div>
-        <div class="q-why">Pulls from December column (MANNA, Second Harvest) and November (farmers, food banks). Shows the quotes-with-citations pattern well.</div>
-      </div>
-      <span class="label label-evolution">Cross-speech</span>
-    </li>
-    <li>
-      <span class="q-num q-green">7</span>
-      <div class="q-text">
-        <div class="q-prompt">What's the Governor's vision for North Carolina's economy?</div>
-        <div class="q-why">Big open-ended question. Pulls from State of the State + November (30,000 jobs, innovation, life sciences). Tests RAG on a wide topic.</div>
-      </div>
-      <span class="label label-semantic">Wide topic</span>
     </li>
   </ul>
 </div>
@@ -312,7 +288,7 @@ Governer Stien: We've partnerd with philanthropies to send 55 million dollars in
 <hr>
 
 <div class="tip-box" style="margin-top: 12px;">
-  <strong>Demo flow:</strong> Start with Clips #1, then Remarks #1, then Proofread Sample 1. If the audience is engaged, circle back for a second question in each category. The semantic search questions (#3 in Clips, #3 in Remarks) are the strongest "wow" moments — they show the AI finding results that a keyword search would miss.
+  <strong>Demo flow:</strong> Start with Clips #1, then Remarks #1, then Proofread Sample 1. If the audience is engaged, circle back for a second question in each category.
 </div>
 
 <div class="footer">NC DIT AI Office &middot; Demo Questions v1.0 &middot; March 2026</div>

@@ -347,7 +347,7 @@ Both Storage and Cosmos DB are locked down with `publicNetworkAccess: Disabled` 
 | APIM endpoints | Tested | All 3 endpoints verified: `/comms/clips/query`, `/comms/remarks/query`, `/comms/proofread` |
 | Copilot Studio agent | Deployed & working | Generative orchestration — all 3 tools (QueryClips, QueryRemarks, ProofreadTranscript) active, no manual topics needed |
 | SPA demo | Working | `demo.html` + `demo-server.js` on port 9090, routes through APIM with subscription key from `APIM_SUBSCRIPTION_KEY` env var |
-| Always-ready instances | Configured | HTTP triggers set to always-ready=1 to eliminate cold start timeouts (~$34/month) |
+| Always-ready instances | Configured (in Bicep) | `alwaysReady: [{ name: 'http', instanceCount: 1 }]` in `function-app.bicep` scaleAndConcurrency. Eliminates cold start timeouts (~$34/month). |
 
 ## Open Questions
 

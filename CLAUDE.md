@@ -80,8 +80,8 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 /docs
   build-demo-pptx.py            — Generates demo-questions.pptx (python-pptx)
   build-presentation-pptx.py    — Generates presentation.pptx (python-pptx)
-  demo-questions.pptx           — Demo questions PowerPoint (6 clips, 7 remarks, 2 proofread samples)
-  presentation.pptx             — 5-slide presentation PowerPoint
+  demo-questions.pptx           — Demo questions PowerPoint (5 clips, 5 remarks, 2 proofread samples)
+  presentation.pptx             — 8-slide presentation PowerPoint (5 capability + 3 diagram slides)
   /html                         — Printable HTML guides and presentation
     architecture-cheat-sheet.html
     how-it-works-guide.html
@@ -99,9 +99,10 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 ```
 
 ## Recent Changes (2026-03-26)
+- **Always-ready instances in Bicep** — Added `alwaysReady: [{ name: 'http', instanceCount: 1 }]` to `scaleAndConcurrency` in `function-app.bicep`. Fixes cold start timeout (240s ConnectorTimeoutError on first Copilot Studio call).
+- **Presentation expanded to 8 slides** — Added 3 diagram slides: Architecture Overview (service topology), Request Flow (swim lanes per capability), Data Flow (ingestion + query paths). Build script: `docs/build-presentation-pptx.py`.
+- **Demo questions trimmed & verified** — 5 clips, 5 remarks, 2 proofread samples. Every question verified against actual seeded data. Removed questions that didn't produce results ("rural internet access" had no matching clips, etc.). Build script: `docs/build-demo-pptx.py`.
 - **3-request split** — Presentation slide 2 now shows 3 separate customer requests (News Clips, Proofreading, Remarks) instead of combining clips + proofreading into one.
-- **Demo questions created** — `docs/html/demo-questions.html` + `docs/demo-questions.pptx` with sample prompts for all 3 capabilities, mapped to seeded data.
-- **Presentation PPTX** — `docs/presentation.pptx` generated from the HTML deck via `python-pptx`. Build script at `docs/build-presentation-pptx.py`.
 
 ## Changes (2026-03-24)
 - **Clips dedup bug fixed** — `@azure/cosmos` v4 `ErrorResponse.code` is the string `"NotFound"`, not the number `404`. The dedup check in `clips-ingest.ts` was comparing with `!== 404`, so every new clip was treated as an error. Fix: check for both `404` and `"NotFound"`.

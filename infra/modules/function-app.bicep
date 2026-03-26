@@ -73,6 +73,12 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         }
       }
       scaleAndConcurrency: {
+        alwaysReady: [
+          {
+            name: 'http'
+            instanceCount: 1
+          }
+        ]
         maximumInstanceCount: 100
         instanceMemoryMB: 2048
       }

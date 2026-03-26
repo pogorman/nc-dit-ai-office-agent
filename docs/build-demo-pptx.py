@@ -147,34 +147,30 @@ def main():
     # ===== SLIDE 2: NEWS CLIPS =====
     clips_questions = [
         ("What clips came in this week about broadband?",
-         "Starter from the talk track. Shows basic semantic search."),
+         "Starter. Hits the $26M Stop-Gap Solutions press release about 5,161 rural homes."),
         ("Show me the latest news.",
          "Triggers browse mode \u2014 returns most recent clips sorted by date."),
-        ("Has the Governor said anything about rural internet access?",
-         "Semantic match: finds \"broadband\" articles even though the words don't overlap."),
-        ("Any press releases about economic development or jobs?",
-         "Broad topic. Shows hybrid search combining meaning and keyword matching."),
-        ("What's in the news about Hurricane Helene recovery?",
-         "Timely topic. Matches western NC disaster recovery press releases."),
-        ("Are there any clips about education or schools?",
-         "Wide query \u2014 could match teacher pay, school safety, student wellbeing."),
+        ("Any press releases about Hurricane Helene recovery?",
+         "Hits the $8.5M small business infrastructure grants and WNC recovery clips."),
+        ("What has the Governor said about law enforcement pay?",
+         "Hits Charlotte law enforcement raises clip and $1.4B Critical Needs Budget."),
+        ("Any news about jobs or economic development?",
+         "Broad query. Hits PSA Airlines (400 jobs), rural listening tour, Students@Work."),
     ]
     add_question_slide(prs, "News Clips", "Search Governor press releases scraped from governor.nc.gov", BLUE, clips_questions)
 
     # ===== SLIDE 3: REMARKS SEARCH =====
     remarks_questions = [
         ("What has the Governor said about mental health and public safety?",
-         "Starter from the talk track. Hits the October column \u2014 mental health as public safety."),
+         "Starter. Hits October column \u2014 $195M public safety package, 1.8M adults with mental health conditions."),
         ("What language has the Governor used about keeping kids safe online?",
-         "Direct hit on the September column. Shows retrieval of specific policy language."),
-        ("How has the Governor talked about emergency preparedness and hurricane recovery?",
-         "Pulls from August (prep) and November (Helene gratitude). Cross-speech synthesis."),
-        ("What has the Governor said about law enforcement and supporting police?",
-         "October column: $195M public safety package, raising officer salaries."),
+         "Direct hit on September column \u2014 Student Safety Task Force, cell phone legislation."),
+        ("How has the Governor talked about hurricane recovery?",
+         "Cross-speech: State of the State ($60B damages), August (prep), November (98% roads reopened)."),
+        ("What has the Governor said about food banks and hunger?",
+         "December column (MANNA, Second Harvest, SNAP cuts) + November (food banks)."),
         ("How does the Governor talk about North Carolina's history and democracy?",
-         "January column: America 250, Halifax Resolves, Bill of Rights. Rich synthesis."),
-        ("What has the Governor said about food insecurity and food banks?",
-         "December column (MANNA, Second Harvest) + November (farmers). Quotes with citations."),
+         "January column \u2014 America 250, Halifax Resolves, Moores Creek Bridge, Bill of Rights."),
     ]
     add_question_slide(prs, "Remarks Search", "Search the Governor's speeches and columns \u2014 GPT-4o writes a synthesis with direct quotes", GREEN, remarks_questions)
 
@@ -259,10 +255,10 @@ def main():
          "RAG synthesis with direct quotes and citations \u2014 the core value prop", GREEN),
         ("3", "Proofread", "Paste Sample 1 (short transcript with typos)",
          "Quick turnaround, every change explained with confidence levels", ORANGE),
-        ("4", "Clips #3 (if time)", "\"Has the Governor said anything about rural internet access?\"",
-         "The \"wow\" moment \u2014 semantic search finds \"broadband\" from \"rural internet\"", BLUE),
-        ("5", "Remarks #3 (if time)", "\"How has the Governor talked about emergency preparedness?\"",
-         "Cross-speech synthesis \u2014 pulls from August + November columns", GREEN),
+        ("4", "Clips #3 (if time)", "\"Any press releases about Hurricane Helene recovery?\"",
+         "Shows the agent surfacing timely, relevant press releases", BLUE),
+        ("5", "Remarks #3 (if time)", "\"How has the Governor talked about hurricane recovery?\"",
+         "Cross-speech synthesis \u2014 pulls from State of the State + August + November", GREEN),
     ]
 
     y = Inches(1.9)

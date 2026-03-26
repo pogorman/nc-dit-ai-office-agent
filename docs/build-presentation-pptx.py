@@ -141,6 +141,263 @@ def add_insight_box(slide, y, bold_text, rest_text):
     run_rest.font.name = "Segoe UI"
 
 
+def add_architecture_slide(prs, blank):
+    """Slide 6: Architecture overview — service topology."""
+    s = prs.slides.add_slide(blank)
+    set_bg(s, NAVY)
+
+    tb(s, Inches(0.6), Inches(0.25), Inches(12), Inches(0.55),
+       "Architecture Overview", sz=34, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
+    tb(s, Inches(0.6), Inches(0.75), Inches(12), Inches(0.3),
+       "End-to-end service topology on Azure", sz=14,
+       color=RGBColor(0xBB, 0xCC, 0xFF), align=PP_ALIGN.CENTER)
+
+    BW, BH = Inches(1.95), Inches(1.15)
+    AW = Inches(0.4)
+    Y = Inches(1.7)
+    FILL_A = RGBColor(0x15, 0x38, 0x70)
+    FILL_B = RGBColor(0x1A, 0x40, 0x80)
+    LINE_C = RGBColor(0x33, 0x55, 0x99)
+    ARR_C = RGBColor(0x55, 0x77, 0xBB)
+
+    cx = [Inches(0.35)]
+    for _ in range(3):
+        cx.append(cx[-1] + BW + AW)
+
+    main_boxes = [
+        ("Teams / Web", "Users ask questions\nor paste transcripts"),
+        ("Copilot Studio", "Agent orchestration\nroutes to the right skill"),
+        ("API Management", "Auth gateway\nsubscription key + routing"),
+        ("Azure Functions", "Serverless compute\n6 TypeScript functions"),
+    ]
+
+    for i, (title, detail) in enumerate(main_boxes):
+        fill = FILL_A if i % 2 == 0 else FILL_B
+        rect(s, cx[i], Y, BW, BH, fill, line_color=LINE_C)
+        tb(s, cx[i] + Inches(0.08), Y + Inches(0.15), BW - Inches(0.16), Inches(0.3),
+           title, sz=13, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
+        tb(s, cx[i] + Inches(0.08), Y + Inches(0.5), BW - Inches(0.16), Inches(0.55),
+           detail, sz=9, color=RGBColor(0xAA, 0xBB, 0xDD), align=PP_ALIGN.CENTER)
+        if i < 3:
+            tb(s, cx[i] + BW, Y + BH / 2 - Inches(0.15), AW, Inches(0.3),
+               "\u2192", sz=22, color=ARR_C, align=PP_ALIGN.CENTER)
+
+    # Arrow from Functions to backend services
+    tb(s, cx[3] + BW, Y + BH / 2 - Inches(0.15), AW, Inches(0.3),
+       "\u2192", sz=22, color=ARR_C, align=PP_ALIGN.CENTER)
+
+    # Backend services (stacked vertically)
+    SX = cx[3] + BW + AW
+    SW, SH, SG = Inches(2.55), Inches(0.8), Inches(0.1)
+    services = [
+        ("Azure OpenAI", "GPT-4o  \u00b7  text-embedding-3-large", GREEN),
+        ("AI Search", "Hybrid vector + keyword  \u00b7  semantic ranker", BLUE),
+        ("Cosmos DB", "Serverless  \u00b7  metadata + full text", ORANGE),
+    ]
+    sy = Y - Inches(0.15)
+    for title, detail, accent in services:
+        rect(s, SX, sy, SW, SH, accent)
+        tb(s, SX + Inches(0.08), sy + Inches(0.1), SW - Inches(0.16), Inches(0.28),
+           title, sz=12, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
+        tb(s, SX + Inches(0.08), sy + Inches(0.4), SW - Inches(0.16), Inches(0.35),
+           detail, sz=9, color=RGBColor(0xEE, 0xEE, 0xEE), align=PP_ALIGN.CENTER)
+        sy += SH + SG
+
+    # Supporting services row
+    SPY = Inches(4.3)
+    tb(s, Inches(0.6), SPY - Inches(0.35), Inches(12), Inches(0.3),
+       "SUPPORTING SERVICES", sz=10, color=RGBColor(0x77, 0x88, 0xAA),
+       bold=True, align=PP_ALIGN.CENTER)
+
+    support = [
+        ("Key Vault", "Function host key\nfor APIM only"),
+        ("Blob Storage", "Remarks uploads\ntrigger ingestion"),
+        ("VNet + Private Endpoints", "Network isolation\nCosmos + Blob"),
+        ("Managed Identity", "DefaultAzureCredential\nzero secrets in code"),
+    ]
+    SPW, SPH, SPG = Inches(2.7), Inches(0.9), Inches(0.27)
+    total = len(support) * SPW + (len(support) - 1) * SPG
+    sx = (SLIDE_W - total) / 2
+    SP_FILL = RGBColor(0x12, 0x2D, 0x55)
+    SP_LINE = RGBColor(0x2A, 0x44, 0x77)
+    for title, detail in support:
+        rect(s, sx, SPY, SPW, SPH, SP_FILL, line_color=SP_LINE)
+        tb(s, sx + Inches(0.08), SPY + Inches(0.1), SPW - Inches(0.16), Inches(0.25),
+           title, sz=11, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
+        tb(s, sx + Inches(0.08), SPY + Inches(0.38), SPW - Inches(0.16), Inches(0.45),
+           detail, sz=9, color=RGBColor(0x99, 0xAA, 0xCC), align=PP_ALIGN.CENTER)
+        sx += SPW + SPG
+
+    # Cost callout
+    CY = Inches(5.6)
+    rect(s, Inches(2.8), CY, Inches(7.7), Inches(0.6),
+         RGBColor(0x0D, 0x22, 0x44), line_color=RGBColor(0x33, 0x55, 0x88))
+    tb(s, Inches(3.0), CY + Inches(0.08), Inches(7.3), Inches(0.4),
+       "~$120\u2013195/mo total  \u00b7  Serverless \u2014 scales to zero  \u00b7  100% consumption tier",
+       sz=13, color=RGBColor(0xBB, 0xCC, 0xFF), align=PP_ALIGN.CENTER)
+
+    FTR = RGBColor(0x66, 0x77, 0x99)
+    tb(s, Inches(0.6), Inches(7.05), Inches(5), Inches(0.3),
+       "NC DIT AI Office", sz=9, color=FTR)
+    tb(s, Inches(7.5), Inches(7.05), Inches(5), Inches(0.3),
+       "6 / 8", sz=9, color=FTR, align=PP_ALIGN.RIGHT)
+
+
+def add_request_flow_slide(prs, blank):
+    """Slide 7: Request flow — one swim lane per capability."""
+    s = prs.slides.add_slide(blank)
+    set_bg(s, WHITE)
+
+    tb(s, Inches(0.6), Inches(0.3), Inches(12), Inches(0.55),
+       "Request Flow", sz=34, color=NAVY, bold=True)
+    tb(s, Inches(0.6), Inches(0.8), Inches(12), Inches(0.3),
+       "What happens when a user sends a message", sz=14, color=LIGHT_GRAY)
+
+    BW, BH = Inches(2.35), Inches(1.2)
+    AW = Inches(0.3)
+    START_X = Inches(1.4)
+
+    lanes = [
+        ("News\nClips", BLUE, Inches(1.4), [
+            ("User asks in Teams", "\"What clips came in\nabout broadband?\""),
+            ("APIM routes request", "Subscription key auth\n\u2192 clips-query function"),
+            ("AI Search", "Hybrid vector + keyword\nsemantic reranker"),
+            ("Return matching clips", "Title, date, outlet,\nGovernor mention"),
+        ]),
+        ("Remarks\nSearch", GREEN, Inches(3.0), [
+            ("User asks in Teams", "\"What has the Governor\nsaid about teacher pay?\""),
+            ("APIM routes request", "Subscription key auth\n\u2192 remarks-query function"),
+            ("AI Search + GPT-4o", "Retrieve chunks, then\nsynthesize with quotes"),
+            ("Return summary", "Written synthesis with\ndirect quotes + sources"),
+        ]),
+        ("Proof-\nread", ORANGE, Inches(4.6), [
+            ("User pastes transcript", "Raw text with\nASR/OCR errors"),
+            ("APIM routes request", "Subscription key auth\n\u2192 proofread function"),
+            ("GPT-4o proofreads", "Fix errors, preserve\nspeaking style"),
+            ("Return corrections", "Clean text + change list\nwith confidence levels"),
+        ]),
+    ]
+
+    for label, color, y, steps in lanes:
+        # Color bar on left
+        bar = s.shapes.add_shape(MSO_SHAPE.RECTANGLE,
+                                 Inches(0.4), y, Inches(0.07), BH)
+        bar.fill.solid()
+        bar.fill.fore_color.rgb = color
+        bar.line.fill.background()
+
+        # Lane label
+        tb(s, Inches(0.52), y + Inches(0.3), Inches(0.85), Inches(0.6),
+           label, sz=12, color=color, bold=True, align=PP_ALIGN.CENTER)
+
+        # Step boxes
+        x = START_X
+        for i, (title, detail) in enumerate(steps):
+            rect(s, x, y, BW, BH, FAFA, line_color=DDD)
+            circle(s, x + Inches(0.08), y + Inches(0.08), Inches(0.26),
+                   color, str(i + 1), text_sz=10)
+            tb(s, x + Inches(0.4), y + Inches(0.08), BW - Inches(0.5), Inches(0.4),
+               title, sz=11, color=DARK, bold=True)
+            tb(s, x + Inches(0.4), y + Inches(0.5), BW - Inches(0.5), Inches(0.6),
+               detail, sz=9, color=GRAY)
+            x += BW
+            if i < len(steps) - 1:
+                tb(s, x, y + BH / 2 - Inches(0.12), AW, Inches(0.25),
+                   "\u2192", sz=18, color=FOOTER_GRAY, align=PP_ALIGN.CENTER)
+                x += AW
+
+    footer(s, "NC DIT AI Office", "7 / 8")
+
+
+def add_data_flow_slide(prs, blank):
+    """Slide 8: Data flow — how data enters and exits the system."""
+    s = prs.slides.add_slide(blank)
+    set_bg(s, WHITE)
+
+    tb(s, Inches(0.6), Inches(0.25), Inches(12), Inches(0.55),
+       "Data Flow", sz=34, color=NAVY, bold=True)
+    tb(s, Inches(0.6), Inches(0.75), Inches(12), Inches(0.3),
+       "How data enters the system and how users get answers", sz=14, color=LIGHT_GRAY)
+
+    def section_line(y, text):
+        tb(s, Inches(0.6), y, Inches(3), Inches(0.3), text, sz=12, color=NAVY, bold=True)
+        bar = s.shapes.add_shape(MSO_SHAPE.RECTANGLE,
+                                 Inches(0.6), y + Inches(0.28), Inches(12.1), Inches(0.02))
+        bar.fill.solid()
+        bar.fill.fore_color.rgb = NAVY
+        bar.line.fill.background()
+
+    BW, BH = Inches(2.35), Inches(0.75)
+    AW = Inches(0.28)
+
+    def flow_row(y, label, label_color, steps, accent_first=True):
+        tb(s, Inches(0.45), y + Inches(0.15), Inches(0.85), Inches(0.45),
+           label, sz=10, color=label_color, bold=True, align=PP_ALIGN.CENTER)
+        x = Inches(1.4)
+        for i, (title, detail) in enumerate(steps):
+            is_accent = (accent_first and i == 0) or (not accent_first and i == len(steps) - 1)
+            if is_accent:
+                rect(s, x, y, BW, BH, label_color)
+                tb(s, x + Inches(0.08), y + Inches(0.08), BW - Inches(0.16), Inches(0.28),
+                   title, sz=10, color=WHITE, bold=True, align=PP_ALIGN.CENTER)
+                tb(s, x + Inches(0.08), y + Inches(0.38), BW - Inches(0.16), Inches(0.32),
+                   detail, sz=8, color=RGBColor(0xEE, 0xEE, 0xEE), align=PP_ALIGN.CENTER)
+            else:
+                rect(s, x, y, BW, BH, FAFA, line_color=DDD)
+                tb(s, x + Inches(0.08), y + Inches(0.08), BW - Inches(0.16), Inches(0.28),
+                   title, sz=10, color=DARK, bold=True, align=PP_ALIGN.CENTER)
+                tb(s, x + Inches(0.08), y + Inches(0.38), BW - Inches(0.16), Inches(0.32),
+                   detail, sz=8, color=GRAY, align=PP_ALIGN.CENTER)
+            x += BW
+            if i < len(steps) - 1:
+                tb(s, x, y + BH / 2 - Inches(0.1), AW, Inches(0.2),
+                   "\u2192", sz=16, color=FOOTER_GRAY, align=PP_ALIGN.CENTER)
+                x += AW
+
+    # DATA IN
+    section_line(Inches(1.15), "DATA IN \u2014 Ingestion")
+
+    flow_row(Inches(1.55), "CLIPS", BLUE, [
+        ("Timer \u2014 7 AM daily", "Azure Function\nclips-ingest"),
+        ("Scrape governor.nc.gov", "Fetch press releases\nextract clean text"),
+        ("Embed", "Azure OpenAI\ntext-embedding-3-large"),
+        ("Store + Index", "Cosmos DB (metadata)\nAI Search (vectors)"),
+    ])
+
+    flow_row(Inches(2.5), "REMARKS", GREEN, [
+        ("Blob Upload trigger", "Azure Function\nremarks-ingest"),
+        ("Chunk into paragraphs", "Split speech into\nparagraph-sized chunks"),
+        ("Embed", "Azure OpenAI\ntext-embedding-3-large"),
+        ("Store + Index", "Cosmos DB (chunks)\nAI Search (vectors)"),
+    ])
+
+    # DATA OUT
+    section_line(Inches(3.55), "DATA OUT \u2014 Queries")
+
+    flow_row(Inches(3.95), "CLIPS", BLUE, [
+        ("User asks question", "Copilot Studio \u2192 APIM\n\u2192 clips-query"),
+        ("AI Search", "Hybrid vector + keyword\nsemantic reranker"),
+        ("Return results", "Matching clips with\ntitle, date, outlet"),
+        ("Display in Teams", "Agent formats clips\nfor the user"),
+    ], accent_first=False)
+
+    flow_row(Inches(4.9), "REMARKS", GREEN, [
+        ("User asks question", "Copilot Studio \u2192 APIM\n\u2192 remarks-query"),
+        ("AI Search", "Retrieve top matching\nchunks from speeches"),
+        ("GPT-4o synthesizes", "Write summary with\ndirect quotes + sources"),
+        ("Display in Teams", "Agent shows synthesis\nwith citations"),
+    ], accent_first=False)
+
+    flow_row(Inches(5.85), "PROOFREAD", ORANGE, [
+        ("User pastes text", "Copilot Studio \u2192 APIM\n\u2192 proofread"),
+        ("GPT-4o proofreads", "Fix errors, preserve\nspeaking style"),
+        ("Return corrections", "Clean text + change list\nwith confidence levels"),
+        ("Display in Teams", "Agent shows corrected\ntext + all changes"),
+    ], accent_first=False)
+
+    footer(s, "NC DIT AI Office", "8 / 8")
+
+
 def build():
     prs = Presentation()
     prs.slide_width = SLIDE_W
@@ -222,7 +479,7 @@ def build():
                 "\u2713  All three capabilities \u2014 built, deployed, and live in Teams",
                 sz=18, color=WHITE, bold=True)
 
-    footer(s, "NC DIT AI Office", "2 / 5")
+    footer(s, "NC DIT AI Office", "2 / 8")
 
     # ================================================================
     # SLIDE 3 — NEWS CLIPS
@@ -267,7 +524,7 @@ def build():
                     "Key: ",
                     '"rural internet access" finds an article titled "Broadband Investment for Underserved Communities" \u2014 because the meaning matches, not just the words.')
 
-    footer(s, "NC DIT AI Office", "3 / 5")
+    footer(s, "NC DIT AI Office", "3 / 8")
 
     # ================================================================
     # SLIDE 4 — REMARKS SEARCH
@@ -312,7 +569,7 @@ def build():
                     "This is the RAG pattern ",
                     "(Retrieval-Augmented Generation): we retrieve real source material first, then ask AI to summarize only what it found. The AI never invents quotes \u2014 it cites real text from real speeches.")
 
-    footer(s, "NC DIT AI Office", "4 / 5")
+    footer(s, "NC DIT AI Office", "4 / 8")
 
     # ================================================================
     # SLIDE 5 — PROOFREAD + PLATFORM
@@ -370,7 +627,22 @@ def build():
         tb(s, x + Inches(0.2), y + Inches(0.6), card_w - Inches(0.4), Inches(0.7),
            detail, sz=11, color=GRAY, align=PP_ALIGN.CENTER)
 
-    footer(s, "NC DIT AI Office", "5 / 5")
+    footer(s, "NC DIT AI Office", "5 / 8")
+
+    # ================================================================
+    # SLIDE 6 — ARCHITECTURE OVERVIEW
+    # ================================================================
+    add_architecture_slide(prs, blank)
+
+    # ================================================================
+    # SLIDE 7 — REQUEST FLOW
+    # ================================================================
+    add_request_flow_slide(prs, blank)
+
+    # ================================================================
+    # SLIDE 8 — DATA FLOW
+    # ================================================================
+    add_data_flow_slide(prs, blank)
 
     # Save
     out = Path(__file__).parent / "html" / "presentation.pptx"

@@ -391,26 +391,56 @@ Also created `.funcignore` to exclude `.git`, `infra/`, `seed/`, `src/`, `*.ts`,
 
 Created `docs/html/demo-questions.html` — a styled one-pager with sample prompts organized by capability:
 
-- **News Clips** (6 questions) — from basic search ("What clips came in this week about broadband?") to semantic demos ("Has the Governor said anything about rural internet access?" — finds "broadband" articles via meaning match)
-- **Remarks Search** (7 questions) — mapped to actual seeded content. Each question targets a specific column or cross-speech synthesis (e.g., emergency preparedness pulls from both the August and November columns)
+- **News Clips** (5 questions) — broadband, latest news, Hurricane Helene recovery, law enforcement pay, jobs/economic development. Each verified against seeded clips.
+- **Remarks Search** (5 questions) — mental health/public safety, kids online, hurricane recovery, food banks/hunger, NC history/democracy. Each mapped to specific seeded columns.
 - **Proofread** (2 sample transcripts) — a short one for quick demos and a longer one with speaker labels, both loaded with realistic ASR-style errors
 
 Also generated `docs/demo-questions.pptx` — same content in PowerPoint format with a suggested demo flow slide.
 
 ### Presentation PPTX
 
-Generated `docs/presentation.pptx` from the existing HTML slide deck using `python-pptx`. Same 5 slides: Title → The Ask → News Clips → Remarks Search → Proofread + Platform.
+Generated `docs/html/presentation.pptx` from the existing HTML slide deck using `python-pptx`. 8 slides total: Title → The Ask → News Clips → Remarks Search → Proofread + Platform → Architecture Overview → Request Flow → Data Flow.
 
 ### 3-Request Split
 
-The original presentation framed the customer's ask as 2 requests (clips + proofreading combined, remarks separate). Proofreading is its own distinct capability, so the Ask slide was split into 3 separate request cards, each with its own quote. Updated in both `presentation.html` and the PPTX build script.
+The original presentation framed the customer's ask as 2 requests (clips + proofreading combined, remarks separate). Proofreading is its own distinct capability, so the Ask slide was split into 3 separate request cards, each with its own quote.
 
 ### Build Scripts
 
 - `docs/build-demo-pptx.py` — generates `docs/demo-questions.pptx`
-- `docs/build-presentation-pptx.py` — generates `docs/presentation.pptx`
+- `docs/build-presentation-pptx.py` — generates `docs/html/presentation.pptx`
 
 Both use `python-pptx` and can be re-run to regenerate after edits.
+
+---
+
+## Chapter 13: Architecture Diagrams + Cold Start Fix
+
+**Date:** 2026-03-26
+
+### Cold Start Timeout
+
+During demo testing, the first Copilot Studio query hit a 240-second `ConnectorTimeoutError` — the Function App wasn't warm. The `always-ready=1` setting was documented in ARCHITECTURE.md but was never actually added to the Bicep.
+
+**Fix:** Added `alwaysReady: [{ name: 'http', instanceCount: 1 }]` to the `scaleAndConcurrency` block in `infra/modules/function-app.bicep`. This keeps 1 instance warm for HTTP triggers at all times (~$34/month).
+
+### Demo Questions Verified
+
+Several demo questions didn't produce results:
+- "Has the Governor said anything about rural internet access?" — no clips contained "rural internet" (broadband clip existed but semantic match wasn't strong enough)
+- "Are there any clips about education or schools?" — weak match
+
+Trimmed from 6+7 to 5+5 and verified every question hits specific seeded content by keyword AND semantic match.
+
+### Three Diagram Slides
+
+Added 3 new slides to `presentation.pptx` (slides 6–8):
+
+1. **Architecture Overview** (navy background) — Left-to-right service topology: Teams/Web → Copilot Studio → APIM → Azure Functions → backend services (OpenAI, AI Search, Cosmos DB stacked vertically). Supporting services row below (Key Vault, Blob Storage, VNet, Managed Identity). Cost callout at bottom.
+
+2. **Request Flow** (white background, swim lanes) — Three horizontal lanes showing the runtime path for each capability. Each lane has a colored accent bar, capability label, and 4 numbered step boxes with arrows. Shows what happens from user question to result.
+
+3. **Data Flow** (white background) — Split into DATA IN (ingestion) and DATA OUT (queries). Ingestion shows timer/blob triggers → process → embed → store. Queries show user question → route → search/synthesize → display. Color-coded to match capabilities.
 
 ---
 
