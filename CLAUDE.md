@@ -120,4 +120,3 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 - `.pdf` extraction in remarks-ingest.ts (needs `pdf-parse` package)
 - Blob trigger for remarks-ingest not firing reliably on Flex Consumption (use `seed/load-remarks.ts` as workaround)
 - Daily digest email sending stubbed (needs Logic App or SendGrid integration)
-- Add `clips/refresh` route to APIM and custom connector so it's callable from Copilot Studio and the SPA through APIM

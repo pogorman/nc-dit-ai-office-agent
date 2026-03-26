@@ -18,6 +18,7 @@ GRAY = RGBColor(0x55, 0x55, 0x55)
 LIGHT_GRAY = RGBColor(0x88, 0x88, 0x88)
 FAFA = RGBColor(0xFA, 0xFA, 0xFA)
 DDD = RGBColor(0xDD, 0xDD, 0xDD)
+PURPLE = RGBColor(0x7B, 0x2D, 0x8E)
 AMBER_BG = RGBColor(0xFF, 0xF8, 0xE1)
 AMBER_BORDER = RGBColor(0xF9, 0xA8, 0x25)
 AMBER_TEXT = RGBColor(0xE6, 0x51, 0x00)
@@ -141,8 +142,68 @@ def add_insight_box(slide, y, bold_text, rest_text):
     run_rest.font.name = "Segoe UI"
 
 
+def add_whats_next_slide(prs, blank):
+    """Slide 6: What's Next — Power Platform opportunities."""
+    s = prs.slides.add_slide(blank)
+    set_bg(s, WHITE)
+
+    # Purple header bar
+    cap_bar = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), SLIDE_W, Inches(1.2))
+    cap_bar.fill.solid()
+    cap_bar.fill.fore_color.rgb = PURPLE
+    cap_bar.line.fill.background()
+
+    tb(s, Inches(0.6), Inches(0.15), Inches(10), Inches(0.5),
+       "What\u2019s Next \u2014 Power Platform", sz=32, color=WHITE, bold=True)
+    tb(s, Inches(0.6), Inches(0.65), Inches(11), Inches(0.4),
+       "Azure does the heavy lifting. Power Platform delivers the experience.",
+       sz=15, color=RGBColor(0xE8, 0xD5, 0xF5))
+
+    # Three opportunity cards
+    cards = [
+        ("Daily Digest Email",
+         "Power Automate scheduled flow sends a morning clips summary via Outlook. "
+         "Unblocks a stubbed feature with zero new Azure resources."),
+        ("Dataverse for Metadata",
+         "Move clips + remarks metadata to Dataverse. Staff can browse and edit "
+         "in a model-driven app \u2014 no code needed."),
+        ("Reliable Blob Trigger",
+         "Power Automate \u201cWhen a blob is created\u201d trigger replaces the unreliable "
+         "Flex Consumption blob trigger for remarks ingestion."),
+    ]
+
+    card_w = Inches(3.6)
+    card_h = Inches(2.8)
+    card_gap = Inches(0.5)
+    total_w = card_w * 3 + card_gap * 2
+    start_x = (SLIDE_W - total_w) / 2
+
+    for i, (title, detail) in enumerate(cards):
+        x = start_x + i * (card_w + card_gap)
+        y = Inches(1.6)
+        r = rect(s, x, y, card_w, card_h, FAFA, line_color=DDD)
+
+        # Number circle
+        circ_size = Inches(0.4)
+        circle(s, x + card_w / 2 - circ_size / 2, y + Inches(0.2),
+               circ_size, PURPLE, str(i + 1), text_sz=14)
+
+        tb(s, x + Inches(0.2), y + Inches(0.75), card_w - Inches(0.4), Inches(0.3),
+           title, sz=17, color=DARK, bold=True, align=PP_ALIGN.CENTER)
+        tb(s, x + Inches(0.2), y + Inches(1.2), card_w - Inches(0.4), Inches(1.4),
+           detail, sz=12, color=GRAY, align=PP_ALIGN.CENTER)
+
+    # Insight box
+    add_insight_box(s, Inches(4.8),
+                    "Hybrid approach: ",
+                    "AI Search, OpenAI, and the RAG pipeline stay in Azure where they belong. "
+                    "Power Platform handles orchestration, notifications, and the data experience.")
+
+    footer(s, "NC DIT AI Office", "6 / 9")
+
+
 def add_architecture_slide(prs, blank):
-    """Slide 6: Architecture overview — service topology."""
+    """Slide 7: Architecture overview — service topology."""
     s = prs.slides.add_slide(blank)
     set_bg(s, NAVY)
 
@@ -240,7 +301,7 @@ def add_architecture_slide(prs, blank):
     tb(s, Inches(0.6), Inches(7.05), Inches(5), Inches(0.3),
        "NC DIT AI Office", sz=9, color=FTR)
     tb(s, Inches(7.5), Inches(7.05), Inches(5), Inches(0.3),
-       "6 / 8", sz=9, color=FTR, align=PP_ALIGN.RIGHT)
+       "7 / 9", sz=9, color=FTR, align=PP_ALIGN.RIGHT)
 
 
 def add_request_flow_slide(prs, blank):
@@ -306,7 +367,7 @@ def add_request_flow_slide(prs, blank):
                    "\u2192", sz=18, color=FOOTER_GRAY, align=PP_ALIGN.CENTER)
                 x += AW
 
-    footer(s, "NC DIT AI Office", "7 / 8")
+    footer(s, "NC DIT AI Office", "8 / 9")
 
 
 def add_data_flow_slide(prs, blank):
@@ -395,7 +456,7 @@ def add_data_flow_slide(prs, blank):
         ("Display in Teams", "Agent shows corrected\ntext + all changes"),
     ], accent_first=False)
 
-    footer(s, "NC DIT AI Office", "8 / 8")
+    footer(s, "NC DIT AI Office", "9 / 9")
 
 
 def build():
@@ -479,7 +540,7 @@ def build():
                 "\u2713  All three capabilities \u2014 built, deployed, and live in Teams",
                 sz=18, color=WHITE, bold=True)
 
-    footer(s, "NC DIT AI Office", "2 / 8")
+    footer(s, "NC DIT AI Office", "2 / 9")
 
     # ================================================================
     # SLIDE 3 — NEWS CLIPS
@@ -522,9 +583,9 @@ def build():
     # Insight
     add_insight_box(s, Inches(5.75),
                     "Key: ",
-                    '"rural internet access" finds an article titled "Broadband Investment for Underserved Communities" \u2014 because the meaning matches, not just the words.')
+                    '"police pay" finds an article titled "Governor Stein Calls for Law Enforcement Raises" \u2014 because the meaning matches, not just the words.')
 
-    footer(s, "NC DIT AI Office", "3 / 8")
+    footer(s, "NC DIT AI Office", "3 / 9")
 
     # ================================================================
     # SLIDE 4 — REMARKS SEARCH
@@ -569,7 +630,7 @@ def build():
                     "This is the RAG pattern ",
                     "(Retrieval-Augmented Generation): we retrieve real source material first, then ask AI to summarize only what it found. The AI never invents quotes \u2014 it cites real text from real speeches.")
 
-    footer(s, "NC DIT AI Office", "4 / 8")
+    footer(s, "NC DIT AI Office", "4 / 9")
 
     # ================================================================
     # SLIDE 5 — PROOFREAD + PLATFORM
@@ -627,20 +688,25 @@ def build():
         tb(s, x + Inches(0.2), y + Inches(0.6), card_w - Inches(0.4), Inches(0.7),
            detail, sz=11, color=GRAY, align=PP_ALIGN.CENTER)
 
-    footer(s, "NC DIT AI Office", "5 / 8")
+    footer(s, "NC DIT AI Office", "5 / 9")
 
     # ================================================================
-    # SLIDE 6 — ARCHITECTURE OVERVIEW
+    # SLIDE 6 — WHAT'S NEXT — POWER PLATFORM
+    # ================================================================
+    add_whats_next_slide(prs, blank)
+
+    # ================================================================
+    # SLIDE 7 — ARCHITECTURE OVERVIEW
     # ================================================================
     add_architecture_slide(prs, blank)
 
     # ================================================================
-    # SLIDE 7 — REQUEST FLOW
+    # SLIDE 8 — REQUEST FLOW
     # ================================================================
     add_request_flow_slide(prs, blank)
 
     # ================================================================
-    # SLIDE 8 — DATA FLOW
+    # SLIDE 9 — DATA FLOW
     # ================================================================
     add_data_flow_slide(prs, blank)
 

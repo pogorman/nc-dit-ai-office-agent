@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NC DIT AI Office Agent — Using Foundry Models While Bypassing Copilot Studio's Built-in 4o</title>
+<style>
+  @page { size: letter; margin: 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.4;
+    color: #1a1a1a;
+    max-width: 7.5in;
+    margin: 0 auto;
+    padding: 0.5in;
+  }
+  h1 {
+    font-size: 14pt;
+    color: #7b2d8e;
+    border-bottom: 2px solid #7b2d8e;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-size: 9pt;
+    color: #555;
+    margin-bottom: 12px;
+  }
+  h2 {
+    font-size: 11pt;
+    color: #0a2463;
+    margin: 14px 0 6px 0;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 2px;
+  }
+  h3 {
+    font-size: 9.5pt;
+    color: #333;
+    margin: 8px 0 3px 0;
+  }
+  p { margin-bottom: 6px; }
+  ul { padding-left: 16px; margin-bottom: 6px; }
+  li { margin-bottom: 2px; }
+  code {
+    font-family: 'Cascadia Code', Consolas, monospace;
+    font-size: 8.5pt;
+    background: #f0f0f0;
+    padding: 1px 3px;
+    border-radius: 2px;
+  }
+  .problem-box {
+    background: #fff3f3;
+    border-left: 4px solid #d83b01;
+    padding: 8px 10px;
+    margin: 8px 0;
+  }
+  .problem-box strong { color: #d83b01; }
+  .solution-box {
+    background: #f0faf0;
+    border-left: 4px solid #107c10;
+    padding: 8px 10px;
+    margin: 8px 0;
+  }
+  .solution-box strong { color: #107c10; }
+  .warn-box {
+    background: #fff8e1;
+    border-left: 4px solid #f9a825;
+    padding: 8px 10px;
+    margin: 8px 0;
+  }
+  .warn-box strong { color: #e65100; }
+  .diagram {
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin: 8px 0;
+    font-family: 'Cascadia Code', Consolas, monospace;
+    font-size: 8pt;
+    line-height: 1.5;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 8px 0;
+  }
+  .col-card {
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 8px 10px;
+    background: #fafafa;
+  }
+  .col-card h3 { margin-top: 0; }
+  .col-card.bad { border-color: #d83b01; background: #fff8f5; }
+  .col-card.bad h3 { color: #d83b01; }
+  .col-card.good { border-color: #107c10; background: #f5fdf5; }
+  .col-card.good h3 { color: #107c10; }
+  .step {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+    align-items: flex-start;
+  }
+  .step-num {
+    background: #7b2d8e;
+    color: white;
+    font-weight: 700;
+    font-size: 8pt;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .gcc-note {
+    background: #e8f4fd;
+    border-left: 4px solid #0078d4;
+    padding: 8px 10px;
+    margin: 8px 0;
+  }
+  .gcc-note strong { color: #0078d4; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 8.5pt;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 4px 6px;
+    text-align: left;
+  }
+  th {
+    background: #f0f0f0;
+    font-weight: 600;
+    color: #333;
+  }
+  .footer {
+    margin-top: 12px;
+    font-size: 7.5pt;
+    color: #999;
+    text-align: center;
+    border-top: 1px solid #eee;
+    padding-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Using Foundry Models While Bypassing Copilot Studio's Built-in 4o</h1>
+<div class="subtitle">How to use GPT-5 (or any Azure AI Foundry model) for the heavy lifting while keeping Copilot Studio as the delivery channel &mdash; without its orchestrator model rewriting your answers.</div>
+
+<h2>1. The Problem</h2>
+
+<div class="problem-box">
+  <strong>Copilot Studio in GCC only has GPT-4o.</strong> When you use generative orchestration or generative answers, 4o sits between your backend response and the user. It can paraphrase, truncate, add hedging, or drop citations &mdash; degrading a better answer from a more capable model.
+</div>
+
+<div class="two-col">
+  <div class="col-card bad">
+    <h3>What 4o can do to your response</h3>
+    <ul>
+      <li>Paraphrase or summarize a nuanced synthesis</li>
+      <li>Drop direct quotes, citations, or source links</li>
+      <li>Flatten structured output (change lists, confidence levels)</li>
+      <li>Add unnecessary caveats or hedging language</li>
+      <li>Truncate long responses</li>
+    </ul>
+  </div>
+  <div class="col-card good">
+    <h3>What we want instead</h3>
+    <ul>
+      <li>Foundry model (GPT-5, o3, etc.) generates the final answer</li>
+      <li>Answer reaches the user <strong>verbatim</strong></li>
+      <li>Copilot Studio handles the channel (Teams, web) &mdash; not the thinking</li>
+      <li>Citations, quotes, and structure preserved exactly</li>
+      <li>Topic routing still works for multi-capability agent</li>
+    </ul>
+  </div>
+</div>
+
+<h2>2. The Architecture: Copilot Studio as Thin Shell</h2>
+
+<p>The key insight: <strong>Copilot Studio doesn't have to think.</strong> If you use classic topic authoring (not generative orchestration), you control exactly what gets sent and displayed. The built-in 4o model is only invoked when you use generative features.</p>
+
+<div class="diagram">
+User (Teams / Web)
+  &darr;
+Copilot Studio                    &larr; Classic topics only, NO generative orchestration
+  &darr;  trigger phrases route to the right topic
+Topic: "News Clips"               Topic: "Remarks Search"          Topic: "Proofread"
+  &darr;                               &darr;                              &darr;
+Custom Connector (APIM)           Custom Connector (APIM)          Custom Connector (APIM)
+  &darr;                               &darr;                              &darr;
+Azure Function                    Azure Function                   Azure Function
+  &darr;                               &darr;                              &darr;
+AI Foundry (GPT-5)                AI Foundry (GPT-5)               AI Foundry (GPT-5)
+  &darr;                               &darr;                              &darr;
+Response returned verbatim via Message node &mdash; 4o never touches it</div>
+
+<h2>3. How to Keep 4o Out of the Picture</h2>
+
+<div class="step"><div class="step-num">1</div><div><strong>Turn off generative orchestration.</strong> In Copilot Studio &rarr; Settings &rarr; Generative AI, disable "AI-powered copilot." This stops 4o from interpreting user messages and choosing topics on its own. You'll use classic trigger phrases instead.</div></div>
+
+<div class="step"><div class="step-num">2</div><div><strong>Use classic topic authoring.</strong> Each capability (clips, remarks, proofread) gets its own topic with trigger phrases. The topic calls the custom connector, stores the response in a variable, and displays it in a Message node. No "generative answers" node anywhere in the flow.</div></div>
+
+<div class="step"><div class="step-num">3</div><div><strong>Display the response variable directly.</strong> In the Message node, insert the connector's output variable. Copilot Studio renders it as-is &mdash; no 4o involvement. For plain text, use <code>{Topic.ResponseText}</code>. For rich content, use an Adaptive Card.</div></div>
+
+<div class="step"><div class="step-num">4</div><div><strong>Use Adaptive Cards for structured output.</strong> Return JSON from your backend, bind it to an Adaptive Card template in the Message node. Card content is rendered verbatim &mdash; 4o cannot rewrite Adaptive Card payloads. This is the strongest guarantee of fidelity.</div></div>
+
+<div class="step"><div class="step-num">5</div><div><strong>Move the AI model call to Azure AI Foundry.</strong> Instead of calling Azure OpenAI directly from your Function, call an AI Foundry deployment. The Function code changes are minimal &mdash; swap the endpoint and deployment name. APIM still sits in front.</div></div>
+
+<h2>4. What Changes in the Current Stack</h2>
+
+<table>
+  <tr><th>Component</th><th>Today</th><th>After (Foundry model)</th></tr>
+  <tr><td>Copilot Studio orchestration</td><td>Generative (4o chooses topics)</td><td>Classic topics (trigger phrases)</td></tr>
+  <tr><td>Copilot Studio response</td><td>4o may paraphrase connector output</td><td>Message node displays variable verbatim</td></tr>
+  <tr><td>Backend model</td><td>Azure OpenAI GPT-4o</td><td>AI Foundry GPT-5 (or o3, 4.1, etc.)</td></tr>
+  <tr><td>Backend code</td><td><code>openai-client.ts</code> &rarr; Azure OpenAI endpoint</td><td><code>openai-client.ts</code> &rarr; Foundry endpoint</td></tr>
+  <tr><td>Auth</td><td>DefaultAzureCredential + Cognitive Services OpenAI User</td><td>DefaultAzureCredential + Foundry RBAC</td></tr>
+  <tr><td>APIM</td><td>No change</td><td>No change</td></tr>
+  <tr><td>AI Search, Cosmos DB, Blob Storage</td><td>No change</td><td>No change</td></tr>
+  <tr><td>Embedding model</td><td>text-embedding-3-large</td><td>No change (embeddings stay on Azure OpenAI)</td></tr>
+</table>
+
+<div class="warn-box">
+  <strong>Embeddings don't need to move.</strong> The embedding model (text-embedding-3-large) is used at ingestion time, not at query time in the user's hot path. There's no benefit to moving it to Foundry. Keep it on Azure OpenAI.
+</div>
+
+<h2>5. Code Change: Swap the Model Endpoint</h2>
+
+<p>The current <code>src/shared/openai-client.ts</code> creates an OpenAI client pointed at your Azure OpenAI resource. To use a Foundry deployment, you change the endpoint and deployment name. The <code>openai</code> npm package works with both.</p>
+
+<div class="diagram">
+// Today (Azure OpenAI)
+const client = new AzureOpenAI({
+  endpoint: process.env.AZURE_OPENAI_ENDPOINT,      // https://&lt;resource&gt;.openai.azure.com
+  apiVersion: "2024-10-21",
+  azureADTokenProvider: getBearerTokenProvider(credential, scope),
+});
+
+// After (AI Foundry)
+const client = new AzureOpenAI({
+  endpoint: process.env.AI_FOUNDRY_ENDPOINT,         // https://&lt;project&gt;.services.ai.azure.com
+  apiVersion: "2025-01-01",
+  azureADTokenProvider: getBearerTokenProvider(credential, foundryScope),
+});
+
+// Deployment name changes from "gpt-4o" to your Foundry deployment (e.g., "gpt-5")</div>
+
+<p>Everything downstream &mdash; AI Search, Cosmos DB, the RAG pipeline &mdash; stays the same. The model swap is isolated to the client configuration.</p>
+
+<h2>6. Adaptive Card Strategy (Strongest Guarantee)</h2>
+
+<p>For maximum fidelity, return structured JSON from the backend and render it as an Adaptive Card. Copilot Studio passes the card through untouched.</p>
+
+<div class="two-col">
+  <div class="col-card">
+    <h3>Backend returns JSON</h3>
+    <div class="diagram" style="font-size: 7.5pt;">{
+  "summary": "Governor Stein has addressed...",
+  "quotes": [
+    {
+      "text": "We must invest in...",
+      "source": "State of the State",
+      "date": "2025-03-12"
+    }
+  ],
+  "sourceCount": 4
+}</div>
+  </div>
+  <div class="col-card">
+    <h3>Adaptive Card renders it</h3>
+    <ul>
+      <li>Summary text block &mdash; verbatim from GPT-5</li>
+      <li>Quote blocks with source attribution</li>
+      <li>Source count badge</li>
+      <li>No 4o rewriting &mdash; card payloads are opaque to the orchestrator</li>
+    </ul>
+  </div>
+</div>
+
+<h2>7. What You Lose (and Why It's Worth It)</h2>
+
+<div class="two-col">
+  <div class="col-card">
+    <h3>You lose</h3>
+    <ul>
+      <li><strong>Generative topic routing</strong> &mdash; 4o won't auto-detect intent; you need trigger phrases</li>
+      <li><strong>Conversational follow-ups</strong> &mdash; 4o won't handle "tell me more" without explicit topic design</li>
+      <li><strong>Fallback answers</strong> &mdash; no generative fallback for off-topic questions</li>
+    </ul>
+  </div>
+  <div class="col-card">
+    <h3>You gain</h3>
+    <ul>
+      <li><strong>Model freedom</strong> &mdash; use any Foundry model (GPT-5, o3, etc.) as it becomes available</li>
+      <li><strong>Response fidelity</strong> &mdash; answers reach users exactly as the model wrote them</li>
+      <li><strong>Predictability</strong> &mdash; no surprise paraphrasing or truncation from the orchestrator</li>
+      <li><strong>Cost control</strong> &mdash; 4o token usage drops to near zero</li>
+    </ul>
+  </div>
+</div>
+
+<div class="solution-box">
+  <strong>Hybrid option:</strong> You can keep generative orchestration ON for topic routing (so users don't need exact trigger phrases) but still use Message nodes with direct variable output for responses. This lets 4o pick the right topic but keeps it out of the answer. Test whether 4o's topic selection adds enough value to justify the risk of it occasionally touching the response.
+</div>
+
+<h2>8. GCC Considerations</h2>
+
+<div class="gcc-note">
+  <strong>GCC / GCC-High constraints:</strong>
+  <ul>
+    <li><strong>AI Foundry in GCC:</strong> Verify your Foundry project and model deployment are in a GCC-eligible region. As of early 2026, AI Foundry is available in GCC but model availability lags commercial. Check the Azure Government services-by-region page for current GPT-5 availability.</li>
+    <li><strong>Copilot Studio in GCC:</strong> Classic topic authoring and custom connectors work in GCC. Generative orchestration availability may differ &mdash; but since we're turning it off, this doesn't matter.</li>
+    <li><strong>Managed identity:</strong> DefaultAzureCredential works the same in GCC. The token audience for Foundry may use <code>.us</code> domain &mdash; verify against Foundry docs.</li>
+    <li><strong>Data residency:</strong> All data stays in-tenant. Foundry deployments in GCC regions keep data within the government boundary.</li>
+  </ul>
+</div>
+
+<h2>9. Migration Steps (Checklist)</h2>
+
+<div class="step"><div class="step-num">1</div><div>Create an AI Foundry project in your Azure subscription. Deploy the target model (GPT-5 or equivalent).</div></div>
+<div class="step"><div class="step-num">2</div><div>Grant the Function App's managed identity the appropriate Foundry RBAC role on the project.</div></div>
+<div class="step"><div class="step-num">3</div><div>Add <code>AI_FOUNDRY_ENDPOINT</code> and <code>AI_FOUNDRY_DEPLOYMENT</code> environment variables to the Function App.</div></div>
+<div class="step"><div class="step-num">4</div><div>Update <code>openai-client.ts</code> to use the Foundry endpoint for chat completions. Keep the Azure OpenAI endpoint for embeddings.</div></div>
+<div class="step"><div class="step-num">5</div><div>Test each capability end-to-end: clips query, remarks query, proofread. Verify response quality and latency.</div></div>
+<div class="step"><div class="step-num">6</div><div>In Copilot Studio, convert each topic to use Message nodes with direct variable output (no generative answers node).</div></div>
+<div class="step"><div class="step-num">7</div><div>(Optional) Build Adaptive Card templates for each capability's response format.</div></div>
+<div class="step"><div class="step-num">8</div><div>(Optional) Disable generative orchestration if you want full control over topic routing.</div></div>
+
+<div class="footer">NC DIT AI Office Agent &mdash; Foundry Model Integration Guide &mdash; March 2026</div>
+
+</body>
+</html>
