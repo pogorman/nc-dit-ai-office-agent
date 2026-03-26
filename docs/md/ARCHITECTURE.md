@@ -2,7 +2,7 @@
 
 ## Overview
 
-A serverless AI platform for the North Carolina Governor's Communications Office that automates **news clip monitoring** and provides **semantic search over historical remarks**. The agent experience is delivered through **Microsoft Copilot Studio**, giving staff a conversational interface in Teams (or web) without custom frontend development.
+A serverless AI platform for the North Carolina Governor's Communications Office that automates **news clip monitoring**, provides **semantic search over historical remarks**, and offers **AI-powered transcript proofreading**. The agent experience is delivered through **Microsoft Copilot Studio**, giving staff a conversational interface in Teams (or web) without custom frontend development.
 
 ---
 

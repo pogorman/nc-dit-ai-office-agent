@@ -92,6 +92,10 @@ az deployment group create \
 ├── seed/                     Data seeding & index creation scripts
 │   └── remarks/              7 seeded remarks (State of State + 6 monthly columns)
 ├── docs/
+│   ├── demo-questions.pptx       Demo questions PowerPoint
+│   ├── presentation.pptx         5-slide presentation PowerPoint
+│   ├── build-demo-pptx.py        Regenerate demo-questions.pptx
+│   ├── build-presentation-pptx.py Regenerate presentation.pptx
 │   ├── html/                 Printable HTML guides, presentation, talk track, demo UI
 │   ├── md/                   Markdown docs (ARCHITECTURE, FAQ, USER-GUIDE, etc.)
 │   └── pdf/                  PDF exports (for printed handouts)
@@ -149,5 +153,8 @@ The Power Platform custom connector (`/connector/`) bridges Copilot Studio to AP
 | [HOW-I-WAS-BUILT.md](./docs/md/HOW-I-WAS-BUILT.md) | Build journal with prompts and decisions |
 | [Architecture Cheat Sheet](./docs/html/architecture-cheat-sheet.html) | One-pager: why each Azure service was chosen |
 | [How It Works Guide](./docs/html/how-it-works-guide.html) | ELI5 guide for narrating the architecture to non-technical audiences |
-| [Presentation](./docs/html/presentation.html) | 5-slide demo deck (open in browser, F11 fullscreen) |
+| [Presentation (HTML)](./docs/html/presentation.html) | 5-slide demo deck (open in browser, F11 fullscreen) |
+| [Presentation (PPTX)](./docs/presentation.pptx) | 5-slide PowerPoint version of the deck |
+| [Demo Questions (HTML)](./docs/html/demo-questions.html) | Sample prompts for live demo — clips, remarks, proofread |
+| [Demo Questions (PPTX)](./docs/demo-questions.pptx) | PowerPoint version of demo questions |
 | [Talk Track](./docs/html/talk-track.html) | 1-page speaker guide with timing + demo moments |

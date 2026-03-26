@@ -78,10 +78,15 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
     2025-12-16_december-column-..._governors-office.txt
     2026-01-30_january-column-..._governors-office.txt
 /docs
+  build-demo-pptx.py            — Generates demo-questions.pptx (python-pptx)
+  build-presentation-pptx.py    — Generates presentation.pptx (python-pptx)
+  demo-questions.pptx           — Demo questions PowerPoint (6 clips, 7 remarks, 2 proofread samples)
+  presentation.pptx             — 5-slide presentation PowerPoint
   /html                         — Printable HTML guides and presentation
     architecture-cheat-sheet.html
     how-it-works-guide.html
     demo.html                   — SPA demo UI (needs demo-server.js proxy)
+    demo-questions.html         — Sample prompts for live demo (HTML version)
     presentation.html           — 5-slide demo deck (open in browser, F11 fullscreen)
     talk-track.html             — 1-page speaker guide with timing + demo moments
   /md                           — Markdown documentation
@@ -93,7 +98,12 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
   /pdf                          — PDF exports (empty, for printed handouts)
 ```
 
-## Recent Changes (2026-03-24)
+## Recent Changes (2026-03-26)
+- **3-request split** — Presentation slide 2 now shows 3 separate customer requests (News Clips, Proofreading, Remarks) instead of combining clips + proofreading into one.
+- **Demo questions created** — `docs/html/demo-questions.html` + `docs/demo-questions.pptx` with sample prompts for all 3 capabilities, mapped to seeded data.
+- **Presentation PPTX** — `docs/presentation.pptx` generated from the HTML deck via `python-pptx`. Build script at `docs/build-presentation-pptx.py`.
+
+## Changes (2026-03-24)
 - **Clips dedup bug fixed** — `@azure/cosmos` v4 `ErrorResponse.code` is the string `"NotFound"`, not the number `404`. The dedup check in `clips-ingest.ts` was comparing with `!== 404`, so every new clip was treated as an error. Fix: check for both `404` and `"NotFound"`.
 - **Clips schedule changed** — Timer moved from every 15 min to daily at 7 AM Eastern (`0 0 7 * * *`). `WEBSITE_TIME_ZONE=America/New_York` set on Function App so cron is DST-aware.
 - **Manual refresh endpoint added** — `POST /api/clips/refresh` runs the same ingestion logic on demand, returns `{ successCount, errorCount, totalCount }`.

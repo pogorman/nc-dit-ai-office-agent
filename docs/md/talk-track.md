@@ -4,7 +4,7 @@
 Don't linger. "Let me show you what we built for the Governor's Communications Office."
 
 ## Slide 2: The Ask (1 minute)
-Read the two requests — these are their words. Emphasize: they came to us with two concrete problems, not a vague AI ask. Point out the green badge: all three capabilities are live in Teams today. This isn't a mockup.
+Read the three requests — these are their words. Emphasize: they came to us with three concrete problems, not a vague AI ask. Point out the green badge: all three capabilities are live in Teams today. This isn't a mockup.
 
 ## Slide 3: News Clips (2 minutes)
 Walk the top flow (ingestion): "Every morning at 7 AM, a serverless function scrapes the Governor's press release page, reads each article, converts it into a meaning-vector, and stores it." Walk the bottom flow (query): "Staff open the chatbot in Teams and ask a question. The system searches by meaning, not just keywords — so 'rural internet access' finds 'broadband investment' even though they share zero words."

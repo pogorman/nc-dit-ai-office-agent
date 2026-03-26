@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Demo Questions — NC Governor's Communications Agent</title>
+<style>
+  @page { size: letter; margin: 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.55;
+    color: #1a1a1a;
+    max-width: 7.5in;
+    margin: 0 auto;
+    padding: 0.5in;
+    background: #fff;
+  }
+
+  h1 {
+    font-size: 16pt;
+    color: #0a2463;
+    margin-bottom: 4px;
+  }
+  .tagline {
+    font-size: 9pt; color: #888;
+    margin-bottom: 18px;
+    border-bottom: 2px solid #0a2463;
+    padding-bottom: 8px;
+  }
+
+  .cap-section {
+    margin-bottom: 18px;
+    page-break-inside: avoid;
+  }
+  .cap-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 12pt;
+    font-weight: 700;
+  }
+  .cap-blue { background: #0078d4; }
+  .cap-green { background: #107c10; }
+  .cap-orange { background: #d83b01; }
+
+  .cap-note {
+    font-size: 8.5pt;
+    color: #666;
+    font-style: italic;
+    margin-bottom: 8px;
+    margin-left: 2px;
+  }
+
+  .question-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 10px 0;
+  }
+  .question-list li {
+    background: #f5f7fa;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    font-size: 9.5pt;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+  }
+  .q-num {
+    display: inline-block;
+    min-width: 20px; height: 20px;
+    line-height: 20px;
+    text-align: center;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: 700;
+    font-size: 8pt;
+    flex-shrink: 0;
+  }
+  .q-blue { background: #0078d4; }
+  .q-green { background: #107c10; }
+  .q-orange { background: #d83b01; }
+
+  .q-text {
+    flex: 1;
+  }
+  .q-prompt {
+    font-weight: 700;
+    color: #333;
+  }
+  .q-why {
+    color: #666;
+    font-size: 8.5pt;
+    margin-top: 2px;
+  }
+
+  .label {
+    display: inline-block;
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: #fff;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .label-starter { background: #107c10; }
+  .label-semantic { background: #0078d4; }
+  .label-filter { background: #6b7280; }
+  .label-rag { background: #107c10; }
+  .label-evolution { background: #7c3aed; }
+  .label-proofread { background: #d83b01; }
+
+  .transcript-box {
+    background: #fdf6ec;
+    border-left: 4px solid #d83b01;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 9pt;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    margin-bottom: 8px;
+  }
+
+  .tip-box {
+    background: #e8f5e9;
+    border-left: 4px solid #107c10;
+    padding: 8px 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 9pt;
+    margin-bottom: 10px;
+  }
+  .tip-box strong { color: #107c10; }
+
+  hr {
+    border: none;
+    border-top: 2px solid #0a2463;
+    margin: 16px 0 12px 0;
+  }
+
+  .footer {
+    margin-top: 14px;
+    font-size: 7.5pt;
+    color: #bbb;
+    text-align: center;
+    border-top: 1px solid #eee;
+    padding-top: 4px;
+  }
+
+  @media print {
+    body { padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Demo Questions — NC Governor's Communications Agent</h1>
+<div class="tagline">Sample prompts to type into the agent during a live demo &middot; March 2026</div>
+
+<!-- ===== NEWS CLIPS ===== -->
+<div class="cap-section">
+  <div class="cap-header cap-blue">News Clips</div>
+  <div class="cap-note">These questions search Governor press releases scraped from governor.nc.gov. Use them to show semantic search, keyword matching, and date filtering.</div>
+
+  <ul class="question-list">
+    <li>
+      <span class="q-num q-blue">1</span>
+      <div class="q-text">
+        <div class="q-prompt">What clips came in this week about broadband?</div>
+        <div class="q-why">Starter question from the talk track. Shows basic semantic search.</div>
+      </div>
+      <span class="label label-starter">Starter</span>
+    </li>
+    <li>
+      <span class="q-num q-blue">2</span>
+      <div class="q-text">
+        <div class="q-prompt">Show me the latest news.</div>
+        <div class="q-why">Triggers "latest" mode — returns most recent clips sorted by date, no search needed.</div>
+      </div>
+      <span class="label label-filter">Browse</span>
+    </li>
+    <li>
+      <span class="q-num q-blue">3</span>
+      <div class="q-text">
+        <div class="q-prompt">Has the Governor said anything about rural internet access?</div>
+        <div class="q-why">Demonstrates semantic matching — finds "broadband" articles even though the words don't overlap.</div>
+      </div>
+      <span class="label label-semantic">Semantic</span>
+    </li>
+    <li>
+      <span class="q-num q-blue">4</span>
+      <div class="q-text">
+        <div class="q-prompt">Any press releases about economic development or jobs?</div>
+        <div class="q-why">Broad topic query. Shows how hybrid search combines meaning and keyword matching.</div>
+      </div>
+      <span class="label label-semantic">Semantic</span>
+    </li>
+    <li>
+      <span class="q-num q-blue">5</span>
+      <div class="q-text">
+        <div class="q-prompt">What's in the news about Hurricane Helene recovery?</div>
+        <div class="q-why">Timely topic. Matches press releases about western NC disaster recovery efforts.</div>
+      </div>
+      <span class="label label-semantic">Semantic</span>
+    </li>
+    <li>
+      <span class="q-num q-blue">6</span>
+      <div class="q-text">
+        <div class="q-prompt">Are there any clips about education or schools?</div>
+        <div class="q-why">Broader query. Could match teacher pay, school safety, student wellbeing topics.</div>
+      </div>
+      <span class="label label-semantic">Semantic</span>
+    </li>
+  </ul>
+</div>
+
+<!-- ===== REMARKS SEARCH ===== -->
+<div class="cap-section">
+  <div class="cap-header cap-green">Remarks Search</div>
+  <div class="cap-note">These questions search the Governor's speeches and columns (State of the State + 6 monthly columns). The agent retrieves matching passages, then GPT-4o writes a synthesis with direct quotes and citations.</div>
+
+  <ul class="question-list">
+    <li>
+      <span class="q-num q-green">1</span>
+      <div class="q-text">
+        <div class="q-prompt">What has the Governor said about mental health and public safety?</div>
+        <div class="q-why">Starter question from the talk track. Hits the October column hard — mental health as public safety.</div>
+      </div>
+      <span class="label label-starter">Starter</span>
+    </li>
+    <li>
+      <span class="q-num q-green">2</span>
+      <div class="q-text">
+        <div class="q-prompt">What language has the Governor used about keeping kids safe online?</div>
+        <div class="q-why">Direct hit on the September column. Shows retrieval of specific policy language and the Student Safety Task Force.</div>
+      </div>
+      <span class="label label-rag">RAG</span>
+    </li>
+    <li>
+      <span class="q-num q-green">3</span>
+      <div class="q-text">
+        <div class="q-prompt">How has the Governor talked about emergency preparedness and hurricane recovery?</div>
+        <div class="q-why">Pulls from the August column (hurricane prep) and November column (Helene recovery gratitude). Shows cross-speech synthesis.</div>
+      </div>
+      <span class="label label-evolution">Cross-speech</span>
+    </li>
+    <li>
+      <span class="q-num q-green">4</span>
+      <div class="q-text">
+        <div class="q-prompt">What has the Governor said about law enforcement and supporting police?</div>
+        <div class="q-why">Matches October column ($195M public safety package, raising officer salaries) and State of the State.</div>
+      </div>
+      <span class="label label-rag">RAG</span>
+    </li>
+    <li>
+      <span class="q-num q-green">5</span>
+      <div class="q-text">
+        <div class="q-prompt">How does the Governor talk about North Carolina's history and democracy?</div>
+        <div class="q-why">Hits the January column about America 250, Halifax Resolves, and the Bill of Rights. Good for showing rich synthesis.</div>
+      </div>
+      <span class="label label-rag">RAG</span>
+    </li>
+    <li>
+      <span class="q-num q-green">6</span>
+      <div class="q-text">
+        <div class="q-prompt">What has the Governor said about food insecurity and food banks?</div>
+        <div class="q-why">Pulls from December column (MANNA, Second Harvest) and November (farmers, food banks). Shows the quotes-with-citations pattern well.</div>
+      </div>
+      <span class="label label-evolution">Cross-speech</span>
+    </li>
+    <li>
+      <span class="q-num q-green">7</span>
+      <div class="q-text">
+        <div class="q-prompt">What's the Governor's vision for North Carolina's economy?</div>
+        <div class="q-why">Big open-ended question. Pulls from State of the State + November (30,000 jobs, innovation, life sciences). Tests RAG on a wide topic.</div>
+      </div>
+      <span class="label label-semantic">Wide topic</span>
+    </li>
+  </ul>
+</div>
+
+<!-- ===== PROOFREAD ===== -->
+<div class="cap-section">
+  <div class="cap-header cap-orange">Transcript Proofreading</div>
+  <div class="cap-note">Paste one of these sample transcripts into the agent. The AI fixes errors and returns every change with a reason and confidence level.</div>
+
+  <div class="tip-box"><strong>Tip:</strong> For the demo, paste the short sample. If time permits, use the longer one to show the agent handles multi-paragraph transcripts.</div>
+
+  <p style="font-weight: 700; font-size: 9.5pt; margin: 8px 0 4px 0;">Sample 1 — Short (quick demo)</p>
+  <div class="transcript-box">Good evening, North Carolinains. Im honored to adress this chamber tonite. Our state faces real challanges — from hurricaine recovery in the west to the mental health crisis effecting our communities. But i beleive that togather, we can build a safer, stronger North Carolna. Governer Stien has proposed a 195 million dollar public saftey package that invests in law enforcment, violence preventation, and mental health treatement. Lets get it done.</div>
+
+  <p style="font-weight: 700; font-size: 9.5pt; margin: 8px 0 4px 0;">Sample 2 — With speaker labels</p>
+  <div class="transcript-box">Gov. Stien: Thank you all for being hear today. The work were doing in western North Carolna after Hurricaine Helene has been nothing short of extrodinary.
+
+Reporter: Governer, can you give us an update on the road re-openings?
+
+Gov Stein: Absolutley. The Departement of Transporation has re-opened ninty eight percent of Helene-impacted state roads. Our crews have been working around the clock, and i want to reconize there incredible effortt.
+
+Reporter: And what about the small buisness grants?
+
+Governer Stien: We've partnerd with philanthropies to send 55 million dollars in grants to more then twenty one hundred small buisnesses in western NC. These are real buisnesses — resturants, shops, farms — that were devestated by the storm.</div>
+</div>
+
+<hr>
+
+<div class="tip-box" style="margin-top: 12px;">
+  <strong>Demo flow:</strong> Start with Clips #1, then Remarks #1, then Proofread Sample 1. If the audience is engaged, circle back for a second question in each category. The semantic search questions (#3 in Clips, #3 in Remarks) are the strongest "wow" moments — they show the AI finding results that a keyword search would miss.
+</div>
+
+<div class="footer">NC DIT AI Office &middot; Demo Questions v1.0 &middot; March 2026</div>
+
+</body>
+</html>

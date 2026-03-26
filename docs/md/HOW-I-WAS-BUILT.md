@@ -8,11 +8,13 @@ An ELI5 walkthrough of how this project was designed and built, documenting the 
 
 **Date:** 2026-03-23
 
-The NC DIT AI Office came to us with two needs for the Governor's Communications team:
+The NC DIT AI Office came to us with three needs for the Governor's Communications team:
 
-1. **News Clips** — "How could we automate the process of identifying mentions of Governor Stein in the news and collecting the outlet, title, first paragraph, and first mention of Governor Stein in the article? Is there a way to use AI for proofreading of faulty transcripts?"
+1. **News Clips** — "How could we automate the process of identifying mentions of Governor Stein in the news and collecting the outlet, title, first paragraph, and first mention of Governor Stein in the article?"
 
-2. **Remarks Search** — "How could we create a useful search + retrieval function for existing language on a given topic? For example, what is the language we've used to talk about clean tech across a variety of remarks?"
+2. **Proofreading** — "Is there a way to use AI for proofreading of faulty transcripts?"
+
+3. **Remarks Search** — "How could we create a useful search + retrieval function for existing language on a given topic? For example, what is the language we've used to talk about clean tech across a variety of remarks?"
 
 ### Design Decisions
 
@@ -378,6 +380,37 @@ Discovered that `func azure functionapp publish` cannot upload through the VNet 
 3. `az storage account update --public-network-access Disabled`
 
 Also created `.funcignore` to exclude `.git`, `infra/`, `seed/`, `src/`, `*.ts`, `*.md` from the deploy package — without it the archive was too large and uploads would hang.
+
+---
+
+## Chapter 12: Demo Questions + Presentation PPTX
+
+**Date:** 2026-03-26
+
+### Demo Questions
+
+Created `docs/html/demo-questions.html` — a styled one-pager with sample prompts organized by capability:
+
+- **News Clips** (6 questions) — from basic search ("What clips came in this week about broadband?") to semantic demos ("Has the Governor said anything about rural internet access?" — finds "broadband" articles via meaning match)
+- **Remarks Search** (7 questions) — mapped to actual seeded content. Each question targets a specific column or cross-speech synthesis (e.g., emergency preparedness pulls from both the August and November columns)
+- **Proofread** (2 sample transcripts) — a short one for quick demos and a longer one with speaker labels, both loaded with realistic ASR-style errors
+
+Also generated `docs/demo-questions.pptx` — same content in PowerPoint format with a suggested demo flow slide.
+
+### Presentation PPTX
+
+Generated `docs/presentation.pptx` from the existing HTML slide deck using `python-pptx`. Same 5 slides: Title → The Ask → News Clips → Remarks Search → Proofread + Platform.
+
+### 3-Request Split
+
+The original presentation framed the customer's ask as 2 requests (clips + proofreading combined, remarks separate). Proofreading is its own distinct capability, so the Ask slide was split into 3 separate request cards, each with its own quote. Updated in both `presentation.html` and the PPTX build script.
+
+### Build Scripts
+
+- `docs/build-demo-pptx.py` — generates `docs/demo-questions.pptx`
+- `docs/build-presentation-pptx.py` — generates `docs/presentation.pptx`
+
+Both use `python-pptx` and can be re-run to regenerate after edits.
 
 ---
 
