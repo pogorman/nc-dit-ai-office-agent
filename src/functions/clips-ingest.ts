@@ -12,13 +12,17 @@ const GOV_BASE_URL = "https://governor.nc.gov";
 const FETCH_TIMEOUT_MS = 10_000;
 const PAGES_TO_SCRAPE = 2; // First 2 pages of press releases (~20 articles)
 
-const WEB_SEARCH_QUERIES = [
-  "North Carolina Governor Josh Stein news coverage past 6 months — WRAL, News & Observer, Charlotte Observer, AP. Do NOT include governor.nc.gov links.",
-  "Governor Josh Stein budget education teachers North Carolina news articles. Do NOT include governor.nc.gov links.",
-  "Governor Josh Stein Hurricane Helene recovery western North Carolina news. Do NOT include governor.nc.gov links.",
-  "Josh Stein North Carolina Medicaid healthcare policy news articles. Do NOT include governor.nc.gov links.",
-  "Josh Stein North Carolina law enforcement public safety economy jobs news. Do NOT include governor.nc.gov links.",
-];
+const NO_GOV = "Do NOT include governor.nc.gov links.";
+
+function webSearchQueries(timeframe: string): string[] {
+  return [
+    `North Carolina Governor Josh Stein news coverage ${timeframe} — WRAL, News & Observer, Charlotte Observer, AP. ${NO_GOV}`,
+    `Governor Josh Stein budget education teachers North Carolina news articles ${timeframe}. ${NO_GOV}`,
+    `Governor Josh Stein Hurricane Helene recovery western North Carolina news ${timeframe}. ${NO_GOV}`,
+    `Josh Stein North Carolina Medicaid healthcare policy news articles ${timeframe}. ${NO_GOV}`,
+    `Josh Stein North Carolina law enforcement public safety economy jobs news ${timeframe}. ${NO_GOV}`,
+  ];
+}
 
 interface ClipListing {
   title: string;
@@ -149,14 +153,16 @@ function outletFromUrl(url: string): string {
  * Uses the web_search tool to find recent Governor Stein coverage.
  */
 async function fetchWebNewsListings(
+  timeframe: string,
   context: InvocationContext
 ): Promise<ClipListing[]> {
-  context.log(`Searching web for Governor Stein news (${WEB_SEARCH_QUERIES.length} queries)`);
+  const queries = webSearchQueries(timeframe);
+  context.log(`Searching web for Governor Stein news (${queries.length} queries, ${timeframe})`);
 
   try {
     // Run all queries in parallel
     const queryResults = await Promise.all(
-      WEB_SEARCH_QUERIES.map((q) => webSearch(q).catch(() => []))
+      queries.map((q) => webSearch(q).catch(() => []))
     );
 
     // Merge and dedup across all queries
@@ -309,14 +315,14 @@ interface IngestionResult {
   sources: { gov: number; web: number };
 }
 
-async function runIngestion(context: InvocationContext): Promise<IngestionResult> {
+async function runIngestion(timeframe: string, context: InvocationContext): Promise<IngestionResult> {
   // Fetch from all sources in parallel
   const [govListings, webListings] = await Promise.all([
     fetchGovListings(PAGES_TO_SCRAPE, context).catch((error) => {
       context.error(`Failed to fetch gov listings: ${error}`);
       return [] as ClipListing[];
     }),
-    fetchWebNewsListings(context),
+    fetchWebNewsListings(timeframe, context),
   ]);
 
   // Merge and dedup by URL (first occurrence wins)
@@ -372,12 +378,12 @@ async function clipsIngest(timer: Timer, context: InvocationContext): Promise<vo
     context.log("Timer is past due — running anyway");
   }
 
-  await runIngestion(context);
+  await runIngestion("past week", context);
 }
 
 async function clipsRefresh(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   context.log(`Manual clips refresh triggered at ${new Date().toISOString()}`);
-  const result = await runIngestion(context);
+  const result = await runIngestion("past 6 months", context);
   return { jsonBody: result };
 }
 
