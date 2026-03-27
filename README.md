@@ -8,7 +8,7 @@ AI-powered tool for the North Carolina Governor's Communications Office that aut
 |---|---|---|
 | **Transcript Proofreading** | AI-powered cleanup of faulty ASR/OCR transcripts | Fully implemented |
 | **Remarks Search** | Semantic search + RAG synthesis across the Governor's remarks corpus | Implemented (`.txt` ingestion; `.docx`/`.pdf` stubbed) |
-| **News Clips** | Automated monitoring via governor.nc.gov scraping + web news search (Azure OpenAI Responses API with Bing grounding) | Implemented (30 clips: 23 gov + 7 external media; runs daily at 7 AM ET + manual refresh) |
+| **News Clips** | Automated monitoring via governor.nc.gov scraping + multi-query web search (5 focused queries via Azure OpenAI Responses API with Bing grounding) | Implemented (58 clips across 21 outlets; runs daily at 7 AM ET + manual refresh) |
 | **Daily Digest** | Weekday morning email summary of new clips | Stubbed (email sending TBD) |
 
 ## Architecture
@@ -19,7 +19,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for full system design, data models, Co
 - **Runtime:** TypeScript on Azure Functions v4 (Flex Consumption), Node.js 20
 - **Gateway:** Azure API Management (Consumption tier)
 - **Search:** Azure AI Search (Basic, hybrid vector + BM25)
-- **AI:** Azure OpenAI (GPT-4o + text-embedding-3-large + Responses API with Bing grounding for web news search)
+- **AI:** Azure OpenAI (GPT-4o + text-embedding-3-large + Responses API with Bing grounding for multi-query web news search)
 - **Storage:** Cosmos DB (Serverless) for clips/metadata, Blob Storage for remarks uploads
 - **Secrets:** Azure Key Vault (RBAC mode) — Function host key for APIM (no external API keys needed)
 - **Agent:** Microsoft Copilot Studio (Teams / web / SharePoint embed)
@@ -83,7 +83,7 @@ az deployment group create \
 │   │   └── remarks-query.ts      POST /api/remarks/query
 │   └── shared/               Singleton clients + types
 │       ├── types.ts
-│       ├── openai-client.ts      AzureOpenAI singleton + webSearch() via Responses API
+│       ├── openai-client.ts      AzureOpenAI singleton + webSearch() via Responses API (search_context_size: "high")
 │       ├── search-client.ts
 │       └── cosmos-client.ts
 ├── connector/                Power Platform custom connector

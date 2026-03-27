@@ -24,9 +24,12 @@ The system checks for new articles daily at 7 AM Eastern. You can also force an 
 ### What sources does it monitor?
 Two sources run in parallel on each ingestion cycle:
 1. **Governor's press releases** — scrapes governor.nc.gov/news/press-releases (first 2 pages, ~20 articles)
-2. **External media** — searches the web via Azure OpenAI's Responses API with Bing grounding to find coverage from outlets like WRAL, News & Observer, Charlotte Observer, AP News, and others
+2. **External media** — runs **5 focused web search queries** in parallel via Azure OpenAI's Responses API with Bing grounding (`search_context_size: "high"`). Each query targets a different topic area: general coverage, budget/education, Helene recovery, Medicaid/healthcare, law enforcement/economy. Each query returns ~8-12 URLs; combined: ~30-40 unique external URLs per run.
 
-Results are merged and deduplicated by URL. The clips index currently has 30 clips (23 NC Governor + 7 external media). Bing Search v7 APIs are retired; the Responses API `web_search` tool is the replacement and requires no separate Azure resource — it uses the existing Azure OpenAI resource.
+Results are merged and deduplicated by URL. The clips index currently has **58 clips across 21 outlets**: NC Governor (23), WRAL (8), WUNC (4), CBS17 (3), Carolina Journal (2), WLOS (2), NC Newsline (2), plus US News, The Assembly, News From The States, EdNC, and more. Bing Search v7 APIs are retired; the Responses API `web_search` tool is the replacement and requires no separate Azure resource.
+
+### What's the difference between the daily run and manual refresh?
+The daily 7 AM timer uses a **"past week"** timeframe — focused on catching new coverage. The manual `POST /api/clips/refresh` endpoint uses **"past 6 months"** — useful for backfilling historical coverage when first setting up or after adding new query topics.
 
 ### Can I get a daily email summary?
 Not yet — the daily digest HTML generation is built, but email delivery is not yet wired up. This will require a Logic App or SendGrid integration.
@@ -65,7 +68,7 @@ A Power Platform custom connector bridges Copilot Studio and the APIM gateway. T
 All data stays within the NC DIT Azure tenant. Authentication is via Entra ID (SSO). External calls are limited to governor.nc.gov (press release scraping) and the Azure OpenAI Responses API with Bing grounding (web news search) — no internal data leaves the environment. All service-to-service auth uses managed identity — no API keys or connection strings in application code. The Power Platform connector runs in a GCC environment, meeting government compliance requirements. Both Blob Storage and Cosmos DB have public network access disabled and are only accessible via VNet private endpoints.
 
 ### What does it cost to run?
-Approximately $120–195/month at steady state (includes always-ready instances to eliminate cold starts). See [ARCHITECTURE.md](./ARCHITECTURE.md#cost-estimate-monthly-steady-state) for the breakdown.
+Approximately $125–200/month at steady state (includes always-ready instances to eliminate cold starts). See [ARCHITECTURE.md](./ARCHITECTURE.md#cost-estimate-monthly-steady-state) for the breakdown.
 
 ### What file formats can I upload for remarks?
 Currently `.txt` files are fully supported. `.docx` (Word) and `.pdf` support is planned — the ingestion pipeline is built but the text extraction libraries need to be wired in.
@@ -89,7 +92,7 @@ Two dedup bugs were found and fixed:
 2. **Fixed 2026-03-26** — The Cosmos SDK v4 `.read()` method returns `statusCode: 404` for missing items instead of throwing an exception. The dedup logic was rewritten to check `statusCode === 200 && existingClip` rather than using try/catch.
 
 ### How much does the web news search cost?
-The Azure OpenAI Responses API with Bing grounding costs ~$0.035 per call ($35 per 1,000 calls). At once-daily ingestion, this adds ~$1/month. No separate Bing Search resource is needed — web search is built into the existing Azure OpenAI resource.
+The Azure OpenAI Responses API with Bing grounding costs ~$0.035 per call ($35 per 1,000 calls). With 5 queries per daily run, this costs ~$0.175/day or ~$5/month. No separate Bing Search resource is needed — web search is built into the existing Azure OpenAI resource.
 
 ### Is there a web demo outside of Teams?
 Yes — `demo.html` + `demo-server.js` provide a standalone browser-based demo. Run `node demo-server.js` (port 9090) with the `APIM_SUBSCRIPTION_KEY` environment variable set. This is useful for testing and demos outside of the Copilot Studio / Teams environment.

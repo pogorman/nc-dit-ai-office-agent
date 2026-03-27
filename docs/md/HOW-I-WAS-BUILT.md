@@ -460,7 +460,7 @@ Azure OpenAI's **Responses API** includes a `web_search` tool powered by Bing gr
 
 1. **`webSearch()` helper in `openai-client.ts`** — Uses the `OpenAI` class (not `AzureOpenAI`) with a special base URL: `${endpoint}/openai/v1/`. The Responses API requires this path. Auth is via `getBearerTokenProvider` — the token is passed as `apiKey` to the `OpenAI` constructor. URL citations are extracted from response annotations (`type === "url_citation"`).
 
-2. **`fetchWebNewsListings()` in `clips-ingest.ts`** — Calls `webSearch()` with a prompt targeting NC news outlets. Filters out `governor.nc.gov` URLs (the gov scraper already covers those). Returns `ClipListing[]` with outlet names extracted via `outletFromUrl()`.
+2. **`fetchWebNewsListings()` in `clips-ingest.ts`** — Calls `webSearch()` with prompts targeting NC news outlets. Filters out `governor.nc.gov` URLs (the gov scraper already covers those). Returns `ClipListing[]` with outlet names extracted via `outletFromUrl()`. (Later enhanced to run 5 parallel queries — see Chapter 15.)
 
 3. **`outletFromUrl()` domain mapper** — Static `Record<string, string>` mapping hostnames to friendly names: `wral.com` -> "WRAL", `newsobserver.com` -> "News & Observer", `charlotteobserver.com` -> "Charlotte Observer", etc. Falls back to the raw hostname for unmapped domains.
 
@@ -487,9 +487,50 @@ Added `docs` and `connector` to `.funcignore`. These directories contained Power
 ### Results
 
 - Clips index grew from 23 to 30 clips (7 new external media: WRAL, US News, Carolina Journal, North State Journal, NC Newsline)
-- Cost: ~$0.035 per web search call, ~$1/month at once-daily
+- Cost: ~$0.035 per web search call, ~$1/month at once-daily (single query)
 - No new Azure resources provisioned
 - Same managed identity auth — no API keys
+
+---
+
+## Chapter 15: Multi-Query Web Search + Timeframe Split
+
+**Date:** 2026-03-26
+
+### The Problem
+
+A single web search query was only returning 7-12 external articles. The comms team needs broader coverage across topic areas — budget, education, Hurricane Helene recovery, healthcare, law enforcement, economy. A single generic query like "Governor Stein news" couldn't cover all these beats effectively.
+
+### The Solution
+
+Replaced the static `WEB_SEARCH_QUERIES` array with a `webSearchQueries(timeframe)` function that generates 5 focused queries, each targeting a specific topic area:
+
+1. **General coverage** — WRAL, News & Observer, Charlotte Observer, AP
+2. **Budget/education** — budget, education, teachers
+3. **Helene recovery** — Hurricane Helene, western NC recovery
+4. **Medicaid/healthcare** — Medicaid, healthcare policy
+5. **Law enforcement/economy** — law enforcement, public safety, economy, jobs
+
+Each query includes a timeframe parameter and a `NO_GOV` instruction to exclude governor.nc.gov links (the gov scraper already handles those).
+
+### Key Changes
+
+1. **`webSearchQueries(timeframe)`** — Function instead of static array. Takes "past week" or "past 6 months" parameter that's embedded in each query string.
+
+2. **`search_context_size: "high"`** — Set on the `web_search` tool configuration to get more citations per query (previously used default).
+
+3. **Timeframe split** — Daily 7 AM timer passes "past week" (focused on catching new coverage). Manual `POST /api/clips/refresh` passes "past 6 months" (useful for backfilling historical coverage).
+
+4. **Parallel execution** — All 5 queries run via `Promise.all` with individual `.catch(() => [])` so one failed query doesn't block the others.
+
+5. **Cross-query dedup** — Results from all 5 queries are merged with a `Set<string>` tracking seen URLs before the merge with gov results.
+
+### Results
+
+- **58 clips total** across 21 outlets: NC Governor (23), WRAL (8), WUNC (4), CBS17 (3), Carolina Journal (2), WLOS (2), NC Newsline (2), plus US News, The Assembly, News From The States, EdNC, and more
+- Each query returns ~8-12 URLs; combined: ~30-40 unique external URLs per run (after dedup and governor.nc.gov filtering)
+- **Cost:** ~$0.175/day (5 queries x $0.035/call) = ~$5/month for the daily run
+- No new Azure resources — same managed identity auth, same OpenAI resource
 
 ---
 

@@ -25,7 +25,7 @@ The AI Office Agent lives in Microsoft Teams via Copilot Studio. You interact wi
 
 The agent returns a list of articles with outlet, title, and a brief excerpt. Click any card to see the full mention context.
 
-Clips are updated automatically every morning at 7 AM from two sources: the Governor's official press releases (governor.nc.gov) and external news outlets (WRAL, News & Observer, Charlotte Observer, AP, etc.) found via web search. In the web demo, you can also click the green **Refresh Clips** button to trigger an immediate re-scan from both sources.
+Clips are updated automatically every morning at 7 AM from two sources: the Governor's official press releases (governor.nc.gov) and external news outlets found via 5 focused web search queries covering general coverage, budget/education, Helene recovery, healthcare, and law enforcement/economy. The system currently tracks 58 clips across 21 outlets including WRAL, WUNC, CBS17, Carolina Journal, and more. In the web demo, you can also click the green **Refresh Clips** button to trigger an immediate re-scan from both sources (using a wider 6-month timeframe for backfill).
 
 ### Search Clips by Topic
 

@@ -46,10 +46,10 @@ A serverless AI platform for the North Carolina Governor's Communications Office
 
 #### Data Flow
 
-1. **Timer-triggered Azure Function** runs daily at 7 AM Eastern (also available as on-demand HTTP trigger at `POST /api/clips/refresh`)
+1. **Timer-triggered Azure Function** runs daily at 7 AM Eastern using "past week" timeframe (also available as on-demand HTTP trigger at `POST /api/clips/refresh` using "past 6 months" for backfill)
 2. **Two sources run in parallel** via `Promise.all`:
    - **Gov scraper** — scrapes **governor.nc.gov/news/press-releases** (first 2 pages, ~20 articles) using `fetch` + `JSDOM`
-   - **Web news search** — calls **Azure OpenAI Responses API with Bing grounding** (`web_search` tool) to find external coverage from outlets like WRAL, News & Observer, Charlotte Observer, AP, etc. Uses the `OpenAI` class (not `AzureOpenAI`) with the `/openai/v1/` base URL. No separate Bing Search resource needed — uses the existing Azure OpenAI resource with managed identity auth.
+   - **Multi-query web search** — runs **5 focused queries** in parallel via **Azure OpenAI Responses API with Bing grounding** (`web_search` tool, `search_context_size: "high"`). Each query targets a different topic area: general coverage, budget/education, Helene recovery, Medicaid/healthcare, law enforcement/economy. The `webSearchQueries()` function generates queries with a timeframe parameter. Each query returns ~8-12 URLs; combined: ~30-40 unique external URLs per run. Uses the `OpenAI` class (not `AzureOpenAI`) with the `/openai/v1/` base URL. No separate Bing Search resource needed — uses the existing Azure OpenAI resource with managed identity auth.
 3. Results are merged and deduplicated by URL hash (first occurrence wins)
 4. For each new article, follows the link and extracts full text via **Mozilla Readability**:
    - **Title**
@@ -62,7 +62,7 @@ A serverless AI platform for the North Carolina Governor's Communications Office
 7. Stores structured clip in **Cosmos DB** and indexes into **Azure AI Search** for hybrid retrieval
 8. Optionally sends a **daily digest** via Logic App + Outlook connector
 
-> **Cost:** Web search via the Responses API costs ~$0.035 per call ($35/1K). At once-daily, this adds ~$1/month.
+> **Cost:** Web search via the Responses API costs ~$0.035 per call ($35/1K). With 5 queries per run: ~$0.175/day, ~$5/month for the daily run.
 > **Note:** Bing Search v7 APIs are retired (no new resources can be created). The replacement is Grounding with Bing Search via Azure OpenAI Responses API.
 
 #### Copilot Studio Interactions
@@ -178,9 +178,9 @@ The orchestrator maps user intent to the correct tool automatically:
 | **Azure Functions** (Function App) | Flex Consumption (FC1, Linux), always-ready=1 for HTTP | 7 functions — clips ingestion/query/refresh/digest, remarks ingestion/query, proofread |
 | **Azure API Management** | Consumption | Auth boundary, rate limiting (60/min), function key injection |
 | **Azure AI Search** | Basic (B) | Hybrid vector + keyword indexes for clips and remarks |
-| **Azure OpenAI** | Standard (East US 2) | GPT-4o (30K TPM) for synthesis/proofread + Responses API with Bing grounding for web news search (~$1/mo), text-embedding-3-large (120K TPM) for vectors |
+| **Azure OpenAI** | Standard (East US 2) | GPT-4o (30K TPM) for synthesis/proofread + Responses API with Bing grounding for multi-query web news search (5 queries/run, ~$5/mo), text-embedding-3-large (120K TPM) for vectors |
 | **Azure Cosmos DB** | Serverless (NoSQL) | `clips`, `ingestion-state`, `remarks-metadata`, `remarks-chunks` containers |
-| **Azure Key Vault** | Standard (RBAC mode) | Function host key for APIM (no external API keys — web search uses Azure OpenAI's built-in Bing grounding with managed identity) |
+| **Azure Key Vault** | Standard (RBAC mode) | Function host key for APIM (no external API keys — multi-query web search uses Azure OpenAI's built-in Bing grounding with managed identity) |
 | **Azure Blob Storage** | Standard LRS (public access disabled) | `remarks-uploads` container for document staging |
 | **VNet** | 10.0.0.0/16 | Network isolation for storage and Cosmos DB; Function App VNet integration |
 | **Private Endpoint** | Blob Storage | Private connectivity to storage via `privatelink.blob.core.windows.net` |
@@ -326,11 +326,11 @@ Both Storage and Cosmos DB are locked down with `publicNetworkAccess: Disabled` 
 | Azure Functions (Flex Consumption + always-ready=1) | ~$34–45 |
 | APIM (Consumption) | ~$3.50 per million calls |
 | Azure AI Search (Basic) | ~$70 |
-| Azure OpenAI (GPT-4o + embeddings + Bing grounding web search) | ~$31–81 (usage-dependent; web search adds ~$1/mo at once-daily) |
+| Azure OpenAI (GPT-4o + embeddings + Bing grounding web search) | ~$35–85 (usage-dependent; multi-query web search adds ~$5/mo at 5 queries/day) |
 | Cosmos DB (Serverless) | ~$5–20 |
 | Blob Storage + VNet/Private Endpoint | ~$5 |
 | Copilot Studio | Per-tenant (likely already licensed) |
-| **Total** | **~$120–195/mo** |
+| **Total** | **~$125–200/mo** |
 
 ---
 
@@ -341,12 +341,12 @@ Both Storage and Cosmos DB are locked down with `publicNetworkAccess: Disabled` 
 | Bicep IaC (all resources) | Deployed | 9 modules in `rg-nc-comms-agent-dev`, all RBAC grants active |
 | VNet + Private Endpoints | Deployed | VNet 10.0.0.0/16, func-integration subnet (10.0.1.0/24), private-endpoints subnet (10.0.2.0/24), blob PE + DNS zone (in Bicep), Cosmos DB PE + DNS zone (CLI-only, needs Bicep codification) |
 | Transcript Proofread Function | Deployed & tested | POST `/api/proofread` — structured JSON with changes + confidence |
-| Clips Ingestion Function | Deployed & enhanced | Timer trigger (7 AM ET daily) + manual HTTP refresh (`POST /api/clips/refresh`). Two sources in parallel: gov scraper (governor.nc.gov) + web news search (Azure OpenAI Responses API with Bing grounding). Cosmos SDK v4 dedup fixed — `.read()` returns statusCode 404 instead of throwing; uses `statusCode === 200 && existingClip`. Refresh endpoint returns `newCount`, `skippedCount`, and `sources: { gov, web }` breakdown. |
-| Clips Query Function | Deployed & tested | POST `/api/clips/query` — "latest" mode (AI Search wildcard + orderBy) + hybrid search. 30 clips indexed (23 NC Governor + 7 external media). |
+| Clips Ingestion Function | Deployed & enhanced | Timer trigger (7 AM ET daily, "past week" timeframe) + manual HTTP refresh (`POST /api/clips/refresh`, "past 6 months" for backfill). Multi-query web search: `webSearchQueries()` generates 5 focused queries (general, budget/education, Helene recovery, Medicaid/healthcare, law enforcement/economy) run in parallel with `search_context_size: "high"`. Combined: ~30-40 unique external URLs per run. Gov scraper + web search run in parallel via `Promise.all`. Cost: ~$0.175/day ($5/month). |
+| Clips Query Function | Deployed & tested | POST `/api/clips/query` — "latest" mode (AI Search wildcard + orderBy) + hybrid search. 58 clips indexed across 21 outlets: NC Governor (23), WRAL (8), WUNC (4), CBS17 (3), Carolina Journal (2), WLOS (2), NC Newsline (2), plus US News, The Assembly, News From The States, EdNC, and more. |
 | Clips Digest Function | Deployed (stub) | HTML generation done, email sending TBD (needs Logic App or SendGrid) |
 | Remarks Ingestion Function | Deployed (partial) | Blob trigger registered but not firing reliably on Flex Consumption; use `seed/load-remarks.ts` as workaround. `.docx`/`.pdf` extraction still stubbed. |
 | Remarks Query Function | Deployed & tested | POST `/api/remarks/query` — hybrid search + GPT-4o RAG synthesis with direct quotes and citations. 2025 State of the State seeded (17 chunks). |
-| Shared clients (OpenAI, Search, Cosmos) | Deployed | Singleton pattern, DefaultAzureCredential, all auth working. `openai-client.ts` now exports `webSearch()` helper using `OpenAI` class with `/openai/v1/` base URL for Responses API. |
+| Shared clients (OpenAI, Search, Cosmos) | Deployed | Singleton pattern, DefaultAzureCredential, all auth working. `openai-client.ts` exports `webSearch()` helper using `OpenAI` class with `/openai/v1/` base URL for Responses API (`search_context_size: "high"` for more citations per query). |
 | AI Search indexes | Created | `clips` index (11 fields) and `remarks` index (10 fields), both with HNSW vector search + semantic config |
 | Seed tooling | Built | `seed/` directory with data loading scripts for clips, remarks, and search indexes |
 | Power Platform custom connector | Deployed | OpenAPI 2.0 spec with 3 actions (QueryClips, QueryRemarks, ProofreadTranscript), deployed to GCC environment (`og-ai`) |
