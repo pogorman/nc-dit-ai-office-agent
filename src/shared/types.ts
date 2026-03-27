@@ -118,3 +118,60 @@ export interface ProofreadResponse {
   /** Human-readable summary of all corrections */
   summary: string;
 }
+
+// ---------------------------------------------------------------------------
+// Video/Audio Transcription
+// ---------------------------------------------------------------------------
+
+export interface TranscribeResponse {
+  /** The transcribed text */
+  transcript: string;
+  /** Original filename */
+  filename: string;
+  /** File size in bytes */
+  fileSizeBytes: number;
+}
+
+// ---------------------------------------------------------------------------
+// Ingestion Runs
+// ---------------------------------------------------------------------------
+
+export interface IngestionRun {
+  /** Unique run ID (ISO timestamp + trigger type) */
+  id: string;
+  /** What triggered the run */
+  trigger: "timer" | "manual";
+  /** ISO 8601 start time */
+  startedAt: string;
+  /** ISO 8601 completion time */
+  completedAt: string;
+  /** Duration in milliseconds */
+  durationMs: number;
+  /** Clips newly ingested */
+  newCount: number;
+  /** Clips skipped (already in Cosmos) */
+  skippedCount: number;
+  /** Clips that failed to process */
+  errorCount: number;
+  /** Total clips processed */
+  totalCount: number;
+  /** Source breakdown */
+  sources: { gov: number; web: number };
+  /** Overall run status */
+  status: "success" | "partial" | "failed";
+  /** Allow additional fields */
+  [key: string]: unknown;
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard
+// ---------------------------------------------------------------------------
+
+export interface DashboardStats {
+  totalClips: number;
+  totalRemarks: number;
+  outletBreakdown: Record<string, number>;
+  latestClipDate: string | null;
+  latestIngestTime: string | null;
+  latestRun: IngestionRun | null;
+}

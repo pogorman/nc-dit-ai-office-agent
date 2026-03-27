@@ -111,6 +111,10 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
           name: 'EMBEDDING_DEPLOYMENT_NAME'
           value: 'text-embedding-3-large'
         }
+        {
+          name: 'WHISPER_DEPLOYMENT_NAME'
+          value: 'whisper'
+        }
         // --- Azure AI Search (endpoint only) ---
         {
           name: 'AZURE_AI_SEARCH_ENDPOINT'

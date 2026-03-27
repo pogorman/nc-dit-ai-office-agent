@@ -2,38 +2,38 @@
 
 ## Overview
 
-A serverless AI platform for the North Carolina Governor's Communications Office that automates **news clip monitoring**, provides **semantic search over historical remarks**, and offers **AI-powered transcript proofreading**. The agent experience is delivered through **Microsoft Copilot Studio**, giving staff a conversational interface in Teams (or web) without custom frontend development.
+A serverless AI platform for the North Carolina Governor's Communications Office that automates **news clip monitoring**, provides **semantic search over historical remarks**, offers **AI-powered transcript proofreading**, and supports **audio/video transcription** via Whisper. The agent experience is delivered through **Microsoft Copilot Studio**, giving staff a conversational interface in Teams (or web). A **React dashboard** provides operational visibility into clips, remarks, and ingestion runs.
 
 ---
 
 ## System Context
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Copilot Studio Agent                    │
-│              (Teams / Web / SharePoint embed)               │
-└──────────────────────────┬──────────────────────────────────┘
-                           │  Custom Connector (GCC: og-ai)
-                           │  Ocp-Apim-Subscription-Key
-                           ▼
+┌──────────────────────┐  ┌──────────────────────────────────┐
+│  Copilot Studio      │  │  React Dashboard (Vite+Tailwind) │
+│  (Teams / Web)       │  │  localhost:5173 / static build   │
+└──────────┬───────────┘  └──────────────┬───────────────────┘
+           │  Custom Connector            │  Vite dev proxy
+           │  Ocp-Apim-Subscription-Key   │  Ocp-Apim-Subscription-Key
+           ▼                              ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                Azure API Management (APIM)                  │
 │  https://nc-comms-agent-dev-apim.azure-api.net/comms        │
 │           Auth boundary · Rate limiting · Logging           │
-└────┬──────────────┬──────────────┬──────────────────────────┘
-     │              │              │
-     ▼              ▼              ▼
-┌─────────┐  ┌───────────┐  ┌──────────────┐
-│ Clips   │  │ Remarks   │  │ Transcript   │
-│ Function│  │ Function  │  │ Proofread    │
-│         │  │           │  │ Function     │
-└────┬────┘  └─────┬─────┘  └──────┬───────┘
-     │             │               │
-     ▼             ▼               ▼
-┌─────────┐  ┌───────────┐  ┌──────────────┐
-│ Cosmos  │  │ Azure AI  │  │ Azure OpenAI │
-│ DB      │  │ Search    │  │ (GPT-4o)     │
-└─────────┘  └───────────┘  └──────────────┘
+└──┬──────────┬──────────┬──────────┬──────────┬──────────────┘
+   │          │          │          │          │
+   ▼          ▼          ▼          ▼          ▼
+┌───────┐ ┌────────┐ ┌────────┐ ┌──────────┐ ┌───────────┐
+│ Clips │ │Remarks │ │Proofrd │ │Transcribe│ │ Dashboard │
+│ Funcs │ │ Funcs  │ │  Func  │ │  Func    │ │  Funcs    │
+└───┬───┘ └───┬────┘ └───┬────┘ └────┬─────┘ └─────┬─────┘
+    │         │          │           │              │
+    ▼         ▼          ▼           ▼              ▼
+┌─────────┐  ┌───────────┐  ┌──────────────┐  ┌─────────┐
+│ Cosmos  │  │ Azure AI  │  │ Azure OpenAI │  │ Cosmos  │
+│ DB      │  │ Search    │  │ (GPT-4o +    │  │ DB      │
+│         │  │           │  │  Whisper)     │  │ (reads) │
+└─────────┘  └───────────┘  └──────────────┘  └─────────┘
 ```
 
 ---
@@ -118,6 +118,31 @@ A serverless AI platform for the North Carolina Governor's Communications Office
    - Preserve original meaning — flag uncertain corrections with `[?]`
 4. Returns corrected transcript with a change summary
 
+### 4. Audio/Video Transcription
+
+**Goal:** Convert audio/video recordings to text using Whisper.
+
+#### Data Flow
+
+1. Client sends `POST /api/transcribe` with a multipart/form-data file upload
+2. Function validates file type (mp3, mp4, mpeg, mpga, m4a, wav, webm) and size (max 25MB)
+3. Calls **Azure OpenAI Whisper** deployment via `transcribeAudio()` helper
+4. Returns `{ transcript, filename, fileSizeBytes }`
+
+Optional `language` field (ISO 639-1 code) can be included to hint the source language.
+
+### 5. Dashboard
+
+**Goal:** Give admins operational visibility into the platform without querying Cosmos DB directly.
+
+#### Data Flow
+
+1. React SPA calls 4 GET endpoints via APIM: `/dashboard/stats`, `/dashboard/clips`, `/dashboard/remarks`, `/dashboard/runs`
+2. Each endpoint queries Cosmos DB directly (no AI Search involved)
+3. Stats endpoint aggregates clip count, remarks count, outlet breakdown, and latest ingestion run
+4. Clips endpoint supports pagination (offset/limit) and filtering by outlet and date range
+5. Runs endpoint returns `IngestionRun` documents from the `ingestion-state` container, ordered by completion time
+
 ---
 
 ## Copilot Studio — Agent Design
@@ -175,10 +200,10 @@ The orchestrator maps user intent to the correct tool automatically:
 
 | Resource | SKU / Tier | Purpose |
 |---|---|---|
-| **Azure Functions** (Function App) | Flex Consumption (FC1, Linux), always-ready=1 for HTTP | 7 functions — clips ingestion/query/refresh/digest, remarks ingestion/query, proofread |
+| **Azure Functions** (Function App) | Flex Consumption (FC1, Linux), always-ready=1 for HTTP | 11 functions — clips ingestion/query/refresh/digest, remarks ingestion/query, proofread, transcribe, 4 dashboard endpoints |
 | **Azure API Management** | Consumption | Auth boundary, rate limiting (60/min), function key injection |
 | **Azure AI Search** | Basic (B) | Hybrid vector + keyword indexes for clips and remarks |
-| **Azure OpenAI** | Standard (East US 2) | GPT-4o (30K TPM) for synthesis/proofread + Responses API with Bing grounding for multi-query web news search (5 queries/run, ~$5/mo), text-embedding-3-large (120K TPM) for vectors |
+| **Azure OpenAI** | Standard (East US 2) | GPT-4o (30K TPM) for synthesis/proofread, Whisper for audio/video transcription, Responses API with Bing grounding for multi-query web news search (5 queries/run, ~$5/mo), text-embedding-3-large (120K TPM) for vectors |
 | **Azure Cosmos DB** | Serverless (NoSQL) | `clips`, `ingestion-state`, `remarks-metadata`, `remarks-chunks` containers |
 | **Azure Key Vault** | Standard (RBAC mode) | Function host key for APIM (no external API keys — multi-query web search uses Azure OpenAI's built-in Bing grounding with managed identity) |
 | **Azure Blob Storage** | Standard LRS (public access disabled) | `remarks-uploads` container for document staging |
@@ -338,11 +363,11 @@ Both Storage and Cosmos DB are locked down with `publicNetworkAccess: Disabled` 
 
 | Component | Status | Notes |
 |---|---|---|
-| Bicep IaC (all resources) | Deployed | 9 modules in `rg-nc-comms-agent-dev`, all RBAC grants active |
+| Bicep IaC (all resources) | Deployed | 9 modules in `rg-nc-comms-agent-dev`, all RBAC grants active. WHISPER_DEPLOYMENT_NAME added to function-app.bicep. |
 | VNet + Private Endpoints | Deployed | VNet 10.0.0.0/16, func-integration subnet (10.0.1.0/24), private-endpoints subnet (10.0.2.0/24), blob PE + DNS zone (in Bicep), Cosmos DB PE + DNS zone (CLI-only, needs Bicep codification) |
 | Transcript Proofread Function | Deployed & tested | POST `/api/proofread` — structured JSON with changes + confidence |
 | Clips Ingestion Function | Deployed & enhanced | Timer trigger (7 AM ET daily, "past week" timeframe) + manual HTTP refresh (`POST /api/clips/refresh`, "past 6 months" for backfill). Multi-query web search: `webSearchQueries()` generates 5 focused queries (general, budget/education, Helene recovery, Medicaid/healthcare, law enforcement/economy) run in parallel with `search_context_size: "high"`. Combined: ~30-40 unique external URLs per run. Gov scraper + web search run in parallel via `Promise.all`. Cost: ~$0.175/day ($5/month). |
-| Clips Query Function | Deployed & tested | POST `/api/clips/query` — "latest" mode (AI Search wildcard + orderBy) + hybrid search. 58 clips indexed across 21 outlets: NC Governor (23), WRAL (8), WUNC (4), CBS17 (3), Carolina Journal (2), WLOS (2), NC Newsline (2), plus US News, The Assembly, News From The States, EdNC, and more. |
+| Clips Query Function | Deployed & tested | POST `/api/clips/query` — "latest" mode (AI Search wildcard + orderBy) + hybrid search. 78 clips indexed across 29 outlets. |
 | Clips Digest Function | Deployed (stub) | HTML generation done, email sending TBD (needs Logic App or SendGrid) |
 | Remarks Ingestion Function | Deployed (partial) | Blob trigger registered but not firing reliably on Flex Consumption; use `seed/load-remarks.ts` as workaround. `.docx`/`.pdf` extraction still stubbed. |
 | Remarks Query Function | Deployed & tested | POST `/api/remarks/query` — hybrid search + GPT-4o RAG synthesis with direct quotes and citations. 2025 State of the State seeded (17 chunks). |
@@ -351,9 +376,13 @@ Both Storage and Cosmos DB are locked down with `publicNetworkAccess: Disabled` 
 | Seed tooling | Built | `seed/` directory with data loading scripts for clips, remarks, and search indexes |
 | Power Platform custom connector | Deployed | OpenAPI 2.0 spec with 3 actions (QueryClips, QueryRemarks, ProofreadTranscript), deployed to GCC environment (`og-ai`) |
 | APIM function key | Configured | Named value `function-host-key` set with actual Function App host key |
-| APIM endpoints | Tested | All 3 endpoints verified: `/comms/clips/query`, `/comms/remarks/query`, `/comms/proofread` |
+| Transcribe Function | Deployed & tested | POST `/api/transcribe` — multipart/form-data file upload → Whisper transcription. Supports mp3, mp4, wav, webm, etc. 25MB max. WHISPER_DEPLOYMENT_NAME env var. |
+| Dashboard Functions | Deployed & tested | 4 GET endpoints: `/api/dashboard/stats`, `/api/dashboard/clips` (paginated, outlet/date filters), `/api/dashboard/remarks`, `/api/dashboard/runs`. All read from Cosmos DB. |
+| Dashboard React SPA | Built | React 19 + Vite 8 + Tailwind CSS v4. Four tabs: Overview (stat cards, outlet breakdown, latest run with auto-refresh), Clips (paginated list), Remarks (document table), Runs (ingestion history with status badges). Types shared from `src/shared/types.ts` via `@shared` path alias. |
+| Run logging | Deployed | Each clips ingestion (timer + manual) persists an `IngestionRun` document to the `ingestion-state` Cosmos container with trigger type, timing, counts, sources, and status. |
+| APIM endpoints | Tested | All endpoints verified: `/comms/clips/query`, `/comms/remarks/query`, `/comms/proofread`, `/comms/transcribe`, plus 4 dashboard GET routes |
 | Copilot Studio agent | Deployed & working | Generative orchestration — all 3 tools (QueryClips, QueryRemarks, ProofreadTranscript) active, no manual topics needed |
-| SPA demo | Working | `demo.html` + `demo-server.js` on port 9090, routes through APIM with subscription key from `APIM_SUBSCRIPTION_KEY` env var |
+| SPA demo (legacy) | Working | `demo.html` + `demo-server.js` on port 9090, routes through APIM with subscription key from `APIM_SUBSCRIPTION_KEY` env var |
 | Always-ready instances | Configured (in Bicep) | `alwaysReady: [{ name: 'http', instanceCount: 1 }]` in `function-app.bicep` scaleAndConcurrency. Eliminates cold start timeouts (~$34/month). |
 
 ## Open Questions

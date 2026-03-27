@@ -6,7 +6,7 @@
  * for Entra ID token-based authentication (the @azure/openai v2 pattern).
  */
 
-import { AzureOpenAI, OpenAI } from "openai";
+import { AzureOpenAI, OpenAI, toFile } from "openai";
 import { DefaultAzureCredential, getBearerTokenProvider } from "@azure/identity";
 
 let clientInstance: AzureOpenAI | null = null;
@@ -90,6 +90,30 @@ export async function webSearch(query: string): Promise<WebSearchResult[]> {
   }
 
   return results;
+}
+
+/**
+ * Transcribe an audio/video file using Azure OpenAI Whisper.
+ * Accepts a Buffer and filename; returns the transcript text.
+ * Max file size: 25MB (Whisper API limit).
+ */
+export async function transcribeAudio(
+  buffer: Buffer,
+  filename: string,
+  language?: string
+): Promise<string> {
+  const client = getClient();
+  const deploymentName = getRequiredEnv("WHISPER_DEPLOYMENT_NAME");
+
+  const file = await toFile(buffer, filename);
+
+  const transcription = await client.audio.transcriptions.create({
+    model: deploymentName,
+    file,
+    ...(language ? { language } : {}),
+  });
+
+  return transcription.text;
 }
 
 export interface ChatCompletionOptions {

@@ -1,18 +1,21 @@
 # NC DIT AI Office Agent — Claude Code Instructions
 
 ## Project Overview
-Serverless AI platform for NC Governor's Communications Office. Three capabilities:
+Serverless AI platform for NC Governor's Communications Office. Five capabilities:
 1. **News Clips** — automated monitoring for Governor Stein mentions (timer-triggered ingestion + query)
 2. **Remarks Search** — semantic search over historical speeches/remarks (blob-triggered ingestion + RAG query)
 3. **Transcript Proofreading** — AI-powered cleanup of faulty transcripts (HTTP endpoint)
+4. **Transcription** — audio/video transcription via Azure OpenAI Whisper (HTTP endpoint)
+5. **Dashboard** — React SPA with operational visibility (stats, clips browser, remarks list, ingestion run history)
 
-Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
+Agent experience delivered via **Microsoft Copilot Studio** (Teams / web). Dashboard delivered via React SPA.
 
 ## Tech Stack
 - **Runtime:** TypeScript (strict mode) on Azure Functions v4 (Flex Consumption), Node.js 20
 - **Gateway:** Azure API Management (Consumption tier)
 - **Search:** Azure AI Search (Basic tier, hybrid vector + keyword)
-- **AI:** Azure OpenAI (GPT-4o for synthesis/proofread, text-embedding-3-large for vectors, Responses API with Bing grounding for multi-query web news search)
+- **AI:** Azure OpenAI (GPT-4o for synthesis/proofread, Whisper for transcription, text-embedding-3-large for vectors, Responses API with Bing grounding for multi-query web news search)
+- **Dashboard:** React 19 + Vite 8 + Tailwind CSS v4 (TypeScript strict mode, types shared from `src/shared/types.ts` via `@shared` path alias)
 - **Storage:** Cosmos DB (serverless) for clips + remarks metadata, Blob Storage for remarks doc uploads
 - **Secrets:** Azure Key Vault (RBAC mode) — stores Function host key for APIM only (no external API keys needed)
 - **Agent:** Copilot Studio with custom connector to APIM
@@ -39,32 +42,34 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
   main.bicepparam               — Dev environment parameters
   /modules
     ai-search.bicep             — Azure AI Search (Basic)
-    apim.bicep                  — API Management (Consumption)
+    apim.bicep                  — API Management (Consumption) — includes dashboard GET + transcribe POST routes
     cosmos-db.bicep             — Cosmos DB (Serverless)
-    function-app.bicep          — Function App (Flex Consumption)
+    function-app.bicep          — Function App (Flex Consumption) — WHISPER_DEPLOYMENT_NAME env var
     key-vault.bicep             — Key Vault (RBAC mode)
-    openai.bicep                — Azure OpenAI + deployments
+    openai.bicep                — Azure OpenAI + deployments (GPT-4o, embeddings, Whisper)
     networking.bicep             — VNet, subnets, private endpoint for blob, private DNS zone (Cosmos PE not yet added — CLI-only)
     role-assignments.bicep      — All managed identity RBAC grants
     storage.bicep               — Blob Storage (publicNetworkAccess: Disabled)
 /src
   /functions
-    clips-ingest.ts             — Timer: gov scrape + 5 parallel web search queries (Bing grounding) → Cosmos DB + AI Search (7 AM ET daily, "past week") + HTTP POST: manual refresh ("past 6 months")
+    clips-ingest.ts             — Timer: gov scrape + 5 parallel web search queries (Bing grounding) → Cosmos DB + AI Search (7 AM ET daily, "past week") + HTTP POST: manual refresh ("past 6 months"). Persists IngestionRun to ingestion-state container.
     clips-query.ts              — HTTP POST: search/browse clips
     clips-digest.ts             — Timer: daily email digest (8 AM weekdays, stub)
+    dashboard.ts                — 4 HTTP GET endpoints: /api/dashboard/{stats,clips,remarks,runs}
     remarks-ingest.ts           — Blob trigger: upload → chunk → embed → index
     remarks-query.ts            — HTTP POST: hybrid search → GPT-4o synthesis
     proofread.ts                — HTTP POST: transcript proofreading (fully implemented)
+    transcribe.ts               — HTTP POST: audio/video transcription via Whisper (25MB max, multipart/form-data)
   /shared
-    types.ts                    — All TypeScript interfaces (NewsClip, RemarksChunk, etc.)
-    openai-client.ts            — Azure OpenAI singleton + helpers + webSearch() via Responses API (search_context_size: "high")
+    types.ts                    — All TypeScript interfaces (NewsClip, RemarksChunk, IngestionRun, DashboardStats, TranscribeResponse, etc.)
+    openai-client.ts            — Azure OpenAI singleton + helpers + webSearch() via Responses API (search_context_size: "high") + transcribeAudio() via Whisper
     search-client.ts            — AI Search factory + hybridSearch<T> helper
     cosmos-client.ts            — Cosmos DB singleton + getContainer helper
 /connector                      — Power Platform custom connector for Copilot Studio
   apiDefinition.swagger.json    — OpenAPI 2.0 spec (3 actions: QueryClips, QueryRemarks, ProofreadTranscript)
   apiProperties.json            — Connector metadata (API key auth via APIM subscription key)
 /seed                           — Data seeding & index creation tooling
-  clips.json                    — Seed clips (initial batch; live index has 58 clips across 21 outlets)
+  clips.json                    — Seed clips (initial batch; live index has 78 clips across 29 outlets)
   load-clips.ts                 — Loads clips into Cosmos DB with embeddings
   create-search-indexes.ts      — Creates both AI Search indexes (clips + remarks)
   index-clips-to-search.ts      — Pushes clips from Cosmos to AI Search
@@ -77,6 +82,15 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
     2025-11-24_november-column-..._governors-office.txt
     2025-12-16_december-column-..._governors-office.txt
     2026-01-30_january-column-..._governors-office.txt
+/dashboard                      — React SPA dashboard
+  src/
+    App.tsx                     — Tab router (Overview, Clips, Remarks, Runs)
+    components/                 — StatsPanel, ClipsFeed, RemarksList, RunsHistory, Layout
+    api/                        — API client functions
+    hooks/                      — Custom React hooks
+  vite.config.ts                — Dev proxy to APIM or direct Function App; @shared path alias to src/shared/types.ts
+  .env.example                  — VITE_APIM_BASE_URL, VITE_APIM_SUBSCRIPTION_KEY
+  package.json                  — React 19, Vite 8, Tailwind CSS v4
 /docs
   build-demo-pptx.py            — Generates demo-questions.pptx (python-pptx)
   build-presentation-pptx.py    — Generates presentation.pptx (python-pptx)
@@ -89,6 +103,7 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
     demo-questions.html         — Sample prompts for live demo (HTML version)
     presentation.html           — 5-slide demo deck (open in browser, F11 fullscreen)
     talk-track.html             — 1-page speaker guide with timing + demo moments
+    video-processing-functionality.html — Video/audio transcription feature explainer
   /md                           — Markdown documentation
     ARCHITECTURE.md
     FAQ.md
@@ -98,11 +113,21 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
   /pdf                          — PDF exports (empty, for printed handouts)
 ```
 
-## Recent Changes (2026-03-26)
+## Recent Changes (2026-03-26 evening)
+- **React Dashboard** — New `/dashboard` directory with React 19 + Vite 8 + Tailwind CSS v4. Four tabs: Overview (stat cards, outlet breakdown bars, latest run status with auto-refresh), Clips (paginated list with outlet/date filters), Remarks (document table), Runs (ingestion run history with status badges). Types shared from `src/shared/types.ts` via `@shared` path alias in `vite.config.ts`. No routing library, no state management library, no charting library.
+- **4 dashboard GET endpoints** — New `src/functions/dashboard.ts` with `GET /api/dashboard/stats`, `GET /api/dashboard/clips` (paginated, outlet/date filters), `GET /api/dashboard/remarks`, `GET /api/dashboard/runs`. All read from Cosmos DB.
+- **Transcribe capability** — New `src/functions/transcribe.ts` with `POST /api/transcribe`. Accepts multipart/form-data file upload (mp3, mp4, wav, webm, etc., 25MB max). Uses Azure OpenAI Whisper via `transcribeAudio()` helper in `openai-client.ts`. Optional `language` field for ISO 639-1 hint.
+- **Run logging** — Each clips ingestion (timer + manual) persists an `IngestionRun` document to the `ingestion-state` Cosmos container with trigger type, timing, counts, sources, and status.
+- **New types** — `IngestionRun`, `DashboardStats`, `TranscribeResponse` interfaces in `src/shared/types.ts`.
+- **APIM routes expanded** — 4 dashboard GET operations + 1 transcribe POST operation added to `apim.bicep`.
+- **WHISPER_DEPLOYMENT_NAME** — New env var added to `function-app.bicep`.
+- **78 clips across 29 outlets** — Clips index grown from 58/21 to 78/29.
+- **`.funcignore` updated** — `dashboard` directory excluded from deploy package.
+
+## Changes (2026-03-26 morning)
 - **Multi-query web search** — Replaced single web search query with `webSearchQueries()` function that generates 5 focused queries (general coverage, budget/education, Helene recovery, Medicaid/healthcare, law enforcement/economy). All 5 run in parallel. Each returns ~8-12 URLs; combined: ~30-40 unique external URLs per run. Cost: ~$0.175/day ($5/month).
 - **`search_context_size: "high"`** — Set on the `web_search` tool to get more citations per query.
 - **Timeframe split** — Daily 7 AM timer uses "past week" (focused on new coverage). Manual `POST /api/clips/refresh` uses "past 6 months" (for backfill). `webSearchQueries()` takes a timeframe parameter.
-- **58 clips across 21 outlets** — NC Governor (23), WRAL (8), WUNC (4), CBS17 (3), Carolina Journal (2), WLOS (2), NC Newsline (2), plus US News, The Assembly, News From The States, EdNC, and more.
 - **Web news search via Azure OpenAI Responses API with Bing grounding** — `clips-ingest.ts` has a second source: `fetchWebNewsListings()` calls the Responses API `web_search` tool to find external news. Gov scraper + web search run in parallel via `Promise.all`, merged with URL-hash dedup. No new Azure resource needed — uses existing Azure OpenAI resource's built-in Bing grounding with managed identity auth.
 - **`openai-client.ts` `webSearch()` helper** — Uses the `OpenAI` class (not `AzureOpenAI`) with `/openai/v1/` base URL for the Responses API. Extracts URL citations from response annotations. Exports `WebSearchResult` interface.
 - **Outlet name extraction** — `outletFromUrl()` maps hostnames to friendly names (wral.com -> "WRAL", newsobserver.com -> "News & Observer", etc.).
@@ -130,6 +155,8 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 - `.pdf` extraction in remarks-ingest.ts (needs `pdf-parse` package)
 - Blob trigger for remarks-ingest not firing reliably on Flex Consumption (use `seed/load-remarks.ts` as workaround)
 - Daily digest email sending stubbed (needs Logic App or SendGrid integration)
+- Add `clips/refresh` and `transcribe` routes to custom connector so they are callable from Copilot Studio
+- Dashboard production build + hosting (currently dev-only via `npm run dev`)
 
 ## Key Patterns — Web Search
 - `webSearch()` in `openai-client.ts` uses the `OpenAI` class (not `AzureOpenAI`) with `baseURL: ${endpoint}/openai/v1/` — the Responses API requires this path

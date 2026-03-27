@@ -208,6 +208,111 @@ resource operationProofread 'Microsoft.ApiManagement/service/apis/operations@202
   }
 }
 
+resource operationTranscribe 'Microsoft.ApiManagement/service/apis/operations@2023-09-01-preview' = {
+  parent: api
+  name: 'transcribe'
+  properties: {
+    displayName: 'Transcribe Audio/Video'
+    description: 'Upload an audio or video file and get a text transcript via Whisper'
+    method: 'POST'
+    urlTemplate: '/transcribe'
+    request: {
+      representations: [
+        {
+          contentType: 'multipart/form-data'
+        }
+      ]
+    }
+    responses: [
+      {
+        statusCode: 200
+        description: 'Transcription result'
+        representations: [
+          {
+            contentType: 'application/json'
+          }
+        ]
+      }
+    ]
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard Operations (GET — read-only)
+// ---------------------------------------------------------------------------
+
+resource operationDashboardStats 'Microsoft.ApiManagement/service/apis/operations@2023-09-01-preview' = {
+  parent: api
+  name: 'dashboard-stats'
+  properties: {
+    displayName: 'Dashboard Stats'
+    description: 'Aggregated clip and remarks counts, outlet breakdown, latest run status'
+    method: 'GET'
+    urlTemplate: '/dashboard/stats'
+    responses: [
+      {
+        statusCode: 200
+        description: 'Dashboard statistics'
+        representations: [{ contentType: 'application/json' }]
+      }
+    ]
+  }
+}
+
+resource operationDashboardClips 'Microsoft.ApiManagement/service/apis/operations@2023-09-01-preview' = {
+  parent: api
+  name: 'dashboard-clips'
+  properties: {
+    displayName: 'Dashboard Clips'
+    description: 'Paginated clip list with optional outlet and date filters'
+    method: 'GET'
+    urlTemplate: '/dashboard/clips'
+    responses: [
+      {
+        statusCode: 200
+        description: 'Paginated clip list'
+        representations: [{ contentType: 'application/json' }]
+      }
+    ]
+  }
+}
+
+resource operationDashboardRemarks 'Microsoft.ApiManagement/service/apis/operations@2023-09-01-preview' = {
+  parent: api
+  name: 'dashboard-remarks'
+  properties: {
+    displayName: 'Dashboard Remarks'
+    description: 'List of ingested remarks documents with metadata'
+    method: 'GET'
+    urlTemplate: '/dashboard/remarks'
+    responses: [
+      {
+        statusCode: 200
+        description: 'Remarks document list'
+        representations: [{ contentType: 'application/json' }]
+      }
+    ]
+  }
+}
+
+resource operationDashboardRuns 'Microsoft.ApiManagement/service/apis/operations@2023-09-01-preview' = {
+  parent: api
+  name: 'dashboard-runs'
+  properties: {
+    displayName: 'Dashboard Runs'
+    description: 'Recent ingestion run history with status and metrics'
+    method: 'GET'
+    urlTemplate: '/dashboard/runs'
+    responses: [
+      {
+        statusCode: 200
+        description: 'Run history list'
+        representations: [{ contentType: 'application/json' }]
+      }
+    ]
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Outputs
 // ---------------------------------------------------------------------------

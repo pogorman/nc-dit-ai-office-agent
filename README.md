@@ -1,14 +1,16 @@
 # NC DIT AI Office Agent
 
-AI-powered tool for the North Carolina Governor's Communications Office that automates news clip monitoring and provides semantic search over historical remarks — delivered as a conversational agent in Microsoft Teams via Copilot Studio.
+AI-powered tool for the North Carolina Governor's Communications Office that automates news clip monitoring and provides semantic search over historical remarks — delivered as a conversational agent in Microsoft Teams via Copilot Studio, with a React dashboard for operational visibility.
 
 ## Capabilities
 
 | Capability | Description | Status |
 |---|---|---|
 | **Transcript Proofreading** | AI-powered cleanup of faulty ASR/OCR transcripts | Fully implemented |
+| **Transcription** | Audio/video transcription via Azure OpenAI Whisper (mp3, mp4, wav, webm, etc.) | Fully implemented |
 | **Remarks Search** | Semantic search + RAG synthesis across the Governor's remarks corpus | Implemented (`.txt` ingestion; `.docx`/`.pdf` stubbed) |
-| **News Clips** | Automated monitoring via governor.nc.gov scraping + multi-query web search (5 focused queries via Azure OpenAI Responses API with Bing grounding) | Implemented (58 clips across 21 outlets; runs daily at 7 AM ET + manual refresh) |
+| **News Clips** | Automated monitoring via governor.nc.gov scraping + multi-query web search (5 focused queries via Azure OpenAI Responses API with Bing grounding) | Implemented (78 clips across 29 outlets; runs daily at 7 AM ET + manual refresh) |
+| **Dashboard** | React SPA with stats overview, clip browser, remarks list, and ingestion run history | Fully implemented |
 | **Daily Digest** | Weekday morning email summary of new clips | Stubbed (email sending TBD) |
 
 ## Architecture
@@ -19,7 +21,8 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for full system design, data models, Co
 - **Runtime:** TypeScript on Azure Functions v4 (Flex Consumption), Node.js 20
 - **Gateway:** Azure API Management (Consumption tier)
 - **Search:** Azure AI Search (Basic, hybrid vector + BM25)
-- **AI:** Azure OpenAI (GPT-4o + text-embedding-3-large + Responses API with Bing grounding for multi-query web news search)
+- **AI:** Azure OpenAI (GPT-4o + text-embedding-3-large + Whisper + Responses API with Bing grounding for multi-query web news search)
+- **Dashboard:** React 19 + Vite 8 + Tailwind CSS v4 (TypeScript strict mode)
 - **Storage:** Cosmos DB (Serverless) for clips/metadata, Blob Storage for remarks uploads
 - **Secrets:** Azure Key Vault (RBAC mode) — Function host key for APIM (no external API keys needed)
 - **Agent:** Microsoft Copilot Studio (Teams / web / SharePoint embed)
@@ -74,18 +77,27 @@ az deployment group create \
 ```
 ├── infra/                    Bicep IaC (9 resource modules)
 ├── src/
-│   ├── functions/            Azure Functions (6 functions)
+│   ├── functions/            Azure Functions (8 functions)
 │   │   ├── proofread.ts          POST /api/proofread
+│   │   ├── transcribe.ts         POST /api/transcribe (Whisper audio/video transcription)
 │   │   ├── clips-ingest.ts       Timer (7 AM ET daily) + POST /api/clips/refresh (gov scraper + web search)
 │   │   ├── clips-query.ts        POST /api/clips/query
 │   │   ├── clips-digest.ts       Timer (8 AM weekdays)
+│   │   ├── dashboard.ts          GET /api/dashboard/{stats,clips,remarks,runs}
 │   │   ├── remarks-ingest.ts     Blob trigger (remarks-uploads)
 │   │   └── remarks-query.ts      POST /api/remarks/query
 │   └── shared/               Singleton clients + types
-│       ├── types.ts
-│       ├── openai-client.ts      AzureOpenAI singleton + webSearch() via Responses API (search_context_size: "high")
+│       ├── types.ts              NewsClip, RemarksChunk, IngestionRun, DashboardStats, TranscribeResponse, etc.
+│       ├── openai-client.ts      AzureOpenAI singleton + webSearch() + transcribeAudio()
 │       ├── search-client.ts
 │       └── cosmos-client.ts
+├── dashboard/                React SPA dashboard (Vite + Tailwind)
+│   ├── src/
+│   │   ├── App.tsx               Tab router (Overview, Clips, Remarks, Runs)
+│   │   └── components/           StatsPanel, ClipsFeed, RemarksList, RunsHistory
+│   ├── vite.config.ts            Dev proxy to APIM or direct Function App
+│   ├── .env.example              VITE_APIM_BASE_URL, VITE_APIM_SUBSCRIPTION_KEY
+│   └── package.json              React 19, Vite 8, Tailwind CSS v4
 ├── connector/                Power Platform custom connector
 │   ├── apiDefinition.swagger.json   OpenAPI 2.0 spec (3 actions)
 │   └── apiProperties.json           Connector metadata + auth config
@@ -116,8 +128,28 @@ All endpoints are live and tested through the APIM gateway:
 | `https://nc-comms-agent-dev-apim.azure-api.net/comms/clips/refresh` | POST | Force clips re-ingestion (gov scraper + web search) |
 | `https://nc-comms-agent-dev-apim.azure-api.net/comms/remarks/query` | POST | Semantic search over remarks (RAG) |
 | `https://nc-comms-agent-dev-apim.azure-api.net/comms/proofread` | POST | Transcript proofreading |
+| `https://nc-comms-agent-dev-apim.azure-api.net/comms/transcribe` | POST | Audio/video transcription (Whisper) |
+| `https://nc-comms-agent-dev-apim.azure-api.net/comms/dashboard/stats` | GET | Dashboard stats (clip count, outlet breakdown, latest run) |
+| `https://nc-comms-agent-dev-apim.azure-api.net/comms/dashboard/clips` | GET | Paginated clips list (outlet/date filters) |
+| `https://nc-comms-agent-dev-apim.azure-api.net/comms/dashboard/remarks` | GET | Remarks document list |
+| `https://nc-comms-agent-dev-apim.azure-api.net/comms/dashboard/runs` | GET | Ingestion run history |
 
 Auth: `Ocp-Apim-Subscription-Key` header with APIM subscription key.
+
+## Dashboard
+
+A React SPA dashboard (`/dashboard`) provides operational visibility into clips, remarks, and ingestion runs. Four tabs: Overview (stat cards, outlet breakdown bars, latest run status with auto-refresh), Clips (paginated list with outlet/date filters), Remarks (document table), Runs (ingestion run history with status badges).
+
+```bash
+cd dashboard
+npm install
+cp .env.example .env.local
+# Edit .env.local — set VITE_APIM_SUBSCRIPTION_KEY (and optionally VITE_APIM_BASE_URL)
+npm run dev
+# Open http://localhost:5173
+```
+
+The Vite dev server proxies `/api` requests to APIM (or directly to the Function App if `VITE_APIM_BASE_URL` points to `*.azurewebsites.net`). No routing library, no state management library, no charting library — just React 19, Vite 8, and Tailwind CSS v4.
 
 ## SPA Demo
 
@@ -136,10 +168,12 @@ node demo-server.js
 
 The Copilot Studio agent is **fully working** in the GCC Power Platform environment (`og-ai`). It uses **generative orchestration** — no manual topic configuration needed. The agent selects the right tool based on the operation descriptions in the OpenAPI spec.
 
-Three tools are deployed:
+Three tools are deployed via the custom connector:
 - **QueryClips** — search/browse news clips
 - **QueryRemarks** — semantic search over remarks with RAG synthesis
 - **ProofreadTranscript** — AI-powered transcript cleanup
+
+The transcribe and dashboard endpoints are accessed directly (not through Copilot Studio).
 
 The Power Platform custom connector (`/connector/`) bridges Copilot Studio to APIM.
 

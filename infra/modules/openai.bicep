@@ -69,6 +69,23 @@ resource embeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2
   dependsOn: [gpt4oDeployment]
 }
 
+resource whisperDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
+  parent: openaiAccount
+  name: 'whisper'
+  sku: {
+    name: 'Standard'
+    capacity: 3 // 3 concurrent requests per minute
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: 'whisper'
+      version: '001'
+    }
+  }
+  dependsOn: [embeddingDeployment]
+}
+
 // ---------------------------------------------------------------------------
 // Outputs
 // ---------------------------------------------------------------------------

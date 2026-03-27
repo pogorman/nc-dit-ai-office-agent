@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NC AI Office Agent — Video/Audio Transcription (Whisper)</title>
+<style>
+  @page { size: letter; margin: 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+    max-width: 8in;
+    margin: 0 auto;
+    padding: 0.5in;
+    background: #fff;
+  }
+
+  h1 {
+    font-size: 18pt;
+    color: #0078d4;
+    margin-bottom: 4px;
+  }
+  .tagline {
+    font-size: 11pt;
+    color: #555;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+
+  /* --- Overview Box --- */
+  .overview {
+    background: #f0f6ff;
+    border: 2px solid #0078d4;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+  .overview h2 {
+    font-size: 13pt;
+    color: #0078d4;
+    margin-bottom: 8px;
+  }
+  .overview p {
+    margin-bottom: 6px;
+  }
+  .elevator {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #333;
+    border-left: 4px solid #0078d4;
+    padding-left: 12px;
+    margin: 12px 0;
+  }
+
+  /* --- Sections --- */
+  .section {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .section-header {
+    background: #f8f8f8;
+    padding: 10px 16px;
+    border-bottom: 1px solid #ddd;
+  }
+  .section-header h2 {
+    font-size: 12pt;
+    color: #0078d4;
+  }
+  .section-header .subtitle {
+    font-size: 9pt;
+    color: #888;
+  }
+  .section-body {
+    padding: 12px 16px;
+  }
+  .section-body p {
+    margin-bottom: 8px;
+  }
+  .section-body ul, .section-body ol {
+    padding-left: 20px;
+    margin-bottom: 8px;
+  }
+  .section-body li {
+    margin-bottom: 4px;
+  }
+
+  /* --- Flow Diagram --- */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .flow-step {
+    background: #e8f0fe;
+    border: 1px solid #b0c4de;
+    border-radius: 6px;
+    padding: 8px 14px;
+    text-align: center;
+    font-size: 9pt;
+    min-width: 100px;
+  }
+  .flow-step strong {
+    display: block;
+    color: #0078d4;
+    font-size: 9.5pt;
+  }
+  .flow-arrow {
+    font-size: 16pt;
+    color: #0078d4;
+    font-weight: bold;
+  }
+
+  /* --- Architecture Diagram --- */
+  .arch-diagram {
+    background: #1a1a2e;
+    color: #e8e8e8;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 8.5pt;
+    line-height: 1.4;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .arch-diagram .highlight { color: #64b5f6; }
+  .arch-diagram .accent { color: #81c784; }
+  .arch-diagram .dim { color: #888; }
+
+  /* --- Table --- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 9pt;
+  }
+  th {
+    background: #f0f6ff;
+    color: #0078d4;
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 2px solid #0078d4;
+    font-size: 9pt;
+  }
+  td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #eee;
+  }
+  tr:hover td {
+    background: #fafafa;
+  }
+
+  /* --- Code Block --- */
+  .code-block {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 8.5pt;
+    line-height: 1.5;
+    overflow-x: auto;
+    margin: 8px 0;
+    white-space: pre;
+  }
+
+  /* --- Callout --- */
+  .callout {
+    background: #fff8e1;
+    border-left: 4px solid #f9a825;
+    padding: 10px 14px;
+    margin: 12px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 9.5pt;
+  }
+  .callout.info {
+    background: #e8f5e9;
+    border-left-color: #43a047;
+  }
+  .callout.blue {
+    background: #e3f2fd;
+    border-left-color: #1976d2;
+  }
+
+  /* --- Two-column --- */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 12px 0;
+  }
+
+  /* --- Footer --- */
+  .footer {
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid #ddd;
+    font-size: 8pt;
+    color: #999;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>Video/Audio Transcription</h1>
+<p class="tagline">Converting audio and video recordings to text using Azure OpenAI Whisper</p>
+
+<!-- ===== Overview ===== -->
+<div class="overview">
+  <h2>What We Built</h2>
+  <p class="elevator">
+    The Communications Office can now upload audio or video files and get an accurate text transcript back in seconds &mdash; no manual transcription needed.
+  </p>
+  <p>This adds a fourth AI capability to the NC Comms Agent platform, alongside news clips monitoring, remarks search, and transcript proofreading. It uses OpenAI's Whisper model deployed on the existing Azure OpenAI resource &mdash; same managed identity auth, no new Azure resources or API keys.</p>
+</div>
+
+<!-- ===== How It Works ===== -->
+<div class="section">
+  <div class="section-header">
+    <h2>How It Works</h2>
+    <span class="subtitle">End-to-end request flow</span>
+  </div>
+  <div class="section-body">
+    <div class="flow">
+      <div class="flow-step"><strong>Upload</strong>Audio/video file<br>(mp3, mp4, wav...)</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><strong>APIM</strong>Auth + rate limit<br>POST /transcribe</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><strong>Azure Function</strong>Validate file<br>type &amp; size</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><strong>Whisper</strong>Azure OpenAI<br>speech-to-text</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><strong>Response</strong>JSON with<br>transcript text</div>
+    </div>
+
+    <div class="arch-diagram"><span class="dim">Client (Copilot Studio / Web / curl)</span>
+    <span class="dim">|</span>
+    <span class="dim">| multipart/form-data (file + optional language)</span>
+    <span class="dim">v</span>
+<span class="highlight">APIM Gateway</span> <span class="dim">(subscription key auth, 60 req/min rate limit)</span>
+    <span class="dim">|</span>
+    <span class="dim">| x-functions-key injected</span>
+    <span class="dim">v</span>
+<span class="highlight">Azure Function</span>  <span class="accent">POST /api/transcribe</span>
+    <span class="dim">|  1. Validate extension (mp3/mp4/wav/webm/...)</span>
+    <span class="dim">|  2. Validate size (&le; 25 MB)</span>
+    <span class="dim">|  3. Buffer file into memory</span>
+    <span class="dim">v</span>
+<span class="highlight">Azure OpenAI</span> <span class="accent">Whisper deployment</span>  <span class="dim">(managed identity auth)</span>
+    <span class="dim">|</span>
+    <span class="dim">v</span>
+<span class="accent">{ transcript, filename, fileSizeBytes }</span></div>
+  </div>
+</div>
+
+<!-- ===== What Was Deployed ===== -->
+<div class="section">
+  <div class="section-header">
+    <h2>What Was Deployed</h2>
+    <span class="subtitle">Azure resources and code changes (2026-03-26)</span>
+  </div>
+  <div class="section-body">
+    <table>
+      <tr><th>Component</th><th>What Changed</th><th>Details</th></tr>
+      <tr>
+        <td><strong>Azure OpenAI</strong></td>
+        <td>Whisper model deployment</td>
+        <td>Model: <code>whisper</code> v001, SKU: Standard, 3 concurrent requests. Same resource as GPT-4o and embeddings.</td>
+      </tr>
+      <tr>
+        <td><strong>Function App</strong></td>
+        <td>New function + env var</td>
+        <td><code>transcribe.ts</code> &mdash; HTTP POST handler. <code>WHISPER_DEPLOYMENT_NAME=whisper</code> added to app settings.</td>
+      </tr>
+      <tr>
+        <td><strong>APIM</strong></td>
+        <td>New operation</td>
+        <td><code>POST /transcribe</code> on the <code>comms-agent-api</code>. Same auth policy (function key injection + rate limiting).</td>
+      </tr>
+      <tr>
+        <td><strong>Shared client</strong></td>
+        <td><code>transcribeAudio()</code> helper</td>
+        <td>Added to <code>openai-client.ts</code>. Uses <code>toFile()</code> from the <code>openai</code> package to convert Buffer to File for the API call.</td>
+      </tr>
+      <tr>
+        <td><strong>Types</strong></td>
+        <td><code>TranscribeResponse</code></td>
+        <td>Interface with <code>transcript</code>, <code>filename</code>, <code>fileSizeBytes</code> fields.</td>
+      </tr>
+      <tr>
+        <td><strong>Bicep IaC</strong></td>
+        <td>Updated (not re-deployed)</td>
+        <td><code>openai.bicep</code>: Whisper deployment resource. <code>function-app.bicep</code>: <code>WHISPER_DEPLOYMENT_NAME</code> setting. <code>apim.bicep</code>: transcribe operation. Resources deployed via CLI due to pre-existing networking/Cosmos module conflicts.</td>
+      </tr>
+    </table>
+
+    <div class="callout info">
+      <strong>No new Azure resources.</strong> Whisper runs on the existing Azure OpenAI resource. Auth is via the same managed identity &mdash; no API keys, no Key Vault changes, no new RBAC grants needed.
+    </div>
+  </div>
+</div>
+
+<!-- ===== Supported Formats ===== -->
+<div class="section">
+  <div class="section-header">
+    <h2>Supported File Formats</h2>
+  </div>
+  <div class="section-body">
+    <div class="two-col">
+      <div>
+        <table>
+          <tr><th>Format</th><th>Extension</th><th>Common Use</th></tr>
+          <tr><td>MP3</td><td><code>.mp3</code></td><td>Compressed audio</td></tr>
+          <tr><td>MP4</td><td><code>.mp4</code></td><td>Video with audio track</td></tr>
+          <tr><td>MPEG</td><td><code>.mpeg</code></td><td>Video/audio</td></tr>
+          <tr><td>MPGA</td><td><code>.mpga</code></td><td>MPEG audio layer</td></tr>
+          <tr><td>M4A</td><td><code>.m4a</code></td><td>Apple audio (AAC)</td></tr>
+          <tr><td>WAV</td><td><code>.wav</code></td><td>Uncompressed audio</td></tr>
+          <tr><td>WebM</td><td><code>.webm</code></td><td>Web video/audio</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="callout">
+          <strong>25 MB file size limit</strong> &mdash; this is a Whisper API constraint. For longer recordings, the audio needs to be split into chunks before upload. A typical 25 MB MP3 file contains ~25&ndash;30 minutes of audio.
+        </div>
+        <div class="callout blue">
+          <strong>Language hint:</strong> Optionally include a <code>language</code> field (ISO 639-1 code like <code>"en"</code> or <code>"es"</code>) to improve accuracy when the source language is known.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== API Usage ===== -->
+<div class="section">
+  <div class="section-header">
+    <h2>API Usage</h2>
+    <span class="subtitle">How to call the transcription endpoint</span>
+  </div>
+  <div class="section-body">
+    <p><strong>Endpoint:</strong> <code>POST https://nc-comms-agent-dev-apim.azure-api.net/comms/transcribe</code></p>
+    <p><strong>Content-Type:</strong> <code>multipart/form-data</code></p>
+    <p><strong>Auth:</strong> <code>Ocp-Apim-Subscription-Key</code> header</p>
+
+    <h3 style="margin: 12px 0 6px; font-size: 10pt; color: #333;">Request (curl example)</h3>
+    <div class="code-block">curl -X POST \
+  "https://nc-comms-agent-dev-apim.azure-api.net/comms/transcribe" \
+  -H "Ocp-Apim-Subscription-Key: YOUR_KEY" \
+  -F "file=@press-conference.mp4" \
+  -F "language=en"</div>
+
+    <h3 style="margin: 12px 0 6px; font-size: 10pt; color: #333;">Response</h3>
+    <div class="code-block">{
+  "transcript": "Good afternoon, everyone. Today I am pleased to announce...",
+  "filename": "press-conference.mp4",
+  "fileSizeBytes": 15728640
+}</div>
+
+    <h3 style="margin: 12px 0 6px; font-size: 10pt; color: #333;">Error Responses</h3>
+    <table>
+      <tr><th>Status</th><th>Condition</th><th>Response</th></tr>
+      <tr><td>400</td><td>Missing file</td><td><code>{ "error": "Missing 'file' field..." }</code></td></tr>
+      <tr><td>400</td><td>Unsupported format</td><td><code>{ "error": "Unsupported file type '.avi'..." }</code></td></tr>
+      <tr><td>400</td><td>File too large</td><td><code>{ "error": "File too large (32.5MB)..." }</code></td></tr>
+      <tr><td>502</td><td>Whisper unavailable</td><td><code>{ "error": "Transcription failed..." }</code></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== Copilot Studio Integration ===== -->
+<div class="section">
+  <div class="section-header">
+    <h2>Copilot Studio Integration</h2>
+    <span class="subtitle">How to connect this from the Teams agent</span>
+  </div>
+  <div class="section-body">
+    <p>The transcription endpoint uses <code>multipart/form-data</code> for file upload, which requires a different connector approach than the existing JSON-based actions (QueryClips, QueryRemarks, ProofreadTranscript).</p>
+
+    <h3 style="margin: 12px 0 6px; font-size: 10pt; color: #333;">Option A: Direct HTTP Action (Recommended)</h3>
+    <ol>
+      <li>In Copilot Studio, create a new <strong>Topic</strong> triggered by phrases like "transcribe this recording", "convert video to text", "transcribe audio"</li>
+      <li>Add an <strong>"Ask a question"</strong> node to collect the file upload from the user</li>
+      <li>Add an <strong>HTTP request</strong> action (Power Automate cloud flow):
+        <ul>
+          <li>Method: <code>POST</code></li>
+          <li>URI: <code>https://nc-comms-agent-dev-apim.azure-api.net/comms/transcribe</code></li>
+          <li>Headers: <code>Ocp-Apim-Subscription-Key</code></li>
+          <li>Body: multipart/form-data with the uploaded file</li>
+        </ul>
+      </li>
+      <li>Parse the JSON response and display the <code>transcript</code> field back to the user</li>
+    </ol>
+
+    <h3 style="margin: 12px 0 6px; font-size: 10pt; color: #333;">Option B: Power Automate Flow (For Larger Files)</h3>
+    <ol>
+      <li>Create a Power Automate cloud flow triggered from Copilot Studio</li>
+      <li>User uploads file to a SharePoint library or OneDrive folder</li>
+      <li>Flow detects the new file, reads it, and sends to the transcription endpoint</li>
+      <li>Flow returns the transcript text back to Copilot Studio</li>
+      <li>Advantage: bypasses Copilot Studio's message size limits for larger files</li>
+    </ol>
+
+    <div class="callout blue">
+      <strong>Why not add it to the existing custom connector?</strong> The current connector (<code>apiDefinition.swagger.json</code>) uses OpenAPI 2.0 with JSON request bodies. File uploads via multipart/form-data require different connector configuration. The existing 3 JSON-based actions (QueryClips, QueryRemarks, ProofreadTranscript) continue to work unchanged. Transcription can be added as a separate connector or handled via a Power Automate HTTP action.
+    </div>
+  </div>
+</div>
+
+<!-- ===== Chain with Proofreading ===== -->
+<div class="section">
+  <div class="section-header">
+    <h2>Chain: Transcribe + Proofread</h2>
+    <span class="subtitle">Two-step pipeline for polished transcripts</span>
+  </div>
+  <div class="section-body">
+    <p>Whisper produces raw transcripts that may contain minor errors (especially for proper nouns, NC-specific terms, or cross-talk). The existing <strong>Proofread</strong> function can clean these up automatically.</p>
+
+    <div class="flow">
+      <div class="flow-step"><strong>Upload</strong>Video/audio file</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><strong>Whisper</strong>Raw transcript</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><strong>GPT-4o</strong>Proofread &amp; fix<br>proper nouns, punctuation</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step"><strong>Output</strong>Polished transcript<br>with change log</div>
+    </div>
+
+    <p>This chain can be automated in a Power Automate flow or built as a combined endpoint. The two functions already exist &mdash; they just need to be wired together.</p>
+  </div>
+</div>
+
+<!-- ===== Architecture Context ===== -->
+<div class="section">
+  <div class="section-header">
+    <h2>Where It Fits in the Architecture</h2>
+  </div>
+  <div class="section-body">
+    <div class="arch-diagram"><span class="highlight">Azure OpenAI Resource</span>  <span class="dim">(nc-comms-agent-dev-oai)</span>
+<span class="dim">|</span>
+<span class="dim">+--</span> <span class="accent">gpt-4o</span>           <span class="dim">Chat completions (synthesis, proofread, web search)</span>
+<span class="dim">|</span>
+<span class="dim">+--</span> <span class="accent">text-embedding-3-large</span>  <span class="dim">Embedding vectors (clips + remarks)</span>
+<span class="dim">|</span>
+<span class="dim">+--</span> <span class="accent">whisper</span>          <span class="dim">Audio/video transcription  &lt;&lt; NEW</span>
+
+
+<span class="highlight">Azure Functions</span>  <span class="dim">(nc-comms-agent-dev-func) &mdash; 12 registered functions</span>
+<span class="dim">|</span>
+<span class="dim">+--</span> clips-ingest     <span class="dim">Timer + HTTP refresh</span>
+<span class="dim">+--</span> clips-query      <span class="dim">POST /api/clips/query</span>
+<span class="dim">+--</span> clips-digest     <span class="dim">Timer (stub)</span>
+<span class="dim">+--</span> remarks-ingest   <span class="dim">Blob trigger</span>
+<span class="dim">+--</span> remarks-query    <span class="dim">POST /api/remarks/query</span>
+<span class="dim">+--</span> proofread        <span class="dim">POST /api/proofread</span>
+<span class="dim">+--</span> <span class="accent">transcribe</span>       <span class="accent">POST /api/transcribe  &lt;&lt; NEW</span>
+<span class="dim">+--</span> dashboard (x4)   <span class="dim">GET /api/dashboard/*</span>
+<span class="dim">+--</span> clips-refresh    <span class="dim">POST /api/clips/refresh</span></div>
+  </div>
+</div>
+
+<!-- ===== Cost ===== -->
+<div class="section">
+  <div class="section-header">
+    <h2>Cost Impact</h2>
+  </div>
+  <div class="section-body">
+    <table>
+      <tr><th>Item</th><th>Cost</th><th>Notes</th></tr>
+      <tr><td>Whisper model deployment</td><td>$0</td><td>No cost for the deployment itself; pay-per-use only</td></tr>
+      <tr><td>Whisper API usage</td><td>~$0.006/min of audio</td><td>A 10-minute press conference = ~$0.06</td></tr>
+      <tr><td>Additional compute</td><td>$0</td><td>Function runs on existing Flex Consumption plan</td></tr>
+    </table>
+    <div class="callout info">
+      <strong>Minimal cost impact.</strong> At 50 transcriptions/month averaging 10 minutes each: ~$3/month. No fixed costs &mdash; you only pay for what you use.
+    </div>
+  </div>
+</div>
+
+<!-- ===== Next Steps ===== -->
+<div class="section">
+  <div class="section-header">
+    <h2>Next Steps</h2>
+    <span class="subtitle">Planned enhancements</span>
+  </div>
+  <div class="section-body">
+    <ol>
+      <li><strong>Copilot Studio topic</strong> &mdash; Wire up the file upload flow so staff can transcribe recordings directly in Teams</li>
+      <li><strong>Transcribe + Proofread chain</strong> &mdash; Combined endpoint or Power Automate flow that runs both steps automatically</li>
+      <li><strong>Large file support</strong> &mdash; Auto-chunk files over 25 MB (extract audio, split into segments, transcribe each, stitch results)</li>
+      <li><strong>Speaker diarization</strong> &mdash; If needed, integrate Azure AI Speech (batch mode) for labeling who said what in multi-speaker recordings</li>
+      <li><strong>Custom connector update</strong> &mdash; Add TranscribeAudio action to the Power Platform connector for generative orchestration</li>
+    </ol>
+  </div>
+</div>
+
+<div class="footer">
+  NC DIT AI Office Agent &bull; Video Processing Functionality &bull; 2026-03-26
+</div>
+
+</body>
+</html>

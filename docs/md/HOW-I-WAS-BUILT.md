@@ -534,4 +534,116 @@ Each query includes a timeframe parameter and a `NO_GOV` instruction to exclude 
 
 ---
 
+## Chapter 16: Audio/Video Transcription via Whisper
+
+**Date:** 2026-03-26
+
+### The Request
+
+The customer asked about adding video transcription — uploading recordings and getting text transcripts back. Three Azure services were evaluated:
+
+1. **Azure OpenAI Whisper** — simplest, uses the existing Azure OpenAI resource and managed identity auth. 25 MB file limit.
+2. **Azure AI Speech (batch transcription)** — purpose-built, supports speaker diarization, no file size limit. More complex setup.
+3. **Azure AI Video Indexer** — full video analysis (faces, topics, sentiment). Overkill for transcription only.
+
+Decision: **Whisper** — zero new Azure resources, same auth pattern, minimal code.
+
+### What Was Built
+
+**Infrastructure (deployed via CLI, also added to Bicep):**
+- `whisper` model deployment on existing Azure OpenAI resource (v001, Standard SKU, 3 concurrent requests)
+- `WHISPER_DEPLOYMENT_NAME=whisper` env var on Function App
+- `POST /transcribe` operation on APIM
+
+**Code:**
+- `transcribeAudio(buffer, filename, language?)` helper in `openai-client.ts` — uses `toFile()` from the `openai` package to convert a Buffer to a File object for the Whisper API
+- `TranscribeResponse` interface in `types.ts` — `{ transcript, filename, fileSizeBytes }`
+- `transcribe.ts` function — HTTP POST handler that accepts multipart/form-data file uploads, validates file extension and size, and calls Whisper
+
+**Deployment note:** The full Bicep deployment failed due to pre-existing conflicts in the networking module (private DNS zone already linked to VNet) and Cosmos DB module (partition key can't be changed). The three new resources were deployed individually via Azure CLI:
+1. `az cognitiveservices account deployment create` — Whisper model
+2. `az functionapp config appsettings set` — env var
+3. `az apim api operation create` — APIM operation
+4. `func azure functionapp publish` — function code (after `npm ci --omit=dev` and toggling storage public access)
+
+### Documentation
+
+Created `docs/html/video-processing-functionality.html` — a styled one-page explainer covering:
+- What was built and how it works (flow diagram + architecture diagram)
+- Supported file formats and limitations
+- API usage with curl examples
+- Copilot Studio integration options (direct HTTP action vs Power Automate flow)
+- Transcribe + Proofread chaining pattern
+- Cost impact (~$0.006/min of audio, ~$3/month at 50 transcriptions)
+
+---
+
+## Chapter 17: React Dashboard + Run Logging
+
+**Date:** 2026-03-26
+
+### The Problem
+
+There was no way to see the state of the platform without querying Cosmos DB directly. How many clips are indexed? Which outlets are represented? When did the last ingestion run? Did it succeed? Staff and admins need this at a glance.
+
+### Dashboard Backend — 4 GET Endpoints
+
+Created `src/functions/dashboard.ts` with four endpoints:
+
+1. **`GET /api/dashboard/stats`** — Aggregates clip count, remarks count, outlet breakdown (GROUP BY), and latest ingestion run in a single `Promise.all` call. Returns a `DashboardStats` object.
+
+2. **`GET /api/dashboard/clips`** — Paginated clip listing (offset/limit, max 50 per page). Supports `outlet`, `dateFrom`, `dateTo` query parameters. Parameterized Cosmos SQL queries to prevent injection.
+
+3. **`GET /api/dashboard/remarks`** — All remarks metadata documents, sorted by date descending.
+
+4. **`GET /api/dashboard/runs`** — Recent ingestion runs from the `ingestion-state` container, sorted by completion time descending.
+
+All four endpoints registered in APIM (`apim.bicep`) with GET methods.
+
+### Run Logging
+
+Each clips ingestion (both the daily timer and manual refresh) now persists an `IngestionRun` document to the `ingestion-state` Cosmos container. Fields: `id`, `trigger` (timer/manual), `startedAt`, `completedAt`, `durationMs`, `newCount`, `skippedCount`, `errorCount`, `totalCount`, `sources: { gov, web }`, `status` (success/partial/failed).
+
+New types added to `types.ts`: `IngestionRun` and `DashboardStats`.
+
+### Dashboard Frontend — React SPA
+
+Created `/dashboard` as a standalone React project:
+
+- **Tech stack:** React 19, Vite 8, Tailwind CSS v4, TypeScript strict mode
+- **No extras:** No routing library, no state management library, no charting library. Just React state and `fetch()`.
+- **Types shared:** `vite.config.ts` defines a `@shared` path alias pointing to `../src/shared`, so the dashboard imports `IngestionRun`, `DashboardStats`, etc. directly from the backend types file.
+- **Dev proxy:** Vite dev server proxies `/api` requests to APIM (or directly to the Function App if `VITE_APIM_BASE_URL` points to `*.azurewebsites.net`), injecting the correct auth header automatically.
+
+Four tabs:
+- **Overview** (`StatsPanel`) — Stat cards for total clips/remarks, horizontal bars for outlet breakdown, latest run status card with auto-refresh
+- **Clips** (`ClipsFeed`) — Paginated clip list with outlet dropdown and date range filters
+- **Remarks** (`RemarksList`) — Document table with title, date, event, chunk count
+- **Runs** (`RunsHistory`) — Ingestion run history with status badges (success/partial/failed), source breakdown, timing
+
+### Local Dev
+
+```bash
+cd dashboard
+npm install
+cp .env.example .env.local
+# Set VITE_APIM_SUBSCRIPTION_KEY in .env.local
+npm run dev
+# Open http://localhost:5173
+```
+
+### `.funcignore` Updated
+
+Added `dashboard` to `.funcignore` so the React SPA (including its `node_modules`) doesn't get included in the Azure Functions deploy package.
+
+---
+
+## Chapter 18: 78 Clips Across 29 Outlets
+
+**Date:** 2026-03-26
+
+The clips index grew from 58 clips across 21 outlets to 78 clips across 29 outlets after additional ingestion runs with the multi-query web search. The 5-query approach covers more topic areas and catches articles from smaller regional outlets that a single generic query would miss.
+
+---
+
 *More chapters will be added as implementation progresses.*

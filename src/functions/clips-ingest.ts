@@ -5,7 +5,7 @@ import { JSDOM } from "jsdom";
 import { getContainer } from "../shared/cosmos-client";
 import { getEmbedding, webSearch } from "../shared/openai-client";
 import { getSearchClient } from "../shared/search-client";
-import { NewsClip } from "../shared/types";
+import { IngestionRun, NewsClip } from "../shared/types";
 
 const GOV_PRESS_RELEASES_URL = "https://governor.nc.gov/news/press-releases";
 const GOV_BASE_URL = "https://governor.nc.gov";
@@ -306,16 +306,13 @@ async function processClip(
   return "new";
 }
 
-interface IngestionResult {
-  successCount: number;
-  errorCount: number;
-  totalCount: number;
-  newCount: number;
-  skippedCount: number;
-  sources: { gov: number; web: number };
-}
+async function runIngestion(
+  trigger: "timer" | "manual",
+  timeframe: string,
+  context: InvocationContext
+): Promise<IngestionRun> {
+  const startedAt = new Date().toISOString();
 
-async function runIngestion(timeframe: string, context: InvocationContext): Promise<IngestionResult> {
   // Fetch from all sources in parallel
   const [govListings, webListings] = await Promise.all([
     fetchGovListings(PAGES_TO_SCRAPE, context).catch((error) => {
@@ -357,18 +354,36 @@ async function runIngestion(timeframe: string, context: InvocationContext): Prom
     }
   }
 
+  const completedAt = new Date().toISOString();
+  const durationMs = new Date(completedAt).getTime() - new Date(startedAt).getTime();
+
   context.log(
     `Clips ingestion complete: ${newCount} new, ${skippedCount} skipped, ${errorCount} errors, ${listings.length} total`
   );
 
-  return {
-    successCount,
-    errorCount,
-    totalCount: listings.length,
+  const run: IngestionRun = {
+    id: `${startedAt}-${trigger}`,
+    trigger,
+    startedAt,
+    completedAt,
+    durationMs,
     newCount,
     skippedCount,
+    errorCount,
+    totalCount: listings.length,
     sources: { gov: govListings.length, web: webListings.length },
+    status: errorCount === 0 ? "success" : successCount > 0 ? "partial" : "failed",
   };
+
+  // Persist run to ingestion-state container
+  try {
+    const runsContainer = getContainer("ingestion-state");
+    await runsContainer.items.create(run);
+  } catch (error) {
+    context.warn(`Failed to log ingestion run: ${error}`);
+  }
+
+  return run;
 }
 
 async function clipsIngest(timer: Timer, context: InvocationContext): Promise<void> {
@@ -378,12 +393,12 @@ async function clipsIngest(timer: Timer, context: InvocationContext): Promise<vo
     context.log("Timer is past due — running anyway");
   }
 
-  await runIngestion("past week", context);
+  await runIngestion("timer", "past week", context);
 }
 
 async function clipsRefresh(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   context.log(`Manual clips refresh triggered at ${new Date().toISOString()}`);
-  const result = await runIngestion("past 6 months", context);
+  const result = await runIngestion("manual", "past 6 months", context);
   return { jsonBody: result };
 }
 

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard & Platform Guide — NC Governor's Communications Agent</title>
+<style>
+  @page { size: letter; margin: 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.55;
+    color: #1a1a1a;
+    max-width: 7.5in;
+    margin: 0 auto;
+    padding: 0.5in;
+    background: #fff;
+  }
+
+  h1 { font-size: 18pt; color: #0a2463; margin-bottom: 4px; }
+  .tagline {
+    font-size: 9pt; color: #888;
+    margin-bottom: 14px;
+    border-bottom: 2px solid #0a2463;
+    padding-bottom: 8px;
+  }
+
+  h2 {
+    font-size: 13pt; color: #0a2463;
+    margin: 14px 0 6px 0;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 3px;
+  }
+  h3 {
+    font-size: 11pt; color: #333;
+    margin: 10px 0 4px 0;
+  }
+
+  p { margin-bottom: 6px; }
+  ul { margin: 4px 0 8px 18px; }
+  li { margin-bottom: 3px; }
+
+  .section { margin-bottom: 12px; page-break-inside: avoid; }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 8px 0;
+  }
+  .card {
+    background: #f5f7fa;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 9.5pt;
+  }
+  .card-label { font-weight: 700; color: #0a2463; margin-bottom: 2px; }
+  .card-value { color: #555; }
+
+  .capability {
+    background: #f0f6ff;
+    border-left: 4px solid #0078d4;
+    padding: 8px 12px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .capability-green { background: #e8f5e9; border-left-color: #107c10; }
+  .capability-orange { background: #fdf6ec; border-left-color: #d83b01; }
+  .capability-purple { background: #f3e8ff; border-left-color: #7b2d8e; }
+  .capability strong { display: block; margin-bottom: 2px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    margin: 6px 0;
+  }
+  th {
+    background: #0a2463;
+    color: #fff;
+    padding: 5px 8px;
+    text-align: left;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  td {
+    padding: 4px 8px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  .highlight {
+    background: #e8f5e9;
+    border-left: 4px solid #107c10;
+    padding: 6px 10px;
+    margin: 8px 0;
+    font-size: 9pt;
+    border-radius: 0 4px 4px 0;
+  }
+  .highlight strong { color: #107c10; }
+
+  .footer {
+    margin-top: 14px;
+    font-size: 7.5pt;
+    color: #bbb;
+    text-align: center;
+    border-top: 1px solid #eee;
+    padding-top: 4px;
+  }
+
+  @media print { body { padding: 0; } }
+</style>
+</head>
+<body>
+
+<h1>Dashboard & Platform Guide</h1>
+<div class="tagline">NC Governor's Communications Agent &middot; What it does, how it works, and how to demo it &middot; March 2026</div>
+
+<!-- ===== WHAT IT IS ===== -->
+<div class="section">
+  <h2>What This Is</h2>
+  <p>A serverless AI platform built for the NC Governor's Communications Office. It does four things:</p>
+
+  <div class="capability">
+    <strong>News Clips — "What's in the news about the Governor?"</strong>
+    Every morning at 7 AM, the system scrapes governor.nc.gov press releases AND searches the web using Azure OpenAI with Bing grounding — pulling from WRAL, WUNC, AP, Charlotte Observer, and 20+ other outlets. Staff search clips in Teams using natural language. Currently: <strong>78 clips from 29 outlets</strong>.
+  </div>
+
+  <div class="capability capability-green">
+    <strong>Remarks Search — "What has the Governor said about healthcare?"</strong>
+    Upload a speech or column. The system chunks it into paragraphs, creates vector embeddings, and indexes it. Staff ask topic questions; GPT-4o synthesizes an answer with direct quotes and citations from across all speeches. Currently: 7 documents, 26+ chunks.
+  </div>
+
+  <div class="capability capability-orange">
+    <strong>Transcript Proofreading — "Clean up this rough transcript"</strong>
+    Paste a faulty transcript. GPT-4o fixes spelling, grammar, and punctuation. Every change is explained with a confidence level (high/medium/low) and a reason. Nothing is stored — text in, clean text out.
+  </div>
+
+  <div class="capability capability-purple">
+    <strong>Audio/Video Transcription — "Transcribe this recording"</strong>
+    Upload an audio or video file (up to 25MB). Azure OpenAI Whisper converts it to text. Returns the transcript with filename and file size metadata.
+  </div>
+</div>
+
+<!-- ===== THE DASHBOARD ===== -->
+<div class="section">
+  <h2>The Dashboard</h2>
+  <p>A React SPA that visualizes the platform's data and health. Four tabs:</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-label">Overview</div>
+      <div class="card-value">Stat cards (total clips, remarks, unique outlets, latest ingest), outlet breakdown bar chart, latest ingestion run status. Auto-refreshes every 60 seconds.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Clips</div>
+      <div class="card-value">Paginated feed of all ingested clips. Filter by outlet (dropdown) and date range. Each card shows title, outlet, published date, lede, and links to the original article.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Remarks</div>
+      <div class="card-value">Table of all uploaded speech/column documents with title, date, event, venue, chunk count, and ingestion timestamp.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Runs</div>
+      <div class="card-value">History of every ingestion run — trigger type (timer/manual), duration, new/skipped/errors, source breakdown (gov + web), and status badge (success/partial/failed).</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HOW IT WORKS ===== -->
+<div class="section">
+  <h2>How News Clips Work</h2>
+  <h3>Ingestion (7 AM daily + manual refresh)</h3>
+  <ol style="margin: 4px 0 8px 18px;">
+    <li><strong>Scrape</strong> — Azure Function fetches 2 pages of governor.nc.gov press releases (~20 articles)</li>
+    <li><strong>Web Search</strong> — 5 parallel Azure OpenAI Responses API calls with Bing grounding, each targeting a different topic (budget, Helene, healthcare, law enforcement, general). Returns ~30-40 unique external URLs.</li>
+    <li><strong>Merge & Dedup</strong> — Gov + web results merged, deduplicated by URL hash. Gov URLs filtered from web results (scraper already covers those).</li>
+    <li><strong>Extract</strong> — Each article fetched, parsed with Mozilla Readability for clean text extraction.</li>
+    <li><strong>Embed</strong> — Azure OpenAI text-embedding-3-large creates a vector embedding of each article.</li>
+    <li><strong>Store</strong> — Article + embedding saved to Cosmos DB (metadata) and Azure AI Search (hybrid search index).</li>
+    <li><strong>Log Run</strong> — Run results (counts, timing, status) persisted to Cosmos for dashboard display.</li>
+  </ol>
+
+  <h3>Query (staff asks in Teams)</h3>
+  <ol style="margin: 4px 0 8px 18px;">
+    <li>Question goes to Copilot Studio chatbot in Teams</li>
+    <li>Chatbot calls APIM → Azure Function → AI Search (hybrid: vector + keyword + semantic reranker)</li>
+    <li>Top matching clips returned with title, outlet, date, and Governor mention context</li>
+  </ol>
+
+  <div class="highlight">
+    <strong>Key demo point:</strong> The daily timer uses "past week" for focused coverage. The manual refresh endpoint uses "past 6 months" for backfill. Cost: ~$0.175/day ($5/month) for the 5 web search calls.
+  </div>
+</div>
+
+<!-- ===== ARCHITECTURE ===== -->
+<div class="section">
+  <h2>Architecture at a Glance</h2>
+  <table>
+    <tr><th>Service</th><th>Role</th><th>Tier</th></tr>
+    <tr><td>Azure Functions (Flex Consumption)</td><td>All backend logic — ingestion, query, proofread, transcribe, dashboard APIs</td><td>Consumption (pay-per-use)</td></tr>
+    <tr><td>Azure API Management</td><td>Gateway — auth, rate limiting, key injection. All clients go through APIM.</td><td>Consumption</td></tr>
+    <tr><td>Azure OpenAI</td><td>GPT-4o (synthesis, proofread), text-embedding-3-large (vectors), Whisper (transcription), Responses API + Bing grounding (web search)</td><td>Standard</td></tr>
+    <tr><td>Azure AI Search</td><td>Hybrid search — vector + BM25 keyword + semantic reranker. Two indexes: clips, remarks.</td><td>Basic (~$70/mo)</td></tr>
+    <tr><td>Cosmos DB</td><td>Document store — clips, remarks metadata, ingestion-state (run history). Serverless billing.</td><td>Serverless</td></tr>
+    <tr><td>Blob Storage</td><td>Remarks document uploads + Function deployment packages</td><td>Standard</td></tr>
+    <tr><td>Key Vault</td><td>Stores Function host key for APIM. RBAC mode.</td><td>Standard</td></tr>
+    <tr><td>VNet + Private Endpoints</td><td>Private connectivity for Blob Storage and Cosmos DB</td><td>—</td></tr>
+    <tr><td>Copilot Studio</td><td>Chatbot UI in Teams — custom connector to APIM</td><td>—</td></tr>
+  </table>
+
+  <div class="highlight">
+    <strong>Security model:</strong> Managed identity + DefaultAzureCredential everywhere. No API keys or passwords in code. APIM is the auth boundary. VNet + private endpoints for Blob and Cosmos. The only key in the system is the Bing grounding call, which uses the same managed identity token.
+  </div>
+</div>
+
+<!-- ===== NUMBERS ===== -->
+<div class="section">
+  <h2>By the Numbers</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-label">78 News Clips</div>
+      <div class="card-value">From 29 outlets — WRAL (11), NC Governor (19), WUNC (5), NC Newsline (5), Carolina Journal (4), CBS17 (3), and 23 more</div>
+    </div>
+    <div class="card">
+      <div class="card-label">7 Remarks Documents</div>
+      <div class="card-value">State of the State + 6 monthly Governor's columns (Aug 2025 – Jan 2026), 26+ chunks indexed</div>
+    </div>
+    <div class="card">
+      <div class="card-label">~$125–200/month</div>
+      <div class="card-value">Total platform cost. AI Search ~$70, OpenAI ~$30-50, web search ~$5, Cosmos/Storage/Functions ~$20-75</div>
+    </div>
+    <div class="card">
+      <div class="card-label">0 passwords in code</div>
+      <div class="card-value">Managed identity everywhere. DefaultAzureCredential. No connection strings. APIM injects Function keys at the gateway.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DEMO FLOW ===== -->
+<div class="section">
+  <h2>Suggested Demo Flow</h2>
+  <ol style="margin: 4px 0 8px 18px;">
+    <li><strong>Dashboard Overview</strong> — Open the dashboard. Show the stat cards (78 clips, 29 outlets). Point to the outlet breakdown. "This runs every morning at 7 AM automatically."</li>
+    <li><strong>Dashboard Clips</strong> — Switch to Clips tab. Filter by "WRAL" to show external media. "These are real articles from WRAL, pulled in via Azure OpenAI with Bing grounding — not scraping, not RSS."</li>
+    <li><strong>Dashboard Runs</strong> — Switch to Runs tab. Show the latest run — 24 new, 29 skipped, 0 errors, 47 seconds. "Every run logs itself so ops can see what happened."</li>
+    <li><strong>Teams Chatbot — Clips</strong> — Switch to Teams. Ask: "What clips came in about broadband?" Show the semantic search results with outlet and date.</li>
+    <li><strong>Teams Chatbot — Remarks</strong> — Ask: "What has the Governor said about mental health and public safety?" Show the RAG synthesis with direct quotes and citations.</li>
+    <li><strong>Teams Chatbot — Proofread</strong> — Paste the sample transcript. Show the corrected output with change explanations.</li>
+  </ol>
+</div>
+
+<!-- ===== TALKING POINTS ===== -->
+<div class="section">
+  <h2>Key Talking Points</h2>
+  <ul>
+    <li><strong>"This is a reference architecture."</strong> — Every Azure AI service in one platform: OpenAI (GPT-4o, embeddings, Whisper, Bing grounding), AI Search, Cosmos DB, APIM, Copilot Studio.</li>
+    <li><strong>"Serverless and consumption-based."</strong> — No always-on VMs. Functions scale to zero. Cosmos DB is serverless. Cost tracks with usage.</li>
+    <li><strong>"Secure by design."</strong> — Managed identity everywhere, VNet + private endpoints, APIM as the gateway, no secrets in code.</li>
+    <li><strong>"Real data, real outlets."</strong> — 78 clips from 29 sources, not mock data. The web search runs against Bing's live index every morning.</li>
+    <li><strong>"Built in days, not months."</strong> — IaC in Bicep, TypeScript backend, React dashboard. The whole platform deploys from a single repo.</li>
+    <li><strong>"Extensible."</strong> — Each capability is a separate Function. Add a new data source? New Function, same pattern. Another office wants this? `az deployment group create` with different parameters.</li>
+  </ul>
+</div>
+
+<!-- ===== IF THEY ASK ===== -->
+<div class="section">
+  <h2>If They Ask...</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-label">"Where do the clips come from?"</div>
+      <div class="card-value">Two sources: governor.nc.gov press releases (scraped directly) + web search via Azure OpenAI Responses API with Bing grounding (20+ outlets). 5 focused queries per run targeting budget, healthcare, Helene recovery, public safety, and general coverage.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">"Is the AI hallucinating?"</div>
+      <div class="card-value">No. Clips are real articles with real URLs. Remarks search only quotes text that exists in uploaded documents. Proofread shows every change with a reason.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">"What about Bing Search v7?"</div>
+      <div class="card-value">Retired by Microsoft. We use the replacement: Azure OpenAI Responses API with built-in Bing grounding. Same Bing index, delivered through the AI model. No separate resource needed.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">"How much does it cost?"</div>
+      <div class="card-value">~$125-200/month total. The only fixed cost is AI Search at ~$70/mo. Everything else scales to zero. Web search adds ~$5/mo. Less than a single software license.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">"Can we add more outlets?"</div>
+      <div class="card-value">The web search already covers the entire internet — it's not limited to specific sites. As outlets publish articles about Governor Stein, Bing finds them. The 5 topic queries maximize coverage.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">"What about the dashboard?"</div>
+      <div class="card-value">React SPA with Tailwind CSS, proxied through APIM. Four tabs: overview stats, clips feed with filters, remarks documents, and ingestion run history. Auto-refreshes every 60 seconds.</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">NC DIT AI Office &middot; Dashboard & Platform Guide v1.0 &middot; March 2026</div>
+
+</body>
+</html>

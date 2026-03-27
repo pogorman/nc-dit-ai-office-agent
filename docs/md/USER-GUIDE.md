@@ -25,7 +25,7 @@ The AI Office Agent lives in Microsoft Teams via Copilot Studio. You interact wi
 
 The agent returns a list of articles with outlet, title, and a brief excerpt. Click any card to see the full mention context.
 
-Clips are updated automatically every morning at 7 AM from two sources: the Governor's official press releases (governor.nc.gov) and external news outlets found via 5 focused web search queries covering general coverage, budget/education, Helene recovery, healthcare, and law enforcement/economy. The system currently tracks 58 clips across 21 outlets including WRAL, WUNC, CBS17, Carolina Journal, and more. In the web demo, you can also click the green **Refresh Clips** button to trigger an immediate re-scan from both sources (using a wider 6-month timeframe for backfill).
+Clips are updated automatically every morning at 7 AM from two sources: the Governor's official press releases (governor.nc.gov) and external news outlets found via 5 focused web search queries covering general coverage, budget/education, Helene recovery, healthcare, and law enforcement/economy. The system currently tracks 78 clips across 29 outlets. In the web demo, you can also click the green **Refresh Clips** button to trigger an immediate re-scan from both sources (using a wider 6-month timeframe for backfill).
 
 ### Search Clips by Topic
 
@@ -78,6 +78,59 @@ The agent returns a synthesis of relevant language with direct quotes, each cite
 - OCR artifacts
 
 Uncertain corrections are flagged with `[?]` — review these before publishing.
+
+---
+
+## Audio/Video Transcription
+
+### Transcribe a Recording
+
+Upload an audio or video file to get a text transcript back in seconds.
+
+**Supported formats:** MP3, MP4, WAV, WebM, M4A, MPEG, MPGA
+**Max file size:** 25 MB (~25-30 minutes of MP3 audio)
+
+The transcription is powered by Azure OpenAI Whisper. You can optionally specify a language hint (ISO 639-1 code like `"en"` or `"es"`) for better accuracy.
+
+### Transcribe + Proofread (Best Results)
+
+For the cleanest transcripts, chain both capabilities:
+1. Upload your recording to get the raw Whisper transcript
+2. Send the raw transcript to the Proofread function for cleanup
+
+This catches Whisper errors on proper nouns (Governor Stein, General Assembly, etc.) and fixes punctuation/formatting issues.
+
+### From the API
+
+```bash
+curl -X POST \
+  "https://nc-comms-agent-dev-apim.azure-api.net/comms/transcribe" \
+  -H "Ocp-Apim-Subscription-Key: YOUR_KEY" \
+  -F "file=@press-conference.mp4"
+```
+
+---
+
+## Dashboard
+
+The dashboard provides operational visibility into the platform. Open it in a browser at **http://localhost:5173** (when running locally).
+
+### Overview Tab
+- Total clips and remarks counts
+- Outlet breakdown (horizontal bars showing clips per outlet)
+- Latest ingestion run status and timing (auto-refreshes)
+
+### Clips Tab
+- Paginated list of all clips sorted by publish date
+- Filter by outlet name and date range
+
+### Remarks Tab
+- Table of all remarks documents with title, date, event, and chunk count
+
+### Runs Tab
+- History of all ingestion runs (timer and manual)
+- Status badges (success / partial / failed)
+- Source breakdown (gov vs web), timing, and counts
 
 ---
 
