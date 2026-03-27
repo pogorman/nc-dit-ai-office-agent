@@ -420,7 +420,7 @@ def add_data_flow_slide(prs, blank):
 
     flow_row(Inches(1.55), "CLIPS", BLUE, [
         ("Timer \u2014 7 AM daily", "Azure Function\nclips-ingest"),
-        ("Scrape governor.nc.gov", "Fetch press releases\nextract clean text"),
+        ("Scrape + Web Search", "governor.nc.gov +\nBing grounding (20+ outlets)"),
         ("Embed", "Azure OpenAI\ntext-embedding-3-large"),
         ("Store + Index", "Cosmos DB (metadata)\nAI Search (vectors)"),
     ])
@@ -557,7 +557,7 @@ def build():
     tb(s, Inches(0.6), Inches(0.15), Inches(10), Inches(0.5),
        "News Clips", sz=32, color=WHITE, bold=True)
     tb(s, Inches(0.6), Inches(0.65), Inches(11), Inches(0.4),
-       "Automatically collects Governor press releases, then lets staff search or browse them instantly.",
+       "Monitors 20+ news outlets and Governor press releases, then lets staff search or browse them instantly.",
        sz=15, color=RGBColor(0xDD, 0xEE, 0xFF))
 
     # Ingestion flow
@@ -565,7 +565,7 @@ def build():
        "HOW DATA GETS IN \u2014 RUNS DAILY AT 7 AM", sz=10, color=LIGHT_GRAY, bold=True)
 
     add_flow_row(s, Inches(1.85), [
-        ("1", "Scrape", "Azure Function fetches governor.nc.gov press releases, extracts clean text with Mozilla Readability"),
+        ("1", "Scrape + Search", "Azure Function scrapes governor.nc.gov AND searches the web via Azure OpenAI + Bing grounding (WRAL, AP, 20+ outlets)"),
         ("2", "Embed", "Azure OpenAI converts each article into a vector embedding \u2014 a numeric fingerprint of its meaning"),
         ("3", "Store + Index", "Article + embedding saved in Cosmos DB (browsing) and Azure AI Search (hybrid search)"),
     ], BLUE)

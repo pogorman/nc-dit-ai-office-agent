@@ -166,9 +166,9 @@
     <span class="slide-time">~2 min</span>
   </div>
   <div class="slide-body">
-    <p>Walk the top flow (ingestion): <span class="say">"Every morning at 7 AM, a serverless function scrapes the Governor's press release page, reads each article, converts it into a meaning-vector, and stores it."</span></p>
+    <p>Walk the top flow (ingestion): <span class="say">"Every morning at 7 AM, a serverless function does two things in parallel: it scrapes the Governor's press release page, and it uses Azure OpenAI with Bing grounding to search the web — WRAL, AP, Charlotte Observer, more than 20 outlets. It reads each article, converts it into a meaning-vector, and stores it. Right now we have about 60 clips from 21 different sources."</span></p>
     <p>Walk the bottom flow (query): <span class="say">"Staff open the chatbot in Teams and ask a question. The system searches by meaning, not just keywords — so 'rural internet access' finds 'broadband investment' even though they share zero words."</span></p>
-    <div class="demo"><strong>Demo:</strong> Switch to Teams. Ask the agent <em>"What clips came in this week about broadband?"</em> — point out the outlet, date, and the Governor mention quote.</div>
+    <div class="demo"><strong>Demo:</strong> Switch to Teams. Ask the agent <em>"What clips came in this week about broadband?"</em> — point out the outlet, date, and the Governor mention quote. Note the mix of gov press releases and external media coverage.</div>
   </div>
 </div>
 
@@ -229,7 +229,7 @@
     </div>
     <div class="faq-item">
       <div class="faq-q">"How much does it cost?"</div>
-      <div class="faq-a">~$120–195/mo total. Serverless scales to zero when idle. Less than a single software license.</div>
+      <div class="faq-a">~$125–200/mo total. Serverless scales to zero when idle. Less than a single software license.</div>
     </div>
   </div>
 </div>

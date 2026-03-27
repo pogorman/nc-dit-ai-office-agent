@@ -7,9 +7,11 @@ Don't linger. "Let me show you what we built for the Governor's Communications O
 Read the three requests — these are their words. Emphasize: they came to us with three concrete problems, not a vague AI ask. Point out the green badge: all three capabilities are live in Teams today. This isn't a mockup.
 
 ## Slide 3: News Clips (2 minutes)
-Walk the top flow (ingestion): "Every morning at 7 AM, a serverless function scrapes the Governor's press release page, reads each article, converts it into a meaning-vector, and stores it." Walk the bottom flow (query): "Staff open the chatbot in Teams and ask a question. The system searches by meaning, not just keywords — so 'rural internet access' finds 'broadband investment' even though they share zero words."
+Walk the top flow (ingestion): "Every morning at 7 AM, a serverless function does two things in parallel: it scrapes the Governor's press release page, and it uses Azure OpenAI with Bing grounding to search the web — WRAL, AP, Charlotte Observer, more than 20 outlets. It reads each article, converts it into a meaning-vector, and stores it. Right now we have about 60 clips from 21 different sources."
 
-**Demo moment:** Switch to Teams, ask the agent "What clips came in this week about broadband?" Show the results. Point out the outlet, date, and the Governor mention quote.
+Walk the bottom flow (query): "Staff open the chatbot in Teams and ask a question. The system searches by meaning, not just keywords — so 'rural internet access' finds 'broadband investment' even though they share zero words."
+
+**Demo moment:** Switch to Teams, ask the agent "What clips came in this week about broadband?" Show the results. Point out the outlet, date, and the Governor mention quote. Note the mix of gov press releases and external media coverage.
 
 ## Slide 4: Remarks Search (2 minutes)
 Walk the top flow (ingestion): "When a speech gets uploaded, the system chops it into paragraphs, embeds each one, and indexes it with the date and event." Walk the bottom flow (query + synthesis): "Staff ask a topic question. The system retrieves the most relevant passages across all speeches, then GPT-4o writes a synthesis with direct quotes and citations."
@@ -22,7 +24,7 @@ Name the RAG pattern: "This is Retrieval-Augmented Generation. The AI never make
 Walk the flow: "Paste a rough transcript, get back a clean version with every change explained and a confidence level." Emphasize: no data stored — text in, clean text out.
 
 Point to the three cards at the bottom — these are your answers to the predictable questions:
-- **Cost:** ~$120–195/month total. Serverless scales to zero.
+- **Cost:** ~$125–200/month total. Serverless scales to zero.
 - **Security:** Managed identity everywhere, no passwords in code, data stays in the state's Azure tenant.
 - **Nothing stored** for proofread — privacy by design.
 

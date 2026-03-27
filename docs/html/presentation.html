@@ -201,15 +201,15 @@
 <div class="slide slide-cap cap-blue">
   <div class="cap-bar">
     <h2>📰 &nbsp;News Clips</h2>
-    <div class="cap-oneliner">Automatically collects Governor press releases, then lets staff search or browse them instantly.</div>
+    <div class="cap-oneliner">Monitors 20+ news outlets and Governor press releases, then lets staff search or browse them instantly.</div>
   </div>
 
   <div class="section-label">How data gets in — runs daily at 7 AM</div>
   <div class="flow-row">
     <div class="flow-box">
       <span class="flow-num">1</span>
-      <span class="flow-title">Scrape</span>
-      <span class="flow-detail">Azure Function fetches <em>governor.nc.gov</em> press releases, extracts clean text with Mozilla Readability</span>
+      <span class="flow-title">Scrape + Search</span>
+      <span class="flow-detail">Azure Function scrapes <em>governor.nc.gov</em> press releases <strong>and</strong> searches the web via Azure OpenAI + Bing grounding (WRAL, AP, Charlotte Observer, 20+ outlets)</span>
     </div>
     <div class="flow-arrow">→</div>
     <div class="flow-box">
