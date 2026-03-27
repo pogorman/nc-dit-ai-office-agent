@@ -12,10 +12,13 @@ const GOV_BASE_URL = "https://governor.nc.gov";
 const FETCH_TIMEOUT_MS = 10_000;
 const PAGES_TO_SCRAPE = 2; // First 2 pages of press releases (~20 articles)
 
-const WEB_SEARCH_QUERY =
-  "Find news articles about North Carolina Governor Josh Stein from the past 6 months. " +
-  "Only include articles from news outlets like WRAL, News & Observer, Charlotte Observer, " +
-  "AP News, Reuters, NC Policy Watch, Axios, and other media — NOT from governor.nc.gov.";
+const WEB_SEARCH_QUERIES = [
+  "North Carolina Governor Josh Stein news coverage past 6 months — WRAL, News & Observer, Charlotte Observer, AP. Do NOT include governor.nc.gov links.",
+  "Governor Josh Stein budget education teachers North Carolina news articles. Do NOT include governor.nc.gov links.",
+  "Governor Josh Stein Hurricane Helene recovery western North Carolina news. Do NOT include governor.nc.gov links.",
+  "Josh Stein North Carolina Medicaid healthcare policy news articles. Do NOT include governor.nc.gov links.",
+  "Josh Stein North Carolina law enforcement public safety economy jobs news. Do NOT include governor.nc.gov links.",
+];
 
 interface ClipListing {
   title: string;
@@ -148,18 +151,33 @@ function outletFromUrl(url: string): string {
 async function fetchWebNewsListings(
   context: InvocationContext
 ): Promise<ClipListing[]> {
-  context.log("Searching web for Governor Stein news via Azure OpenAI + Bing grounding");
+  context.log(`Searching web for Governor Stein news (${WEB_SEARCH_QUERIES.length} queries)`);
 
   try {
-    const allResults = await webSearch(WEB_SEARCH_QUERY);
-    // Filter out governor.nc.gov — the gov scraper already covers those
-    const results = allResults.filter((r) => !r.url.includes("governor.nc.gov"));
-    context.log(`Web search returned ${allResults.length} URLs, ${results.length} after excluding gov.nc.gov`);
+    // Run all queries in parallel
+    const queryResults = await Promise.all(
+      WEB_SEARCH_QUERIES.map((q) => webSearch(q).catch(() => []))
+    );
+
+    // Merge and dedup across all queries
+    const seen = new Set<string>();
+    const results: { title: string; url: string }[] = [];
+    for (const batch of queryResults) {
+      for (const r of batch) {
+        if (!seen.has(r.url) && !r.url.includes("governor.nc.gov")) {
+          seen.add(r.url);
+          results.push(r);
+        }
+      }
+    }
+
+    const totalRaw = queryResults.reduce((sum, batch) => sum + batch.length, 0);
+    context.log(`Web search returned ${totalRaw} total URLs, ${results.length} unique after filtering`);
 
     return results.map((result) => ({
       title: result.title,
       url: result.url,
-      date: "", // Will be extracted from article HTML
+      date: "",
       summary: "",
       outlet: outletFromUrl(result.url),
     }));

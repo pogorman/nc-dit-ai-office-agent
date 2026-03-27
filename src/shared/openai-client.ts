@@ -63,7 +63,7 @@ export async function webSearch(query: string): Promise<WebSearchResult[]> {
 
   const response = await client.responses.create({
     model: deploymentName,
-    tools: [{ type: "web_search" as const }],
+    tools: [{ type: "web_search" as const, search_context_size: "high" as const }],
     input: query,
   });
 
