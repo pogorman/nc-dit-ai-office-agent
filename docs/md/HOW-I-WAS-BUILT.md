@@ -444,4 +444,53 @@ Added 3 new slides to `presentation.pptx` (slides 6–8):
 
 ---
 
+## Chapter 14: Web News Search via Azure OpenAI Responses API
+
+**Date:** 2026-03-26
+
+### The Problem
+
+Clips ingestion only covered governor.nc.gov press releases — official government output. The comms team also needs to monitor external media coverage (WRAL, News & Observer, Charlotte Observer, AP, etc.). The original plan was to use Bing News Search API, but Bing Search v7 APIs are retired — you can't create new resources.
+
+### The Solution
+
+Azure OpenAI's **Responses API** includes a `web_search` tool powered by Bing grounding. This is the replacement for the standalone Bing Search APIs. No new Azure resource needed — it uses the existing Azure OpenAI resource with the same managed identity auth.
+
+### What Was Built
+
+1. **`webSearch()` helper in `openai-client.ts`** — Uses the `OpenAI` class (not `AzureOpenAI`) with a special base URL: `${endpoint}/openai/v1/`. The Responses API requires this path. Auth is via `getBearerTokenProvider` — the token is passed as `apiKey` to the `OpenAI` constructor. URL citations are extracted from response annotations (`type === "url_citation"`).
+
+2. **`fetchWebNewsListings()` in `clips-ingest.ts`** — Calls `webSearch()` with a prompt targeting NC news outlets. Filters out `governor.nc.gov` URLs (the gov scraper already covers those). Returns `ClipListing[]` with outlet names extracted via `outletFromUrl()`.
+
+3. **`outletFromUrl()` domain mapper** — Static `Record<string, string>` mapping hostnames to friendly names: `wral.com` -> "WRAL", `newsobserver.com` -> "News & Observer", `charlotteobserver.com` -> "Charlotte Observer", etc. Falls back to the raw hostname for unmapped domains.
+
+4. **Parallel execution** — `runIngestion()` now runs `fetchGovListings()` and `fetchWebNewsListings()` in parallel via `Promise.all`. Results are merged and deduplicated by URL hash (first occurrence wins).
+
+5. **Enhanced refresh response** — The `POST /api/clips/refresh` endpoint now returns `newCount`, `skippedCount`, and a `sources: { gov, web }` breakdown so callers can see how many clips came from each source.
+
+### Cosmos SDK v4 Dedup Fix
+
+The previous dedup logic used try/catch around `container.item(id, id).read()`, expecting a thrown exception for missing items. In `@azure/cosmos` v4, `.read()` returns `{ statusCode: 404, resource: undefined }` instead of throwing. The fix changed the dedup check to:
+
+```typescript
+const { resource: existingClip, statusCode } = await container.item(id, id).read<NewsClip>();
+if (statusCode === 200 && existingClip) {
+  // Already exists, skip
+  return "skipped";
+}
+```
+
+### `.funcignore` Optimization
+
+Added `docs` and `connector` to `.funcignore`. These directories contained PowerPoint files, HTML guides, and the OpenAPI spec — none needed at runtime. Deploy archive dropped from ~1.4GB to ~145MB (with `npm ci --omit=dev`).
+
+### Results
+
+- Clips index grew from 23 to 30 clips (7 new external media: WRAL, US News, Carolina Journal, North State Journal, NC Newsline)
+- Cost: ~$0.035 per web search call, ~$1/month at once-daily
+- No new Azure resources provisioned
+- Same managed identity auth — no API keys
+
+---
+
 *More chapters will be added as implementation progresses.*

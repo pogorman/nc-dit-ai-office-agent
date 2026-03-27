@@ -12,7 +12,7 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 - **Runtime:** TypeScript (strict mode) on Azure Functions v4 (Flex Consumption), Node.js 20
 - **Gateway:** Azure API Management (Consumption tier)
 - **Search:** Azure AI Search (Basic tier, hybrid vector + keyword)
-- **AI:** Azure OpenAI (GPT-4o for synthesis/proofread, text-embedding-3-large for vectors)
+- **AI:** Azure OpenAI (GPT-4o for synthesis/proofread, text-embedding-3-large for vectors, Responses API with Bing grounding for web news search)
 - **Storage:** Cosmos DB (serverless) for clips + remarks metadata, Blob Storage for remarks doc uploads
 - **Secrets:** Azure Key Vault (RBAC mode) — stores Function host key for APIM only (no external API keys needed)
 - **Agent:** Copilot Studio with custom connector to APIM
@@ -49,7 +49,7 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
     storage.bicep               — Blob Storage (publicNetworkAccess: Disabled)
 /src
   /functions
-    clips-ingest.ts             — Timer: governor.nc.gov scrape → Cosmos DB + AI Search (7 AM ET daily) + HTTP POST: manual refresh
+    clips-ingest.ts             — Timer: gov scrape + web news search (Bing grounding) → Cosmos DB + AI Search (7 AM ET daily) + HTTP POST: manual refresh
     clips-query.ts              — HTTP POST: search/browse clips
     clips-digest.ts             — Timer: daily email digest (8 AM weekdays, stub)
     remarks-ingest.ts           — Blob trigger: upload → chunk → embed → index
@@ -57,14 +57,14 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
     proofread.ts                — HTTP POST: transcript proofreading (fully implemented)
   /shared
     types.ts                    — All TypeScript interfaces (NewsClip, RemarksChunk, etc.)
-    openai-client.ts            — Azure OpenAI singleton + helpers
+    openai-client.ts            — Azure OpenAI singleton + helpers + webSearch() via Responses API
     search-client.ts            — AI Search factory + hybridSearch<T> helper
     cosmos-client.ts            — Cosmos DB singleton + getContainer helper
 /connector                      — Power Platform custom connector for Copilot Studio
   apiDefinition.swagger.json    — OpenAPI 2.0 spec (3 actions: QueryClips, QueryRemarks, ProofreadTranscript)
   apiProperties.json            — Connector metadata (API key auth via APIM subscription key)
 /seed                           — Data seeding & index creation tooling
-  clips.json                    — 10 real Governor Stein clips (March 2026 press releases)
+  clips.json                    — 30 clips (23 NC Governor press releases + 7 external media)
   load-clips.ts                 — Loads clips into Cosmos DB with embeddings
   create-search-indexes.ts      — Creates both AI Search indexes (clips + remarks)
   index-clips-to-search.ts      — Pushes clips from Cosmos to AI Search
@@ -99,6 +99,13 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 ```
 
 ## Recent Changes (2026-03-26)
+- **Web news search via Azure OpenAI Responses API with Bing grounding** — `clips-ingest.ts` now has a second source: `fetchWebNewsListings()` calls the Responses API `web_search` tool to find external news about Governor Stein from WRAL, News & Observer, Charlotte Observer, AP, etc. Gov scraper + web search run in parallel via `Promise.all`, merged with URL-hash dedup. No new Azure resource needed — uses existing Azure OpenAI resource's built-in Bing grounding with managed identity auth. Cost: ~$0.035/call, ~$1/month at once-daily.
+- **`openai-client.ts` new `webSearch()` helper** — Uses the `OpenAI` class (not `AzureOpenAI`) with `/openai/v1/` base URL for the Responses API. Extracts URL citations from response annotations. Exports `WebSearchResult` interface.
+- **Outlet name extraction** — `outletFromUrl()` maps hostnames to friendly names (wral.com -> "WRAL", newsobserver.com -> "News & Observer", etc.).
+- **Cosmos SDK v4 dedup rewrite** — `.read()` returns `statusCode: 404` instead of throwing. Changed dedup check to `statusCode === 200 && existingClip` instead of try/catch.
+- **Refresh endpoint enhanced** — Now returns `newCount`, `skippedCount`, and `sources: { gov, web }` breakdown.
+- **Clips index expanded to 30 clips** — 23 NC Governor press releases + 7 external media (WRAL, US News, Carolina Journal, North State Journal, NC Newsline).
+- **`.funcignore` expanded** — Added `docs` and `connector` to reduce deploy archive size (1.4GB -> 145MB with `npm ci --omit=dev`).
 - **Always-ready instances in Bicep** — Added `alwaysReady: [{ name: 'http', instanceCount: 1 }]` to `scaleAndConcurrency` in `function-app.bicep`. Fixes cold start timeout (240s ConnectorTimeoutError on first Copilot Studio call).
 - **Presentation expanded to 8 slides** — Added 3 diagram slides: Architecture Overview (service topology), Request Flow (swim lanes per capability), Data Flow (ingestion + query paths). Build script: `docs/build-presentation-pptx.py`.
 - **Demo questions trimmed & verified** — 5 clips, 5 remarks, 2 proofread samples. Every question verified against actual seeded data. Removed questions that didn't produce results ("rural internet access" had no matching clips, etc.). Build script: `docs/build-demo-pptx.py`.
@@ -120,3 +127,10 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web).
 - `.pdf` extraction in remarks-ingest.ts (needs `pdf-parse` package)
 - Blob trigger for remarks-ingest not firing reliably on Flex Consumption (use `seed/load-remarks.ts` as workaround)
 - Daily digest email sending stubbed (needs Logic App or SendGrid integration)
+
+## Key Patterns — Web Search
+- `webSearch()` in `openai-client.ts` uses the `OpenAI` class (not `AzureOpenAI`) with `baseURL: ${endpoint}/openai/v1/` — the Responses API requires this path
+- Auth: `getBearerTokenProvider` with `cognitiveservices.azure.com/.default` scope, token passed as `apiKey`
+- URL citations are extracted from `response.output[].content[].annotations[]` where `type === "url_citation"`
+- Gov results are excluded from web search results (`governor.nc.gov` URLs filtered) since the gov scraper already covers those
+- `outletFromUrl()` maps hostnames to friendly outlet names via a static `domainMap` Record

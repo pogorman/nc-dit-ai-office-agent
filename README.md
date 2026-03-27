@@ -8,7 +8,7 @@ AI-powered tool for the North Carolina Governor's Communications Office that aut
 |---|---|---|
 | **Transcript Proofreading** | AI-powered cleanup of faulty ASR/OCR transcripts | Fully implemented |
 | **Remarks Search** | Semantic search + RAG synthesis across the Governor's remarks corpus | Implemented (`.txt` ingestion; `.docx`/`.pdf` stubbed) |
-| **News Clips** | Automated monitoring of Governor press releases via governor.nc.gov scraping | Implemented (dedup bug fixed 2026-03-24; runs daily at 7 AM ET + manual refresh button) |
+| **News Clips** | Automated monitoring via governor.nc.gov scraping + web news search (Azure OpenAI Responses API with Bing grounding) | Implemented (30 clips: 23 gov + 7 external media; runs daily at 7 AM ET + manual refresh) |
 | **Daily Digest** | Weekday morning email summary of new clips | Stubbed (email sending TBD) |
 
 ## Architecture
@@ -19,7 +19,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for full system design, data models, Co
 - **Runtime:** TypeScript on Azure Functions v4 (Flex Consumption), Node.js 20
 - **Gateway:** Azure API Management (Consumption tier)
 - **Search:** Azure AI Search (Basic, hybrid vector + BM25)
-- **AI:** Azure OpenAI (GPT-4o + text-embedding-3-large)
+- **AI:** Azure OpenAI (GPT-4o + text-embedding-3-large + Responses API with Bing grounding for web news search)
 - **Storage:** Cosmos DB (Serverless) for clips/metadata, Blob Storage for remarks uploads
 - **Secrets:** Azure Key Vault (RBAC mode) — Function host key for APIM (no external API keys needed)
 - **Agent:** Microsoft Copilot Studio (Teams / web / SharePoint embed)
@@ -76,14 +76,14 @@ az deployment group create \
 ├── src/
 │   ├── functions/            Azure Functions (6 functions)
 │   │   ├── proofread.ts          POST /api/proofread
-│   │   ├── clips-ingest.ts       Timer (7 AM ET daily) + POST /api/clips/refresh
+│   │   ├── clips-ingest.ts       Timer (7 AM ET daily) + POST /api/clips/refresh (gov scraper + web search)
 │   │   ├── clips-query.ts        POST /api/clips/query
 │   │   ├── clips-digest.ts       Timer (8 AM weekdays)
 │   │   ├── remarks-ingest.ts     Blob trigger (remarks-uploads)
 │   │   └── remarks-query.ts      POST /api/remarks/query
 │   └── shared/               Singleton clients + types
 │       ├── types.ts
-│       ├── openai-client.ts
+│       ├── openai-client.ts      AzureOpenAI singleton + webSearch() via Responses API
 │       ├── search-client.ts
 │       └── cosmos-client.ts
 ├── connector/                Power Platform custom connector
@@ -113,7 +113,7 @@ All endpoints are live and tested through the APIM gateway:
 | Endpoint | Method | Description |
 |---|---|---|
 | `https://nc-comms-agent-dev-apim.azure-api.net/comms/clips/query` | POST | Search/browse news clips |
-| `https://nc-comms-agent-dev-apim.azure-api.net/comms/clips/refresh` | POST | Force clips re-ingestion (TODO: add to APIM) |
+| `https://nc-comms-agent-dev-apim.azure-api.net/comms/clips/refresh` | POST | Force clips re-ingestion (gov scraper + web search) |
 | `https://nc-comms-agent-dev-apim.azure-api.net/comms/remarks/query` | POST | Semantic search over remarks (RAG) |
 | `https://nc-comms-agent-dev-apim.azure-api.net/comms/proofread` | POST | Transcript proofreading |
 

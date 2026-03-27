@@ -42,21 +42,28 @@ A serverless AI platform for the North Carolina Governor's Communications Office
 
 ### 1. News Clips — Governor Stein Mention Monitoring
 
-**Goal:** Automatically identify news articles mentioning Governor Stein and surface structured summaries to comms staff.
+**Goal:** Automatically identify news articles mentioning Governor Stein — from both the Governor's press office and external media — and surface structured summaries to comms staff.
 
 #### Data Flow
 
 1. **Timer-triggered Azure Function** runs daily at 7 AM Eastern (also available as on-demand HTTP trigger at `POST /api/clips/refresh`)
-2. Scrapes **governor.nc.gov/news/press-releases** (first 2 pages, ~20 articles) using `fetch` + `JSDOM`
-3. For each new press release, follows the link and extracts full text via **Mozilla Readability**:
+2. **Two sources run in parallel** via `Promise.all`:
+   - **Gov scraper** — scrapes **governor.nc.gov/news/press-releases** (first 2 pages, ~20 articles) using `fetch` + `JSDOM`
+   - **Web news search** — calls **Azure OpenAI Responses API with Bing grounding** (`web_search` tool) to find external coverage from outlets like WRAL, News & Observer, Charlotte Observer, AP, etc. Uses the `OpenAI` class (not `AzureOpenAI`) with the `/openai/v1/` base URL. No separate Bing Search resource needed — uses the existing Azure OpenAI resource with managed identity auth.
+3. Results are merged and deduplicated by URL hash (first occurrence wins)
+4. For each new article, follows the link and extracts full text via **Mozilla Readability**:
    - **Title**
    - **First paragraph** (lede)
    - **First mention context** (sentence/paragraph containing the Governor's name)
    - **Full article text**
-4. Generates a vector embedding via **Azure OpenAI text-embedding-3-large**
-5. Deduplicates on URL (SHA-256 hash) and stores structured clip in **Cosmos DB**
-6. Indexes clip + embedding into **Azure AI Search** for hybrid retrieval
-7. Optionally sends a **daily digest** via Logic App + Outlook connector
+   - **Outlet name** (extracted from URL hostname via `outletFromUrl()` domain mapping)
+5. Generates a vector embedding via **Azure OpenAI text-embedding-3-large**
+6. Deduplicates on URL (SHA-256 hash) — Cosmos `.read()` returns `statusCode 404` for missing items (not a thrown exception); dedup checks `statusCode === 200 && existingClip`
+7. Stores structured clip in **Cosmos DB** and indexes into **Azure AI Search** for hybrid retrieval
+8. Optionally sends a **daily digest** via Logic App + Outlook connector
+
+> **Cost:** Web search via the Responses API costs ~$0.035 per call ($35/1K). At once-daily, this adds ~$1/month.
+> **Note:** Bing Search v7 APIs are retired (no new resources can be created). The replacement is Grounding with Bing Search via Azure OpenAI Responses API.
 
 #### Copilot Studio Interactions
 
@@ -171,9 +178,9 @@ The orchestrator maps user intent to the correct tool automatically:
 | **Azure Functions** (Function App) | Flex Consumption (FC1, Linux), always-ready=1 for HTTP | 7 functions — clips ingestion/query/refresh/digest, remarks ingestion/query, proofread |
 | **Azure API Management** | Consumption | Auth boundary, rate limiting (60/min), function key injection |
 | **Azure AI Search** | Basic (B) | Hybrid vector + keyword indexes for clips and remarks |
-| **Azure OpenAI** | Standard (East US 2) | GPT-4o (30K TPM) for synthesis/proofread, text-embedding-3-large (120K TPM) for vectors |
+| **Azure OpenAI** | Standard (East US 2) | GPT-4o (30K TPM) for synthesis/proofread + Responses API with Bing grounding for web news search (~$1/mo), text-embedding-3-large (120K TPM) for vectors |
 | **Azure Cosmos DB** | Serverless (NoSQL) | `clips`, `ingestion-state`, `remarks-metadata`, `remarks-chunks` containers |
-| **Azure Key Vault** | Standard (RBAC mode) | Function host key for APIM (Bing News API key no longer needed — clips ingestion scrapes governor.nc.gov directly) |
+| **Azure Key Vault** | Standard (RBAC mode) | Function host key for APIM (no external API keys — web search uses Azure OpenAI's built-in Bing grounding with managed identity) |
 | **Azure Blob Storage** | Standard LRS (public access disabled) | `remarks-uploads` container for document staging |
 | **VNet** | 10.0.0.0/16 | Network isolation for storage and Cosmos DB; Function App VNet integration |
 | **Private Endpoint** | Blob Storage | Private connectivity to storage via `privatelink.blob.core.windows.net` |
@@ -186,7 +193,7 @@ The orchestrator maps user intent to the correct tool automatically:
 
 ## Identity & Auth
 
-All service-to-service authentication uses **managed identity** and **DefaultAzureCredential**. No connection strings or API keys in application code. Key Vault uses **RBAC authorization mode** (not access policies). Clips ingestion scrapes governor.nc.gov directly — no external API keys required. Both Blob Storage and Cosmos DB have `publicNetworkAccess: Disabled` and are accessed exclusively through private endpoints.
+All service-to-service authentication uses **managed identity** and **DefaultAzureCredential**. No connection strings or API keys in application code. Key Vault uses **RBAC authorization mode** (not access policies). Clips ingestion scrapes governor.nc.gov and searches the web via Azure OpenAI's Responses API with Bing grounding — no external API keys required (web search uses the same managed identity auth as chat completions). Both Blob Storage and Cosmos DB have `publicNetworkAccess: Disabled` and are accessed exclusively through private endpoints.
 
 | Caller | Target | Auth mechanism | Role |
 |---|---|---|---|
@@ -319,7 +326,7 @@ Both Storage and Cosmos DB are locked down with `publicNetworkAccess: Disabled` 
 | Azure Functions (Flex Consumption + always-ready=1) | ~$34–45 |
 | APIM (Consumption) | ~$3.50 per million calls |
 | Azure AI Search (Basic) | ~$70 |
-| Azure OpenAI (GPT-4o + embeddings) | ~$30–80 (usage-dependent) |
+| Azure OpenAI (GPT-4o + embeddings + Bing grounding web search) | ~$31–81 (usage-dependent; web search adds ~$1/mo at once-daily) |
 | Cosmos DB (Serverless) | ~$5–20 |
 | Blob Storage + VNet/Private Endpoint | ~$5 |
 | Copilot Studio | Per-tenant (likely already licensed) |
@@ -334,12 +341,12 @@ Both Storage and Cosmos DB are locked down with `publicNetworkAccess: Disabled` 
 | Bicep IaC (all resources) | Deployed | 9 modules in `rg-nc-comms-agent-dev`, all RBAC grants active |
 | VNet + Private Endpoints | Deployed | VNet 10.0.0.0/16, func-integration subnet (10.0.1.0/24), private-endpoints subnet (10.0.2.0/24), blob PE + DNS zone (in Bicep), Cosmos DB PE + DNS zone (CLI-only, needs Bicep codification) |
 | Transcript Proofread Function | Deployed & tested | POST `/api/proofread` — structured JSON with changes + confidence |
-| Clips Ingestion Function | Deployed & fixed | Timer trigger (7 AM ET daily) + manual HTTP refresh (`POST /api/clips/refresh`). Scrapes governor.nc.gov press releases directly — no external API keys needed. Dedup bug fixed 2026-03-24 (`@azure/cosmos` v4 `ErrorResponse.code` is string `"NotFound"`, not number `404`). `WEBSITE_TIME_ZONE=America/New_York` for DST-aware scheduling. |
-| Clips Query Function | Deployed & tested | POST `/api/clips/query` — "latest" mode (AI Search wildcard + orderBy) + hybrid search. 10 real clips seeded. |
+| Clips Ingestion Function | Deployed & enhanced | Timer trigger (7 AM ET daily) + manual HTTP refresh (`POST /api/clips/refresh`). Two sources in parallel: gov scraper (governor.nc.gov) + web news search (Azure OpenAI Responses API with Bing grounding). Cosmos SDK v4 dedup fixed — `.read()` returns statusCode 404 instead of throwing; uses `statusCode === 200 && existingClip`. Refresh endpoint returns `newCount`, `skippedCount`, and `sources: { gov, web }` breakdown. |
+| Clips Query Function | Deployed & tested | POST `/api/clips/query` — "latest" mode (AI Search wildcard + orderBy) + hybrid search. 30 clips indexed (23 NC Governor + 7 external media). |
 | Clips Digest Function | Deployed (stub) | HTML generation done, email sending TBD (needs Logic App or SendGrid) |
 | Remarks Ingestion Function | Deployed (partial) | Blob trigger registered but not firing reliably on Flex Consumption; use `seed/load-remarks.ts` as workaround. `.docx`/`.pdf` extraction still stubbed. |
 | Remarks Query Function | Deployed & tested | POST `/api/remarks/query` — hybrid search + GPT-4o RAG synthesis with direct quotes and citations. 2025 State of the State seeded (17 chunks). |
-| Shared clients (OpenAI, Search, Cosmos) | Deployed | Singleton pattern, DefaultAzureCredential, all auth working |
+| Shared clients (OpenAI, Search, Cosmos) | Deployed | Singleton pattern, DefaultAzureCredential, all auth working. `openai-client.ts` now exports `webSearch()` helper using `OpenAI` class with `/openai/v1/` base URL for Responses API. |
 | AI Search indexes | Created | `clips` index (11 fields) and `remarks` index (10 fields), both with HNSW vector search + semantic config |
 | Seed tooling | Built | `seed/` directory with data loading scripts for clips, remarks, and search indexes |
 | Power Platform custom connector | Deployed | OpenAPI 2.0 spec with 3 actions (QueryClips, QueryRemarks, ProofreadTranscript), deployed to GCC environment (`og-ai`) |
@@ -351,7 +358,7 @@ Both Storage and Cosmos DB are locked down with `publicNetworkAccess: Disabled` 
 
 ## Open Questions
 
-1. ~~**News source scope**~~ — Resolved: scraping governor.nc.gov press releases directly. Bing Search API is retired (no new deployments possible). Could add curated RSS feeds later for broader coverage.
+1. ~~**News source scope**~~ — Resolved: dual-source approach. Governor.nc.gov scraper for official press releases + Azure OpenAI Responses API with Bing grounding for external media (WRAL, News & Observer, Charlotte Observer, AP, etc.). Bing Search v7 APIs are retired; the Responses API `web_search` tool is the replacement. No new Azure resource needed.
 2. **Remarks corpus format** — Are existing remarks in Word docs, PDFs, or a CMS? This affects the ingestion pipeline.
 3. **Access control** — Should all comms staff see all clips/remarks, or are there sensitivity tiers?
 4. **Retention** — How long to keep clips? Archive after 90 days?

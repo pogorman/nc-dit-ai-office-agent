@@ -71,6 +71,11 @@ module keyVault 'modules/key-vault.bicep' = {
   }
 }
 
+// NOTE: Bing Search v7 APIs are retired — new deployments blocked by Microsoft.
+// Bing News source in clips-ingest.ts uses manually-configured env vars
+// (BING_NEWS_ENDPOINT + BING_NEWS_API_KEY) or Grounding with Bing Search.
+// See: aka.ms/BingAPIsRetirement
+
 module networking 'modules/networking.bicep' = {
   name: 'networking-deployment'
   params: {

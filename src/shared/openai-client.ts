@@ -6,7 +6,7 @@
  * for Entra ID token-based authentication (the @azure/openai v2 pattern).
  */
 
-import { AzureOpenAI } from "openai";
+import { AzureOpenAI, OpenAI } from "openai";
 import { DefaultAzureCredential, getBearerTokenProvider } from "@azure/identity";
 
 let clientInstance: AzureOpenAI | null = null;
@@ -36,6 +36,60 @@ function getClient(): AzureOpenAI {
   });
 
   return clientInstance;
+}
+
+export interface WebSearchResult {
+  title: string;
+  url: string;
+}
+
+/**
+ * Search the web using Azure OpenAI's Responses API with Bing grounding.
+ * Returns URLs and titles from the search results.
+ */
+export async function webSearch(query: string): Promise<WebSearchResult[]> {
+  const endpoint = getRequiredEnv("AZURE_OPENAI_ENDPOINT");
+  const credential = new DefaultAzureCredential();
+  const scope = "https://cognitiveservices.azure.com/.default";
+  const tokenProvider = getBearerTokenProvider(credential, scope);
+  const deploymentName = getRequiredEnv("GPT4O_DEPLOYMENT_NAME");
+  const token = await tokenProvider();
+
+  // Use base OpenAI class with Azure Responses API endpoint
+  const client = new OpenAI({
+    baseURL: `${endpoint.replace(/\/$/, "")}/openai/v1/`,
+    apiKey: token,
+  });
+
+  const response = await client.responses.create({
+    model: deploymentName,
+    tools: [{ type: "web_search" as const }],
+    input: query,
+  });
+
+  // Extract URL citations from the response
+  const results: WebSearchResult[] = [];
+  const seen = new Set<string>();
+
+  for (const item of response.output) {
+    if (item.type === "message") {
+      for (const content of item.content) {
+        if (content.type === "output_text" && content.annotations) {
+          for (const annotation of content.annotations) {
+            if (annotation.type === "url_citation" && !seen.has(annotation.url)) {
+              seen.add(annotation.url);
+              results.push({
+                title: annotation.title,
+                url: annotation.url,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return results;
 }
 
 export interface ChatCompletionOptions {
