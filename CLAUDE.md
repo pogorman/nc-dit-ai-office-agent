@@ -14,7 +14,7 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web). Dashb
 - **Runtime:** TypeScript (strict mode) on Azure Functions v4 (Flex Consumption), Node.js 20
 - **Gateway:** Azure API Management (Consumption tier)
 - **Search:** Azure AI Search (Basic tier, hybrid vector + keyword)
-- **AI:** Azure OpenAI (GPT-4o for synthesis/proofread, Whisper for transcription, text-embedding-3-large for vectors, Responses API with Bing grounding for multi-query web news search)
+- **AI:** Azure OpenAI (GPT-5-chat for synthesis/proofread, Whisper for transcription, text-embedding-3-large for vectors, Responses API with Bing grounding for multi-query web news search)
 - **Dashboard:** React 19 + Vite 8 + Tailwind CSS v4 (TypeScript strict mode, types shared from `src/shared/types.ts` via `@shared` path alias)
 - **Storage:** Cosmos DB (serverless) for clips + remarks metadata, Blob Storage for remarks doc uploads
 - **Secrets:** Azure Key Vault (RBAC mode) — stores Function host key for APIM only (no external API keys needed)
@@ -46,7 +46,7 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web). Dashb
     cosmos-db.bicep             — Cosmos DB (Serverless)
     function-app.bicep          — Function App (Flex Consumption) — WHISPER_DEPLOYMENT_NAME env var
     key-vault.bicep             — Key Vault (RBAC mode)
-    openai.bicep                — Azure OpenAI + deployments (GPT-4o, embeddings, Whisper)
+    openai.bicep                — Azure OpenAI + deployments (GPT-4o, GPT-5, GPT-5-chat, embeddings, Whisper)
     networking.bicep             — VNet, subnets, private endpoint for blob, private DNS zone (Cosmos PE not yet added — CLI-only)
     role-assignments.bicep      — All managed identity RBAC grants
     storage.bicep               — Blob Storage (publicNetworkAccess: Disabled)
@@ -57,19 +57,22 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web). Dashb
     clips-digest.ts             — Timer: daily email digest (8 AM weekdays, stub)
     dashboard.ts                — 4 HTTP GET endpoints: /api/dashboard/{stats,clips,remarks,runs}
     remarks-ingest.ts           — Blob trigger: upload → chunk → embed → index
-    remarks-query.ts            — HTTP POST: hybrid search → GPT-4o synthesis
+    remarks-query.ts            — HTTP POST: hybrid search → GPT-5-chat synthesis
     proofread.ts                — HTTP POST: transcript proofreading (fully implemented)
     transcribe.ts               — HTTP POST: audio/video transcription via Whisper (25MB max, multipart/form-data)
   /shared
     types.ts                    — All TypeScript interfaces (NewsClip, RemarksChunk, IngestionRun, DashboardStats, TranscribeResponse, etc.)
-    openai-client.ts            — Azure OpenAI singleton + helpers + webSearch() via Responses API (search_context_size: "high") + transcribeAudio() via Whisper
+    openai-client.ts            — Azure OpenAI singleton + helpers + webSearch() via Responses API (search_context_size: "high") + transcribeAudio() via Whisper. Reasoning model support (gpt-5*, o*): max_completion_tokens, no temperature.
     search-client.ts            — AI Search factory + hybridSearch<T> helper
     cosmos-client.ts            — Cosmos DB singleton + getContainer helper
 /connector                      — Power Platform custom connector for Copilot Studio
-  apiDefinition.swagger.json    — OpenAPI 2.0 spec (3 actions: QueryClips, QueryRemarks, ProofreadTranscript)
+  apiDefinition.swagger.json    — OpenAPI 2.0 spec (4 actions: QueryClips, QueryRemarks, ProofreadTranscript, TranscribeFile)
   apiProperties.json            — Connector metadata (API key auth via APIM subscription key)
 /seed                           — Data seeding & index creation tooling
-  clips.json                    — Seed clips (initial batch; live index has 78 clips across 29 outlets)
+  clips.json                    — Seed clips (initial batch; live index has 118 clips across 40+ outlets)
+  clips-snapshot-2026-03-30.txt — Full snapshot of all 118 clips (title, date, outlet)
+  dump-clips.ts                 — Script to dump all clips from Cosmos DB
+  test-*.json                   — Model quality test results (GPT-4o and GPT-5-chat baselines)
   load-clips.ts                 — Loads clips into Cosmos DB with embeddings
   create-search-indexes.ts      — Creates both AI Search indexes (clips + remarks)
   index-clips-to-search.ts      — Pushes clips from Cosmos to AI Search
@@ -111,9 +114,25 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web). Dashb
     USER-GUIDE.md
     talk-track.md
   /pdf                          — PDF exports (empty, for printed handouts)
+  model-quality-comparison.html — 4-column comparison: GPT-4o vs GPT-5-chat vs Copilot Studio generative vs classic
+/inbox                          — Customer meeting notes and Copilot Studio test results
+  nc-gov-meeting-notes.txt      — 2026-03-26 customer meeting notes with follow-ups
+  scoring-for-generative-w-4o-gcc.txt — Copilot Studio generative orchestration test results
+  3-classic-orchestration-clips-questions.txt — Classic orchestration clips test results
+  3-remarks-classic-orchestration.txt — Classic orchestration remarks test results
 ```
 
-## Recent Changes (2026-03-26 evening)
+## Recent Changes (2026-03-30)
+- **GPT-5-chat deployed** — New `gpt-5-chat` (2025-10-03, GlobalStandard) and `gpt-5` (2025-08-07, GlobalStandard) deployments added to Azure OpenAI. Backend switched from GPT-4o to GPT-5-chat via `GPT4O_DEPLOYMENT_NAME` app setting. Richer synthesis: markdown tables, deeper quote analysis, evolution tracking.
+- **Reasoning model support** — `openai-client.ts` now detects reasoning models (`gpt-5*`, `o*`) and automatically uses `max_completion_tokens` instead of `max_tokens`, drops `temperature`, and bumps default token budget to 16384. Remarks synthesis bumped from 1500 to 8192 max tokens to accommodate reasoning overhead.
+- **Transcribe route added to connector** — `apiDefinition.swagger.json` now has 4 operations: QueryClips, QueryRemarks, ProofreadTranscript, TranscribeFile. Connector updated in Power Platform via `pac connector update`.
+- **Model quality comparison testing** — Ran 7 test questions across 4 configurations (Raw API GPT-4o, Raw API GPT-5-chat, Copilot Studio Generative, Copilot Studio Classic). Results saved in `seed/test-*.json` and `inbox/`. Final comparison doc at `docs/model-quality-comparison.html`.
+- **118 clips across 40+ outlets** — Clips index grown from 78/29 to 118/40+. Full snapshot at `seed/clips-snapshot-2026-03-30.txt`.
+- **dump-clips.ts** — New script to dump all clips from Cosmos DB (`npx tsx seed/dump-clips.ts`).
+- **APIM transcribe route fixed** — Git Bash path expansion corrupted the URL template to `/C:/Program Files/Git/transcribe`. Fixed via REST API PUT.
+- **Onsite meetings Apr 1-2** — Customer meeting notes in `inbox/nc-gov-meeting-notes.txt`. Open items: model upgrade feasibility in Copilot Studio GCC, database separation (press releases vs external news).
+
+## Changes (2026-03-26 evening)
 - **React Dashboard** — New `/dashboard` directory with React 19 + Vite 8 + Tailwind CSS v4. Four tabs: Overview (stat cards, outlet breakdown bars, latest run status with auto-refresh), Clips (paginated list with outlet/date filters), Remarks (document table), Runs (ingestion run history with status badges). Types shared from `src/shared/types.ts` via `@shared` path alias in `vite.config.ts`. No routing library, no state management library, no charting library.
 - **4 dashboard GET endpoints** — New `src/functions/dashboard.ts` with `GET /api/dashboard/stats`, `GET /api/dashboard/clips` (paginated, outlet/date filters), `GET /api/dashboard/remarks`, `GET /api/dashboard/runs`. All read from Cosmos DB.
 - **Transcribe capability** — New `src/functions/transcribe.ts` with `POST /api/transcribe`. Accepts multipart/form-data file upload (mp3, mp4, wav, webm, etc., 25MB max). Uses Azure OpenAI Whisper via `transcribeAudio()` helper in `openai-client.ts`. Optional `language` field for ISO 639-1 hint.
@@ -155,8 +174,12 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web). Dashb
 - `.pdf` extraction in remarks-ingest.ts (needs `pdf-parse` package)
 - Blob trigger for remarks-ingest not firing reliably on Flex Consumption (use `seed/load-remarks.ts` as workaround)
 - Daily digest email sending stubbed (needs Logic App or SendGrid integration)
-- Add `clips/refresh` and `transcribe` routes to custom connector so they are callable from Copilot Studio
+- Add `clips/refresh` route to custom connector (transcribe already added 2026-03-30)
 - Dashboard production build + hosting (currently dev-only via `npm run dev`)
+- Database separation: split press releases (governor.nc.gov) from external news into separate Cosmos containers/indexes (customer request)
+- Copilot Studio GCC model upgrade: GPT-4.0 orchestrator limits response quality — escalation path via state officials to Microsoft product team
+- GPT-5/GPT-5-chat deployments added manually — need to codify in `infra/modules/openai.bicep`
+- Transcribe file upload in Copilot Studio: generative orchestration file mapping needs Activity.Attachments wiring; classic needs Ask a Question (File type) node
 
 ## Key Patterns — Web Search
 - `webSearch()` in `openai-client.ts` uses the `OpenAI` class (not `AzureOpenAI`) with `baseURL: ${endpoint}/openai/v1/` — the Responses API requires this path

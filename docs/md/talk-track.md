@@ -7,14 +7,14 @@ Don't linger. "Let me show you what we built for the Governor's Communications O
 Read the three requests — these are their words. Emphasize: they came to us with three concrete problems, not a vague AI ask. Point out the green badge: all three capabilities are live in Teams today. This isn't a mockup.
 
 ## Slide 3: News Clips (2 minutes)
-Walk the top flow (ingestion): "Every morning at 7 AM, a serverless function does two things in parallel: it scrapes the Governor's press release page, and it uses Azure OpenAI with Bing grounding to search the web — WRAL, AP, Charlotte Observer, more than 20 outlets. It reads each article, converts it into a meaning-vector, and stores it. Right now we have about 60 clips from 21 different sources."
+Walk the top flow (ingestion): "Every morning at 7 AM, a serverless function does two things in parallel: it scrapes the Governor's press release page, and it uses Azure OpenAI with Bing grounding to search the web — WRAL, AP, Charlotte Observer, more than 20 outlets. It reads each article, converts it into a meaning-vector, and stores it. Right now we have 118 clips from more than 40 sources."
 
 Walk the bottom flow (query): "Staff open the chatbot in Teams and ask a question. The system searches by meaning, not just keywords — so 'rural internet access' finds 'broadband investment' even though they share zero words."
 
 **Demo moment:** Switch to Teams, ask the agent "What clips came in this week about broadband?" Show the results. Point out the outlet, date, and the Governor mention quote. Note the mix of gov press releases and external media coverage.
 
 ## Slide 4: Remarks Search (2 minutes)
-Walk the top flow (ingestion): "When a speech gets uploaded, the system chops it into paragraphs, embeds each one, and indexes it with the date and event." Walk the bottom flow (query + synthesis): "Staff ask a topic question. The system retrieves the most relevant passages across all speeches, then GPT-4o writes a synthesis with direct quotes and citations."
+Walk the top flow (ingestion): "When a speech gets uploaded, the system chops it into paragraphs, embeds each one, and indexes it with the date and event." Walk the bottom flow (query + synthesis): "Staff ask a topic question. The system retrieves the most relevant passages across all speeches, then GPT-5-chat writes a synthesis with direct quotes and citations."
 
 Name the RAG pattern: "This is Retrieval-Augmented Generation. The AI never makes things up — it only summarizes what it actually found in the Governor's own words."
 
@@ -37,4 +37,4 @@ Point to the three cards at the bottom — these are your answers to the predict
 - **"What if nobody uses it?"** — Functions scale to zero. Cosmos DB is serverless. Only fixed cost is AI Search at ~$70/mo.
 - **"Can other offices use this?"** — Yes. Each capability is a separate Function. Infra is Bicep — spin up a copy with a parameter change.
 - **"Why Teams?"** — Staff already live there. No new app, no new password, no training. Copilot Studio handles the UI and auth.
-- **"How is this different from Googling?"** — Hybrid search (meaning + keywords + reranking), GPT-4o synthesis with citations, and it searches the Governor's own speeches which aren't on Google.
+- **"How is this different from Googling?"** — Hybrid search (meaning + keywords + reranking), GPT-5-chat synthesis with citations, and it searches the Governor's own speeches which aren't on Google.

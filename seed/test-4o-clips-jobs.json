@@ -1,0 +1,41 @@
+{
+    "clips": [
+        {
+            "id": "6ac58f8660fa6b3dda0e7a637dc593ea6031aa3d8436f2aad2cdcae292d74f12",
+            "url": "https://www.yahoo.com/news/articles/gov-stein-jobs-announcement-eden-132807176.html",
+            "outlet": "yahoo.com",
+            "title": "Gov. Stein to make jobs announcement in Eden",
+            "publishedAt": "2026-03-29T11:00:32.463Z",
+            "lede": "A Brazilian-based energy manufacturer is coming to the Triad, creating 160 jobs as a result.On Tuesday, Rockingham County leaders, along with Gov. Josh Stein, announced TSEA will invest $25 million to bring its operations to Eden.TSEA specializes in power transformers and voltage regulations, according to its website.WFMY News 2 is at the announcement in Eden and will share more about the jobs.",
+            "mentionContext": "Josh Stein, announced TSEA will invest $25 million to bring its operations to Eden.TSEA specializes in power transformers and voltage regulations, according to its website.WFMY News 2 is at the announcement in Eden and will share more about the jobs.",
+            "mentionOffset": 147,
+            "fullText": "A Brazilian-based energy manufacturer is coming to the Triad, creating 160 jobs as a result.On Tuesday, Rockingham County leaders, along with Gov. Josh Stein, announced TSEA will invest $25 million to bring its operations to Eden.TSEA specializes in power transformers and voltage regulations, according to its website.WFMY News 2 is at the announcement in Eden and will share more about the jobs.",
+            "ingestedAt": "2026-03-29T11:00:32.463Z"
+        },
+        {
+            "id": "aafabddc58843cb69b039be30d9f8b99ddf6ce965d0b696091691f14328c9838",
+            "url": "https://www.msn.com/en-us/money/real-estate/josh-stein-expected-to-make-an-economic-development-announcement-in-north-carolina/ar-AA1ZjiAf",
+            "outlet": "msn.com",
+            "title": "Josh Stein expected to make an economic development announcement in North Carolina",
+            "publishedAt": "2026-03-27T11:00:37.232Z",
+            "lede": "",
+            "mentionContext": "",
+            "mentionOffset": 0,
+            "fullText": "",
+            "ingestedAt": "2026-03-27T11:00:37.232Z"
+        },
+        {
+            "id": "9ae5ba7cbc383aaa1dd3981812f4850d7e6f348c4b71505c6f375414305167a3",
+            "url": "https://myfox8.com/news/business/gov-josh-stein-announces-160-manufacturing-jobs-coming-to-eden/",
+            "outlet": "myfox8.com",
+            "title": "160 manufacturing jobs coming to Eden, Gov. Josh Stein announces",
+            "publishedAt": "2026-03-30T11:00:24.865Z",
+            "lede": "",
+            "mentionContext": "",
+            "mentionOffset": 0,
+            "fullText": "",
+            "ingestedAt": "2026-03-30T11:00:24.865Z"
+        }
+    ],
+    "count": 3
+}

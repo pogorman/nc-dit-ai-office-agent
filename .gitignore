@@ -13,6 +13,9 @@ local.settings.json
 .env.local
 .env.*.local
 
+# Claude Code local settings (may contain secrets)
+.claude/
+
 # IDE
 .vscode/
 .idea/

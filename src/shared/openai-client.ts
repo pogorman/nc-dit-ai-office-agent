@@ -133,14 +133,16 @@ export async function getChatCompletion(
   const client = getClient();
   const deploymentName = getRequiredEnv("GPT4O_DEPLOYMENT_NAME");
 
+  const isReasoningModel = deploymentName.startsWith("gpt-5") || deploymentName.startsWith("o");
+
   const response = await client.chat.completions.create({
     model: deploymentName,
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    temperature: options.temperature ?? 0.3,
-    max_tokens: options.maxTokens ?? 4096,
+    ...(isReasoningModel ? {} : { temperature: options.temperature ?? 0.3 }),
+    max_completion_tokens: options.maxTokens ?? (isReasoningModel ? 16384 : 4096),
   });
 
   const content = response.choices[0]?.message?.content;

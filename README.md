@@ -9,7 +9,7 @@ AI-powered tool for the North Carolina Governor's Communications Office that aut
 | **Transcript Proofreading** | AI-powered cleanup of faulty ASR/OCR transcripts | Fully implemented |
 | **Transcription** | Audio/video transcription via Azure OpenAI Whisper (mp3, mp4, wav, webm, etc.) | Fully implemented |
 | **Remarks Search** | Semantic search + RAG synthesis across the Governor's remarks corpus | Implemented (`.txt` ingestion; `.docx`/`.pdf` stubbed) |
-| **News Clips** | Automated monitoring via governor.nc.gov scraping + multi-query web search (5 focused queries via Azure OpenAI Responses API with Bing grounding) | Implemented (78 clips across 29 outlets; runs daily at 7 AM ET + manual refresh) |
+| **News Clips** | Automated monitoring via governor.nc.gov scraping + multi-query web search (5 focused queries via Azure OpenAI Responses API with Bing grounding) | Implemented (118 clips across 40+ outlets; runs daily at 7 AM ET + manual refresh) |
 | **Dashboard** | React SPA with stats overview, clip browser, remarks list, and ingestion run history | Fully implemented |
 | **Daily Digest** | Weekday morning email summary of new clips | Stubbed (email sending TBD) |
 
@@ -21,7 +21,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for full system design, data models, Co
 - **Runtime:** TypeScript on Azure Functions v4 (Flex Consumption), Node.js 20
 - **Gateway:** Azure API Management (Consumption tier)
 - **Search:** Azure AI Search (Basic, hybrid vector + BM25)
-- **AI:** Azure OpenAI (GPT-4o + text-embedding-3-large + Whisper + Responses API with Bing grounding for multi-query web news search)
+- **AI:** Azure OpenAI (GPT-5-chat for synthesis/proofread + text-embedding-3-large + Whisper + Responses API with Bing grounding for multi-query web news search)
 - **Dashboard:** React 19 + Vite 8 + Tailwind CSS v4 (TypeScript strict mode)
 - **Storage:** Cosmos DB (Serverless) for clips/metadata, Blob Storage for remarks uploads
 - **Secrets:** Azure Key Vault (RBAC mode) — Function host key for APIM (no external API keys needed)
@@ -99,10 +99,10 @@ az deployment group create \
 │   ├── .env.example              VITE_APIM_BASE_URL, VITE_APIM_SUBSCRIPTION_KEY
 │   └── package.json              React 19, Vite 8, Tailwind CSS v4
 ├── connector/                Power Platform custom connector
-│   ├── apiDefinition.swagger.json   OpenAPI 2.0 spec (3 actions)
+│   ├── apiDefinition.swagger.json   OpenAPI 2.0 spec (4 actions)
 │   └── apiProperties.json           Connector metadata + auth config
 ├── seed/                     Data seeding & index creation scripts
-│   └── remarks/              7 seeded remarks (State of State + 6 monthly columns)
+│   └── remarks/              7 seeded remarks (State of the State + 6 monthly columns, 26+ chunks)
 ├── docs/
 │   ├── demo-questions.pptx       Demo questions PowerPoint
 │   ├── presentation.pptx         8-slide presentation PowerPoint
@@ -168,12 +168,13 @@ node demo-server.js
 
 The Copilot Studio agent is **fully working** in the GCC Power Platform environment (`og-ai`). It uses **generative orchestration** — no manual topic configuration needed. The agent selects the right tool based on the operation descriptions in the OpenAPI spec.
 
-Three tools are deployed via the custom connector:
+Four tools are deployed via the custom connector:
 - **QueryClips** — search/browse news clips
 - **QueryRemarks** — semantic search over remarks with RAG synthesis
 - **ProofreadTranscript** — AI-powered transcript cleanup
+- **TranscribeFile** — audio/video transcription via Whisper
 
-The transcribe and dashboard endpoints are accessed directly (not through Copilot Studio).
+The dashboard endpoints are accessed directly (not through Copilot Studio).
 
 The Power Platform custom connector (`/connector/`) bridges Copilot Studio to APIM.
 

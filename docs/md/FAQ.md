@@ -28,7 +28,7 @@ Two sources run in parallel on each ingestion cycle:
 1. **Governor's press releases** — scrapes governor.nc.gov/news/press-releases (first 2 pages, ~20 articles)
 2. **External media** — runs **5 focused web search queries** in parallel via Azure OpenAI's Responses API with Bing grounding (`search_context_size: "high"`). Each query targets a different topic area: general coverage, budget/education, Helene recovery, Medicaid/healthcare, law enforcement/economy. Each query returns ~8-12 URLs; combined: ~30-40 unique external URLs per run.
 
-Results are merged and deduplicated by URL. The clips index currently has **78 clips across 29 outlets**. Bing Search v7 APIs are retired; the Responses API `web_search` tool is the replacement and requires no separate Azure resource.
+Results are merged and deduplicated by URL. The clips index currently has **118 clips across 40+ outlets**. Bing Search v7 APIs are retired; the Responses API `web_search` tool is the replacement and requires no separate Azure resource.
 
 ### What's the difference between the daily run and manual refresh?
 The daily 7 AM timer uses a **"past week"** timeframe — focused on catching new coverage. The manual `POST /api/clips/refresh` endpoint uses **"past 6 months"** — useful for backfilling historical coverage when first setting up or after adding new query topics.
@@ -106,7 +106,7 @@ Each clips ingestion (both the daily 7 AM timer and manual `POST /api/clips/refr
 ## Technical
 
 ### How does Copilot Studio connect to the backend?
-A Power Platform custom connector bridges Copilot Studio and the APIM gateway. The connector is deployed to the GCC (Government Community Cloud) Power Platform environment (`og-ai`). It exposes three tools — QueryClips, QueryRemarks, and ProofreadTranscript — and authenticates with an APIM subscription key. The agent uses **generative orchestration**, so it automatically selects the right tool based on the user's intent — no manual topic configuration needed.
+A Power Platform custom connector bridges Copilot Studio and the APIM gateway. The connector is deployed to the GCC (Government Community Cloud) Power Platform environment (`og-ai`). It exposes four tools — QueryClips, QueryRemarks, ProofreadTranscript, and TranscribeFile — and authenticates with an APIM subscription key. The agent uses **generative orchestration**, so it automatically selects the right tool based on the user's intent — no manual topic configuration needed.
 
 ### Is my data secure?
 All data stays within the NC DIT Azure tenant. Authentication is via Entra ID (SSO). External calls are limited to governor.nc.gov (press release scraping) and the Azure OpenAI Responses API with Bing grounding (web news search) — no internal data leaves the environment. All service-to-service auth uses managed identity — no API keys or connection strings in application code. The Power Platform connector runs in a GCC environment, meeting government compliance requirements. Both Blob Storage and Cosmos DB have public network access disabled and are only accessible via VNet private endpoints.

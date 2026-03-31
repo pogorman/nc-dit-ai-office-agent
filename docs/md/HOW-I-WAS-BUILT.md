@@ -646,4 +646,55 @@ The clips index grew from 58 clips across 21 outlets to 78 clips across 29 outle
 
 ---
 
+## Chapter 19: GPT-5-chat Upgrade + Model Quality Comparison
+
+**Date:** 2026-03-30
+
+### The Upgrade
+
+The backend was upgraded from GPT-4o to GPT-5-chat (`gpt-5-chat`, 2025-10-03, GlobalStandard). A second deployment (`gpt-5`, 2025-08-07, GlobalStandard) was also added. Both deployments were created manually via `az cognitiveservices account deployment create` — they still need to be codified in `infra/modules/openai.bicep`.
+
+The switch is controlled by the `GPT4O_DEPLOYMENT_NAME` environment variable (name is legacy — the actual model is now gpt-5-chat).
+
+### Reasoning Model Support
+
+`openai-client.ts` was updated to auto-detect reasoning models (`gpt-5*`, `o*` prefixes) and adjust API parameters:
+- Uses `max_completion_tokens` instead of `max_tokens` (reasoning models require this)
+- Drops `temperature` (reasoning models don't support it)
+- Default token budget bumped to 16,384 (reasoning models use tokens for internal chain-of-thought)
+- Remarks synthesis bumped from 1,500 to 8,192 max tokens to accommodate reasoning overhead
+
+### Model Quality Comparison
+
+Ran 7 test questions across 4 configurations:
+1. **Raw API — GPT-4o** (previous production)
+2. **Raw API — GPT-5-chat** (new production)
+3. **Copilot Studio Generative** (GPT-4.0 orchestrator + GPT-5-chat backend)
+4. **Copilot Studio Classic** (GPT-4.0 orchestrator + GPT-5-chat backend, manual topics)
+
+Key findings:
+- GPT-5-chat produces richer synthesis (markdown tables, deeper quote analysis, evolution tracking)
+- For clips queries, retrieval doesn't depend on the chat model — results are identical
+- Generative orchestration preserves content quality well through the GPT-4.0 "last mile"
+- Classic orchestration has higher fidelity when routed correctly, but trigger phrase sensitivity is a problem
+- Recommendation: GPT-5-chat backend + Generative orchestration as default
+
+Results saved in `seed/test-*.json` and `inbox/`. Final comparison doc at `docs/model-quality-comparison.html`.
+
+### Connector Updated
+
+The custom connector was updated to 4 operations (TranscribeFile added via `pac connector update`). All 4 tools now active in Copilot Studio generative orchestration.
+
+---
+
+## Chapter 20: 118 Clips Across 40+ Outlets
+
+**Date:** 2026-03-30
+
+The clips index grew from 78 clips across 29 outlets to **118 clips across 40+ outlets** after running the daily timer and manual refresh with the GPT-5-chat backend. The 5-query web search continues to find articles from a wide range of NC media outlets.
+
+A full snapshot of all 118 clips (title, date, outlet) was saved to `seed/clips-snapshot-2026-03-30.txt`. A new `seed/dump-clips.ts` script was created to dump all clips from Cosmos DB (`npx tsx seed/dump-clips.ts`).
+
+---
+
 *More chapters will be added as implementation progresses.*

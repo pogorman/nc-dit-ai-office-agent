@@ -1,0 +1,12 @@
+{
+    "corrected": "The governor said North Carolina's economic future is bright, and he wants to double the number of apprentices in the state.",
+    "changes": [
+        {
+            "original": "The governer said North Carolinas econimic future is bright and he wants to dubble the number of apprentises in the state.",
+            "corrected": "The governor said North Carolina's economic future is bright, and he wants to double the number of apprentices in the state.",
+            "confidence": "high",
+            "reason": "Corrected spelling errors ('governer' to 'governor', 'North Carolinas' to 'North Carolina's', 'econimic' to 'economic', 'dubble' to 'double', 'apprentises' to 'apprentices') and added necessary punctuation for clarity."
+        }
+    ],
+    "summary": "Corrected multiple spelling errors, added a possessive apostrophe, and inserted a comma for proper sentence structure."
+}

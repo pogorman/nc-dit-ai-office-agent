@@ -110,7 +110,7 @@ async function remarksQuery(
     const userPrompt = formatChunksForSynthesis(query, chunks);
     const synthesis = await getChatCompletion(SYNTHESIS_SYSTEM_PROMPT, userPrompt, {
       temperature: 0.3,
-      maxTokens: 1500,
+      maxTokens: 8192,
     });
 
     const response: RemarksQueryResponse = {

@@ -4,7 +4,7 @@
 
 The AI Office Agent lives in Microsoft Teams via Copilot Studio. You interact with it by typing natural language questions — no special commands needed.
 
-> **Status:** The Copilot Studio agent is **fully deployed and working** in the GCC environment (`og-ai`). All three tools (QueryClips, QueryRemarks, ProofreadTranscript) are available in Teams.
+> **Status:** The Copilot Studio agent is **fully deployed and working** in the GCC environment (`og-ai`). All four tools (QueryClips, QueryRemarks, ProofreadTranscript, TranscribeFile) are available in Teams.
 
 ### Finding the Agent
 
@@ -25,7 +25,7 @@ The AI Office Agent lives in Microsoft Teams via Copilot Studio. You interact wi
 
 The agent returns a list of articles with outlet, title, and a brief excerpt. Click any card to see the full mention context.
 
-Clips are updated automatically every morning at 7 AM from two sources: the Governor's official press releases (governor.nc.gov) and external news outlets found via 5 focused web search queries covering general coverage, budget/education, Helene recovery, healthcare, and law enforcement/economy. The system currently tracks 78 clips across 29 outlets. In the web demo, you can also click the green **Refresh Clips** button to trigger an immediate re-scan from both sources (using a wider 6-month timeframe for backfill).
+Clips are updated automatically every morning at 7 AM from two sources: the Governor's official press releases (governor.nc.gov) and external news outlets found via 5 focused web search queries covering general coverage, budget/education, Helene recovery, healthcare, and law enforcement/economy. The system currently tracks 118 clips across 40+ outlets. In the web demo, you can also click the green **Refresh Clips** button to trigger an immediate re-scan from both sources (using a wider 6-month timeframe for backfill).
 
 ### Search Clips by Topic
 

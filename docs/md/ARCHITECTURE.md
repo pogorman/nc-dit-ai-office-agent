@@ -31,7 +31,7 @@ A serverless AI platform for the North Carolina Governor's Communications Office
     ▼         ▼          ▼           ▼              ▼
 ┌─────────┐  ┌───────────┐  ┌──────────────┐  ┌─────────┐
 │ Cosmos  │  │ Azure AI  │  │ Azure OpenAI │  │ Cosmos  │
-│ DB      │  │ Search    │  │ (GPT-4o +    │  │ DB      │
+│ DB      │  │ Search    │  │ (GPT-5-chat +│  │ DB      │
 │         │  │           │  │  Whisper)     │  │ (reads) │
 └─────────┘  └───────────┘  └──────────────┘  └─────────┘
 ```
@@ -90,7 +90,7 @@ A serverless AI platform for the North Carolina Governor's Communications Office
 1. User asks a question in Copilot Studio
 2. Copilot Studio calls the **Remarks Function** via APIM
 3. Function executes **hybrid search** (vector similarity + BM25 keyword) against the remarks index
-4. Top-K chunks are passed to **Azure OpenAI GPT-4o** with a synthesis prompt:
+4. Top-K chunks are passed to **Azure OpenAI GPT-5-chat** with a synthesis prompt:
    - Summarize the language used on the requested topic
    - Include direct quotes with citations (date, event)
    - Flag any contradictions or evolution in messaging over time
@@ -100,9 +100,9 @@ A serverless AI platform for the North Carolina Governor's Communications Office
 
 | User intent | Example utterance | Backend action |
 |---|---|---|
-| Topic search | "What language have we used on clean tech?" | Hybrid search → GPT-4o synthesis |
+| Topic search | "What language have we used on clean tech?" | Hybrid search → GPT-5-chat synthesis |
 | Quote retrieval | "Find the exact quote about broadband from the State of the State" | Filtered vector search (event = State of the State) |
-| Compare messaging | "How has our education messaging changed since 2024?" | Time-filtered search → GPT-4o comparison |
+| Compare messaging | "How has our education messaging changed since 2024?" | Time-filtered search → GPT-5-chat comparison |
 
 ### 3. Transcript Proofreading
 
@@ -112,7 +112,7 @@ A serverless AI platform for the North Carolina Governor's Communications Office
 
 1. Staff pastes or uploads a raw transcript in Copilot Studio
 2. Copilot Studio sends transcript to **Transcript Proofread Function** via APIM
-3. Function calls **Azure OpenAI GPT-4o** with a proofreading system prompt:
+3. Function calls **Azure OpenAI GPT-5-chat** with a proofreading system prompt:
    - Fix obvious ASR/OCR errors (homophones, garbled words, missing punctuation)
    - Normalize speaker labels
    - Preserve original meaning — flag uncertain corrections with `[?]`
@@ -171,6 +171,7 @@ The agent uses **generative orchestration** — no manual topics are needed. The
 │  │  • QueryClips                        │    │
 │  │  • QueryRemarks                      │    │
 │  │  • ProofreadTranscript               │    │
+│  │  • TranscribeFile                    │    │
 │  └────────────────┬─────────────────────┘    │
 │                   │                          │
 │                   ▼                          │
@@ -193,6 +194,7 @@ The orchestrator maps user intent to the correct tool automatically:
 | Search remarks by topic | "What language have we used on clean tech?" | QueryRemarks |
 | Find a specific quote | "Find the quote about broadband from the State of the State" | QueryRemarks (with filters) |
 | Proofread a transcript | "Proofread this transcript" | ProofreadTranscript |
+| Transcribe audio/video | "Transcribe this recording" | TranscribeFile |
 
 ---
 
@@ -203,7 +205,7 @@ The orchestrator maps user intent to the correct tool automatically:
 | **Azure Functions** (Function App) | Flex Consumption (FC1, Linux), always-ready=1 for HTTP | 11 functions — clips ingestion/query/refresh/digest, remarks ingestion/query, proofread, transcribe, 4 dashboard endpoints |
 | **Azure API Management** | Consumption | Auth boundary, rate limiting (60/min), function key injection |
 | **Azure AI Search** | Basic (B) | Hybrid vector + keyword indexes for clips and remarks |
-| **Azure OpenAI** | Standard (East US 2) | GPT-4o (30K TPM) for synthesis/proofread, Whisper for audio/video transcription, Responses API with Bing grounding for multi-query web news search (5 queries/run, ~$5/mo), text-embedding-3-large (120K TPM) for vectors |
+| **Azure OpenAI** | Standard (East US 2) | GPT-5-chat (synthesis/proofread), GPT-5 (available), Whisper for audio/video transcription, Responses API with Bing grounding for multi-query web news search (5 queries/run, ~$5/mo), text-embedding-3-large (120K TPM) for vectors. Reasoning model support: auto-detects `gpt-5*`/`o*` models and uses `max_completion_tokens` instead of `max_tokens`, drops `temperature`. |
 | **Azure Cosmos DB** | Serverless (NoSQL) | `clips`, `ingestion-state`, `remarks-metadata`, `remarks-chunks` containers |
 | **Azure Key Vault** | Standard (RBAC mode) | Function host key for APIM (no external API keys — multi-query web search uses Azure OpenAI's built-in Bing grounding with managed identity) |
 | **Azure Blob Storage** | Standard LRS (public access disabled) | `remarks-uploads` container for document staging |
@@ -211,7 +213,7 @@ The orchestrator maps user intent to the correct tool automatically:
 | **Private Endpoint** | Blob Storage | Private connectivity to storage via `privatelink.blob.core.windows.net` |
 | **Private Endpoint** | Cosmos DB | Private connectivity to Cosmos DB via `privatelink.documents.azure.com` (CLI-provisioned, not yet in Bicep) |
 | **Copilot Studio** | Per-tenant license | Agent experience — Teams, web, SharePoint (fully working, generative orchestration) |
-| **Power Platform Custom Connector** | GCC environment (`og-ai`) | OpenAPI 2.0 bridge between Copilot Studio and APIM (3 actions) |
+| **Power Platform Custom Connector** | GCC environment (`og-ai`) | OpenAPI 2.0 bridge between Copilot Studio and APIM (4 actions: QueryClips, QueryRemarks, ProofreadTranscript, TranscribeFile) |
 | **Logic App** (optional, future) | Consumption | Daily digest email delivery |
 
 ---
@@ -351,7 +353,7 @@ Both Storage and Cosmos DB are locked down with `publicNetworkAccess: Disabled` 
 | Azure Functions (Flex Consumption + always-ready=1) | ~$34–45 |
 | APIM (Consumption) | ~$3.50 per million calls |
 | Azure AI Search (Basic) | ~$70 |
-| Azure OpenAI (GPT-4o + embeddings + Bing grounding web search) | ~$35–85 (usage-dependent; multi-query web search adds ~$5/mo at 5 queries/day) |
+| Azure OpenAI (GPT-5-chat + embeddings + Whisper + Bing grounding web search) | ~$35–85 (usage-dependent; multi-query web search adds ~$5/mo at 5 queries/day) |
 | Cosmos DB (Serverless) | ~$5–20 |
 | Blob Storage + VNet/Private Endpoint | ~$5 |
 | Copilot Studio | Per-tenant (likely already licensed) |
@@ -367,21 +369,21 @@ Both Storage and Cosmos DB are locked down with `publicNetworkAccess: Disabled` 
 | VNet + Private Endpoints | Deployed | VNet 10.0.0.0/16, func-integration subnet (10.0.1.0/24), private-endpoints subnet (10.0.2.0/24), blob PE + DNS zone (in Bicep), Cosmos DB PE + DNS zone (CLI-only, needs Bicep codification) |
 | Transcript Proofread Function | Deployed & tested | POST `/api/proofread` — structured JSON with changes + confidence |
 | Clips Ingestion Function | Deployed & enhanced | Timer trigger (7 AM ET daily, "past week" timeframe) + manual HTTP refresh (`POST /api/clips/refresh`, "past 6 months" for backfill). Multi-query web search: `webSearchQueries()` generates 5 focused queries (general, budget/education, Helene recovery, Medicaid/healthcare, law enforcement/economy) run in parallel with `search_context_size: "high"`. Combined: ~30-40 unique external URLs per run. Gov scraper + web search run in parallel via `Promise.all`. Cost: ~$0.175/day ($5/month). |
-| Clips Query Function | Deployed & tested | POST `/api/clips/query` — "latest" mode (AI Search wildcard + orderBy) + hybrid search. 78 clips indexed across 29 outlets. |
+| Clips Query Function | Deployed & tested | POST `/api/clips/query` — "latest" mode (AI Search wildcard + orderBy) + hybrid search. 118 clips indexed across 40+ outlets. |
 | Clips Digest Function | Deployed (stub) | HTML generation done, email sending TBD (needs Logic App or SendGrid) |
 | Remarks Ingestion Function | Deployed (partial) | Blob trigger registered but not firing reliably on Flex Consumption; use `seed/load-remarks.ts` as workaround. `.docx`/`.pdf` extraction still stubbed. |
-| Remarks Query Function | Deployed & tested | POST `/api/remarks/query` — hybrid search + GPT-4o RAG synthesis with direct quotes and citations. 2025 State of the State seeded (17 chunks). |
+| Remarks Query Function | Deployed & tested | POST `/api/remarks/query` — hybrid search + GPT-5-chat RAG synthesis with direct quotes and citations. 7 documents seeded (State of the State + 6 monthly columns, 26+ chunks). |
 | Shared clients (OpenAI, Search, Cosmos) | Deployed | Singleton pattern, DefaultAzureCredential, all auth working. `openai-client.ts` exports `webSearch()` helper using `OpenAI` class with `/openai/v1/` base URL for Responses API (`search_context_size: "high"` for more citations per query). |
 | AI Search indexes | Created | `clips` index (11 fields) and `remarks` index (10 fields), both with HNSW vector search + semantic config |
 | Seed tooling | Built | `seed/` directory with data loading scripts for clips, remarks, and search indexes |
-| Power Platform custom connector | Deployed | OpenAPI 2.0 spec with 3 actions (QueryClips, QueryRemarks, ProofreadTranscript), deployed to GCC environment (`og-ai`) |
+| Power Platform custom connector | Deployed | OpenAPI 2.0 spec with 4 actions (QueryClips, QueryRemarks, ProofreadTranscript, TranscribeFile), deployed to GCC environment (`og-ai`) |
 | APIM function key | Configured | Named value `function-host-key` set with actual Function App host key |
 | Transcribe Function | Deployed & tested | POST `/api/transcribe` — multipart/form-data file upload → Whisper transcription. Supports mp3, mp4, wav, webm, etc. 25MB max. WHISPER_DEPLOYMENT_NAME env var. |
 | Dashboard Functions | Deployed & tested | 4 GET endpoints: `/api/dashboard/stats`, `/api/dashboard/clips` (paginated, outlet/date filters), `/api/dashboard/remarks`, `/api/dashboard/runs`. All read from Cosmos DB. |
 | Dashboard React SPA | Built | React 19 + Vite 8 + Tailwind CSS v4. Four tabs: Overview (stat cards, outlet breakdown, latest run with auto-refresh), Clips (paginated list), Remarks (document table), Runs (ingestion history with status badges). Types shared from `src/shared/types.ts` via `@shared` path alias. |
 | Run logging | Deployed | Each clips ingestion (timer + manual) persists an `IngestionRun` document to the `ingestion-state` Cosmos container with trigger type, timing, counts, sources, and status. |
 | APIM endpoints | Tested | All endpoints verified: `/comms/clips/query`, `/comms/remarks/query`, `/comms/proofread`, `/comms/transcribe`, plus 4 dashboard GET routes |
-| Copilot Studio agent | Deployed & working | Generative orchestration — all 3 tools (QueryClips, QueryRemarks, ProofreadTranscript) active, no manual topics needed |
+| Copilot Studio agent | Deployed & working | Generative orchestration — all 4 tools (QueryClips, QueryRemarks, ProofreadTranscript, TranscribeFile) active, no manual topics needed |
 | SPA demo (legacy) | Working | `demo.html` + `demo-server.js` on port 9090, routes through APIM with subscription key from `APIM_SUBSCRIPTION_KEY` env var |
 | Always-ready instances | Configured (in Bicep) | `alwaysReady: [{ name: 'http', instanceCount: 1 }]` in `function-app.bicep` scaleAndConcurrency. Eliminates cold start timeouts (~$34/month). |
 

@@ -1,0 +1,123 @@
+Meeting notes
+
+Collapse all
+AI Solution Demo for Governor's Communications Office: Patrick presented a comprehensive demo to Luke, William, Sofya, Jeremy, Anna, Jason, and I Hsieh, showcasing an AI-powered agent for the Governor's Communications Office that automates news monitoring, remarks search, and transcript proofreading, with technical details on architecture and deployment in Azure and Copilot Studio.05:21
+.
+Automated News Monitoring: Patrick explained the process of automating the identification of Governor Stein mentions in news articles, using an Azure Function to scrape governor.nc.gov daily, extract clean text with Mozilla Readability, embed articles with Azure OpenAI, and store them in Cosmos DB for semantic search. Staff can query these clips in Teams or M365 Copilot, receiving results ranked by meaning and keywords.
+
+.
+Remarks Search Functionality: The remarks search feature allows manual upload of speech files, which are processed by splitting into paragraphs, tagging with metadata (date, event, venue), embedding, and indexing in Cosmos DB. Staff can search for topics in Teams, and the AI synthesizes relevant passages with direct quotes and citations, following a Retrieval-Augmented Generation (RAG) pattern.
+
+.
+Transcript Proofreading: Transcript proofreading is handled by GPT-40, which cleans up faulty transcripts from ASR or OCR, correcting errors and providing structured output with explanations for each change. The process is serverless, with no data stored, and estimated monthly costs are $120-200.
+
+.
+Power Platform Integration: Patrick described how Power Platform can be used for orchestration, such as sending daily digest emails, managing metadata in Dataverse, and triggering flows for remarks ingestion. Azure handles AI search and embedding, while Power Platform delivers the user experience and notifications.
+
+.
+Technical Architecture Overview: The solution architecture includes Azure OpenAI for embeddings, Cosmos DB for storage, Azure Functions for compute, API Management for routing and security, and Copilot Studio for agent orchestration. Managed identities and serverless design ensure security and scalability, with deployment to Teams and M365 Copilot.
+
+Presented by Patrick O'Gorman
+1
+Presented by Patrick O'Gorman
+2
+Presented by Patrick O'Gorman
+3
+Presented by Patrick O'Gorman
+4
+Presented by Patrick O'Gorman
+5
+Presented by Patrick O'Gorman
+6
+Presented by Patrick O'Gorman
+7
+Presented by Patrick O'Gorman
+8
+Presented by Patrick O'Gorman
+9
+Presented by Patrick O'Gorman
+10
+Presented by Patrick O'Gorman
+11
+Presented by Patrick O'Gorman
+12
+Presented by Patrick O'Gorman
+13
+
+Requirements Clarification and Expansion: Luke and Sofya clarified the Governor's office requirements, emphasizing the need for broader news monitoring beyond governor.nc.gov, including Bing search capabilities, and discussed potential future expansion to include video transcription and indexing for speeches.19:24
+.
+Scope of News Monitoring: Sofya and Luke raised questions about whether the news monitoring tool searches only official releases or the broader internet, noting the Governor's communications team wants to track mentions from all sources, not just their own site. Patrick confirmed the demo currently targets governor.nc.gov but is configurable to include Bing search for wider coverage.
+
+.
+Separation of Data Sources: Luke suggested separating databases or tools for governor.nc.gov and public news sources to clarify intended use, as the office needs both historical press release search and daily updates on external mentions.
+
+.
+Video Transcription and Indexing: Sofya proposed expanding the system to include YouTube videos and event recordings, asking about the feasibility of transcribing and vectorizing spoken content. Patrick acknowledged this as a valuable future enhancement and committed to investigating available cognitive services for transcription.
+
+Presented by Patrick O'Gorman
+14
+Presented by Patrick O'Gorman
+15
+Presented by Patrick O'Gorman
+16
+Presented by Patrick O'Gorman
+17
+Presented by Patrick O'Gorman
+18
+Presented by Patrick O'Gorman
+19
+
+Model Selection and Copilot Studio Limitations: Luke, Patrick, and Jeremy discussed the limitations of Copilot Studio in GCC, which is restricted to GPT-4.0, and explored options for using newer models like GPT-5.2 via Azure AI Foundry, debating the impact on response quality and integration with Teams and M365 Copilot.26:29
+.
+GCC Model Restrictions: Luke expressed concern about being limited to GPT-4.0 in Copilot Studio for GCC, noting that newer models provide significantly better results, especially for dynamic chat use cases. Patrick confirmed that improvements are expected with future model releases but no firm date is available.
+
+.
+Azure AI Foundry Integration: Patrick explained that agents can leverage newer models deployed in Azure AI Foundry by routing queries through Azure Functions and APIs, which Copilot Studio can access via custom connectors, though the final response is still generated by GPT-4.0 in Copilot Studio.
+
+.
+Agent Deployment Options: Luke asked about deploying Foundry agents directly to Teams or M365 Copilot. Patrick and Jeremy clarified that, as of now, Copilot Studio is the main route for deployment, but they will investigate whether Foundry agents can be wrapped for Teams integration.
+
+.
+Impact of Model Choice on Output Quality: Luke emphasized that high-quality outputs require both good inputs and advanced models, preferring to use GPT-5.2 for response generation. Patrick and Jeremy agreed to escalate this need to the product team and explore workarounds.
+
+Presented by Patrick O'Gorman
+20
+Presented by Patrick O'Gorman
+21
+Presented by Patrick O'Gorman
+22
+Presented by Patrick O'Gorman
+23
+Presented by Patrick O'Gorman
+24
+
+Next Steps and Communication Improvements: The group, led by Patrick, Jeremy, and I Hsieh, agreed to clarify requirements, iterate on the solution, escalate model access needs, and improve communication between Microsoft and the Governor's office team, with plans for follow-up and onsite meetings.57:07
+.
+Requirements Gathering and Iteration: Patrick encouraged the Governor's office team to review the demo, provide feedback, and specify additional features or test questions, so the solution can be iteratively refined to meet their needs.
+
+.
+Escalation of Model Access Needs: Luke and Jeremy discussed escalating the need for advanced models in Copilot Studio to the Microsoft product team, offering to involve senior state officials to highlight the urgency and impact.
+
+.
+Follow-Up Actions and Onsite Meeting: Jeremy confirmed Microsoft will research possible workarounds for model limitations and provide a final answer on advanced model integration, with plans for onsite meetings on April 1st and 2nd to continue collaboration.
+
+.
+Communication Process Improvements: I Hsieh and Jeremy acknowledged previous communication gaps and committed to more proactive updates, ensuring the Governor's office is informed about progress and ongoing work.
+
+Are these notes useful?
+
+
+Follow-up tasks
+.
+Web Search Expansion: Investigate and implement Bing search or similar capability to enable global web search for governor mentions, beyond just governor.nc.gov. (Patrick)
+.
+Video Transcription Capability: Research and propose a solution for transcribing and indexing YouTube videos or other event recordings where the governor speaks, to include as searchable data. (Patrick)
+.
+Model Upgrade Feasibility: Determine if and how a newer model (e.g., GPT-5.2) can be used for both search and response in Teams/M365 Copilot, possibly via Azure AI Foundry, and report findings to the team. (Patrick, Jeremy, Anna)
+.
+Database Separation Strategy: Evaluate and recommend an approach for separating databases or tools for governor.nc.gov content and public web search content to clarify intended use cases. (Patrick)
+.
+Communication Improvement: Establish a more fluid and reliable communication channel between Microsoft and the state team to provide timely updates on progress and ongoing work. (Jeremy)
+Are these tasks useful?
+
+

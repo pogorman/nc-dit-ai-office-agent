@@ -1,0 +1,42 @@
+{
+    "corrected": "The Governor said North Carolina's economic future is bright, and he wants to double the number of apprentices in the state.",
+    "changes": [
+        {
+            "original": "governer",
+            "corrected": "Governor",
+            "confidence": "high",
+            "reason": "Spelling correction for the title of an official; proper noun capitalization."
+        },
+        {
+            "original": "North Carolinas",
+            "corrected": "North Carolina's",
+            "confidence": "high",
+            "reason": "Added possessive apostrophe for grammatical correctness."
+        },
+        {
+            "original": "econimic",
+            "corrected": "economic",
+            "confidence": "high",
+            "reason": "Corrected spelling error."
+        },
+        {
+            "original": "dubble",
+            "corrected": "double",
+            "confidence": "high",
+            "reason": "Fixed clear spelling mistake."
+        },
+        {
+            "original": "apprentises",
+            "corrected": "apprentices",
+            "confidence": "high",
+            "reason": "Corrected misspelling to proper word form."
+        },
+        {
+            "original": "future is bright and he wants to dubble the number of apprentises in the state.",
+            "corrected": "future is bright, and he wants to double the number of apprentices in the state.",
+            "confidence": "high",
+            "reason": "Added missing comma to separate clauses properly."
+        }
+    ],
+    "summary": "Corrected multiple spelling errors, added proper noun capitalization, inserted punctuation for clarity, and fixed possessive formatting."
+}

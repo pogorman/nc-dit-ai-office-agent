@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Model Quality Comparison: GPT-4o vs GPT-5-chat vs Copilot Studio Orchestration</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f5f5; color: #1a1a1a; padding: 32px; line-height: 1.6; max-width: 1400px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; color: #0078D4; margin-bottom: 4px; }
+  .subtitle { color: #555; margin-bottom: 24px; font-size: 0.95rem; }
+
+  /* Configuration table */
+  table.config { width: 100%; border-collapse: collapse; margin-bottom: 32px; font-size: 0.88rem; }
+  table.config th { background: #0078D4; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  table.config td { padding: 8px 12px; border: 1px solid #ddd; vertical-align: top; }
+  table.config td:first-child { font-weight: 600; width: 180px; background: #f8f9fa; white-space: nowrap; }
+  table.config tr:nth-child(even) td { background: #fafbfc; }
+  table.config tr:nth-child(even) td:first-child { background: #f0f1f2; }
+
+  /* Test sections */
+  .test-section { background: #fff; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 32px; overflow: hidden; }
+  .test-header { background: #0078D4; color: #fff; padding: 12px 20px; font-size: 1.05rem; font-weight: 600; }
+  .test-prompt { padding: 12px 20px; background: #f0f4f8; border-bottom: 1px solid #ddd; color: #333; }
+  .test-prompt strong { font-style: normal; }
+  .test-prompt code { background: #e8eef4; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+
+  /* 4-column grid */
+  .columns { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .column { padding: 14px 16px; border-right: 1px solid #eee; font-size: 0.85rem; }
+  .column:last-child { border-right: none; }
+  .col-label { font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid; }
+
+  .col-4o .col-label { color: #0078D4; border-color: #0078D4; }
+  .col-5 .col-label { color: #0E639C; border-color: #0E639C; }
+  .col-gen .col-label { color: #5C2D91; border-color: #5C2D91; }
+  .col-classic .col-label { color: #008272; border-color: #008272; }
+
+  .response-text { white-space: pre-wrap; word-wrap: break-word; line-height: 1.55; }
+  .response-text p { margin-bottom: 8px; }
+  .tag { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 2px 7px; border-radius: 3px; margin-bottom: 6px; }
+  .tag-pass { background: #dff6dd; color: #0e7a0e; }
+  .tag-partial { background: #fff4ce; color: #8a6d3b; }
+  .tag-fail { background: #fde7e9; color: #c42b1c; }
+  .tag-same { background: #e8eef4; color: #0078D4; }
+  .tag-na { background: #f0f0f0; color: #666; }
+
+  /* Summary section */
+  .summary-box { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 24px 28px; margin-bottom: 32px; }
+  .summary-box h2 { font-size: 1.25rem; color: #0078D4; margin-bottom: 16px; border-bottom: 2px solid #0078D4; padding-bottom: 8px; }
+  .finding { margin-bottom: 16px; padding: 12px 16px; border-left: 4px solid #0078D4; background: #f8fbff; border-radius: 0 4px 4px 0; }
+  .finding strong { display: block; margin-bottom: 4px; }
+  .finding-num { color: #0078D4; font-weight: 700; }
+
+  /* Scorecard */
+  table.scorecard { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.85rem; }
+  table.scorecard th { background: #0078D4; color: #fff; padding: 8px 12px; text-align: center; font-weight: 600; }
+  table.scorecard th:first-child { text-align: left; }
+  table.scorecard td { padding: 8px 12px; border: 1px solid #ddd; text-align: center; }
+  table.scorecard td:first-child { text-align: left; font-weight: 500; background: #f8f9fa; }
+  table.scorecard .highlight { background: #dff6dd; font-weight: 600; }
+  table.scorecard .warn { background: #fff4ce; }
+  table.scorecard .fail { background: #fde7e9; }
+
+  /* Footer */
+  .footer { margin-top: 24px; color: #888; font-size: 0.8rem; border-top: 1px solid #ddd; padding-top: 12px; }
+
+  @media print {
+    body { padding: 16px; font-size: 0.8rem; }
+    .columns { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .column { padding: 8px 10px; font-size: 0.75rem; }
+    .test-section { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Model Quality Comparison: GPT-4o vs GPT-5-chat vs Copilot Studio Orchestration</h1>
+<p class="subtitle">NC Governor's Communications Office AI Agent &mdash; April 2026</p>
+
+<!-- ===================================================================== -->
+<!-- CONFIGURATIONS -->
+<!-- ===================================================================== -->
+<table class="config">
+  <tr><th colspan="2">Test Configurations</th></tr>
+  <tr>
+    <td>1. Raw API &mdash; GPT-4o</td>
+    <td>Azure Functions backend calling <strong>GPT-4o</strong> directly via APIM. text-embedding-3-large for vectors. This is the current production configuration.</td>
+  </tr>
+  <tr>
+    <td>2. Raw API &mdash; GPT-5-chat</td>
+    <td>Same backend swapped to <strong>GPT-5-chat</strong> (gpt-5-chat, 2025-10-03). Embedding model unchanged. Tests whether the newer model improves synthesis quality.</td>
+  </tr>
+  <tr>
+    <td>3. Copilot Studio Generative</td>
+    <td>GCC environment, <strong>GPT-4.0 orchestrator</strong>. Generative orchestration calls the GPT-5-chat backend as tools, then re-summarizes for the user. Tests the "last mile" quality through the orchestration layer.</td>
+  </tr>
+  <tr>
+    <td>4. Copilot Studio Classic</td>
+    <td>GCC environment, <strong>GPT-4.0 orchestrator</strong>. Classic topics call the same backend. Author controls which fields appear in the response template. Tests whether manual topic design improves fidelity.</td>
+  </tr>
+</table>
+
+<!-- ===================================================================== -->
+<!-- Q1: CLIPS - HURRICANE HELENE -->
+<!-- ===================================================================== -->
+<div class="test-section">
+  <div class="test-header">Q1: Clips &mdash; "What's the latest news about Hurricane Helene recovery?"</div>
+  <div class="test-prompt"><strong>Capability:</strong> News Clips Search &nbsp;|&nbsp; <strong>Type:</strong> Clips query with web search + gov scraper sources</div>
+  <div class="columns">
+    <div class="column col-4o">
+      <div class="col-label">Raw API &mdash; GPT-4o</div>
+      <div class="response-text"><span class="tag tag-pass">PASS</span>
+Returned 3 clips with structured data. Top result from ncbudget.org (2026-03-30) with full article text about unmet needs. Also qcnews.com and naswnc.org.
+
+Response includes id, url, outlet, title, publishedAt, lede, mentionContext, mentionOffset, fullText for each clip.</div>
+    </div>
+    <div class="column col-5">
+      <div class="col-label">Raw API &mdash; GPT-5-chat</div>
+      <div class="response-text"><span class="tag tag-same">IDENTICAL</span>
+Same search results. Clips query does not use the chat model for retrieval, only for embeddings. Output identical to GPT-4o.</div>
+    </div>
+    <div class="column col-gen">
+      <div class="col-label">Copilot Studio &mdash; Generative</div>
+      <div class="response-text"><span class="tag tag-pass">PASS</span>
+Synthesized 5 bullet points:
+- Funding/Grants ($24M mitigation grants)
+- Federal Reimbursement ($155M)
+- Congressional Request ($13.5B)
+- Temporary Housing Extension (FEMA 6-month)
+- State Budget ($792M)
+
+Included footnotes citing NC Budget, ABC11, Spectrum News, WFMY, NC Newsline, NC Governor, Hoodline.
+
+Blended clips + remarks data into one coherent answer.</div>
+    </div>
+    <div class="column col-classic">
+      <div class="col-label">Copilot Studio &mdash; Classic</div>
+      <div class="response-text"><span class="tag tag-partial">DATA COMPLETE, UNFORMATTED</span>
+Returned "I found 10 on that" followed by raw JSON array of all 10 clips with fullText.
+
+All data present but unformatted. User would need Adaptive Cards or message formatting to make it presentable. The data is complete &mdash; formatting is a topic design choice, not a quality issue.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- Q2: REMARKS - CLEAN ENERGY -->
+<!-- ===================================================================== -->
+<div class="test-section">
+  <div class="test-header">Q2: Remarks &mdash; "What language has the Governor used about clean energy and economic development?"</div>
+  <div class="test-prompt"><strong>Capability:</strong> Remarks Search (RAG synthesis) &nbsp;|&nbsp; <strong>Type:</strong> Hybrid search + GPT synthesis over Governor's speeches</div>
+  <div class="columns">
+    <div class="column col-4o">
+      <div class="col-label">Raw API &mdash; GPT-4o</div>
+      <div class="response-text"><span class="tag tag-pass">PASS</span>
+5 themed sections, 7 direct quotes with (date, event) citations. "Evolution in Messaging" section tracking March 2025 vs November 2025.
+
+Sources: 10 chunks from State of the State and November Column.
+
+Key quotes:
+- "We've become a leader in the clean energy economy"
+- "more than 30,000 good-paying jobs"
+- "more than 1500 new jobs, most of which are in rural North Carolina"</div>
+    </div>
+    <div class="column col-5">
+      <div class="col-label">Raw API &mdash; GPT-5-chat</div>
+      <div class="response-text"><span class="tag tag-pass">RICHER</span>
+Added markdown table tracking messaging evolution by period. More structured sections with explicit analysis of how language shifted.
+
+Same 7+ quotes but with deeper contextual analysis of each. Explicitly noted where clean energy is "implicit rather than directly invoked" in later remarks.</div>
+    </div>
+    <div class="column col-gen">
+      <div class="col-label">Copilot Studio &mdash; Generative</div>
+      <div class="response-text"><span class="tag tag-pass">PASS</span>
+Good synthesis &mdash; 4 themed sections:
+1. Core Framing
+2. Integration of Clean Energy
+3. Economic Development Themes
+4. Evolution of Messaging
+
+Preserved key quotes: "We've become a leader in the clean energy economy," "more than 30,000 good-paying jobs," "more than 1500 new jobs, most of which are in rural North Carolina."
+
+Evolution section present. Slightly less granular than GPT-5-chat direct output but quotes and citations intact.</div>
+    </div>
+    <div class="column col-classic">
+      <div class="col-label">Copilot Studio &mdash; Classic</div>
+      <div class="response-text"><span class="tag tag-pass">PASS</span>
+Strong synthesis with dual framing analysis:
+1. <strong>Clean Energy Framing</strong> &mdash; "leader in the clean energy economy" [Ex. 1] as strategic economic leadership; "clean air to breathe and clean water to drink" [Ex. 4] as quality-of-life infrastructure.
+2. <strong>Economic Development Framing</strong> &mdash; Competitiveness, rural inclusion, workforce/skills focus. Key quotes: "real shot at success," "tens of thousands of jobs," "most of new jobs are in rural North Carolina."
+3. <strong>Evolution Over Time</strong> &mdash; March 2025 policy-driven competitiveness to December 2025 moral/civic "sacred responsibility to be a light." Noted clean energy not directly mentioned in later remarks but connected thematically.
+4. <strong>Summary</strong> &mdash; "Clean energy and economic development as mutually reinforcing pillars of North Carolina's identity."
+
+Direct quotes with [Ex. #] citations throughout. Content quality comparable to GPT-5-chat direct output.
+
+Note: Initial attempt failed ("could not answer") due to trigger phrase mismatch. Succeeded after rephrasing prompt.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- Q3: PROOFREAD -->
+<!-- ===================================================================== -->
+<div class="test-section">
+  <div class="test-header">Q3: Proofread &mdash; "The governer said North Carolinas econimic future is bright..."</div>
+  <div class="test-prompt"><strong>Capability:</strong> Transcript Proofreading &nbsp;|&nbsp; <strong>Type:</strong> AI-powered spelling/grammar correction with itemized change list</div>
+  <div class="columns">
+    <div class="column col-4o">
+      <div class="col-label">Raw API &mdash; GPT-4o</div>
+      <div class="response-text"><span class="tag tag-pass">PASS</span>
+Corrected text returned. 1 bulk change block listing all 5 corrections together.
+
+Changes:
+- governer -> governor
+- North Carolinas -> North Carolina's
+- econimic -> economic
+- dubble -> double
+- apprentises -> apprentices
+- Added comma before "and"
+
+Summary: "Corrected multiple spelling errors, added a possessive apostrophe, and inserted a comma."</div>
+    </div>
+    <div class="column col-5">
+      <div class="col-label">Raw API &mdash; GPT-5-chat</div>
+      <div class="response-text"><span class="tag tag-pass">MORE GRANULAR</span>
+Corrected text returned. 5 individual change items, each with its own confidence and reason.
+
+Also capitalized "Governor" (GPT-4o left it lowercase).
+
+More granular and structured output than GPT-4o.</div>
+    </div>
+    <div class="column col-gen">
+      <div class="col-label">Copilot Studio &mdash; Generative</div>
+      <div class="response-text"><span class="tag tag-partial">PARTIAL</span>
+First attempt failed &mdash; Copilot Studio routed the prompt to the wrong tool (remarks query instead of proofread).
+
+On retry with "proof read that," it worked. Returned corrected text with one-line summary: "Capitalization and minor punctuation corrections were made for clarity."
+
+Lost the itemized change list entirely &mdash; just the corrected text and a brief note.</div>
+    </div>
+    <div class="column col-classic">
+      <div class="col-label">Copilot Studio &mdash; Classic</div>
+      <div class="response-text"><span class="tag tag-na">NOT TESTED</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- Q4: CLIPS - JOBS -->
+<!-- ===================================================================== -->
+<div class="test-section">
+  <div class="test-header">Q4: Clips &mdash; "Has the Governor made any announcements about jobs or economic development?"</div>
+  <div class="test-prompt"><strong>Capability:</strong> News Clips Search &nbsp;|&nbsp; <strong>Type:</strong> Clips query covering jobs/econ topics</div>
+  <div class="columns">
+    <div class="column col-4o">
+      <div class="col-label">Raw API &mdash; GPT-4o</div>
+      <div class="response-text"><span class="tag tag-pass">PASS</span>
+3 clips returned:
+- TSEA Energy facility in Eden (160 jobs)
+- Capital Group Charlotte hub
+- PSA Airlines HQ grand opening
+
+Structured data with outlet, date, lede, URL.</div>
+    </div>
+    <div class="column col-5">
+      <div class="col-label">Raw API &mdash; GPT-5-chat</div>
+      <div class="response-text"><span class="tag tag-same">IDENTICAL</span>
+Same search results. Retrieval does not depend on the chat model.</div>
+    </div>
+    <div class="column col-gen">
+      <div class="col-label">Copilot Studio &mdash; Generative</div>
+      <div class="response-text"><span class="tag tag-pass">ENHANCED</span>
+Rich narrative response with 7 themed sections:
+1. Workforce Development
+2. Job Creation
+3. TSEA Energy
+4. Citi Charlotte
+5. Child Care Task Force
+6. Tax Policy
+7. Recognition of Contributors
+
+Blended clips and remarks data. Included footnotes. Went beyond listing clips to synthesize across both data sources.</div>
+    </div>
+    <div class="column col-classic">
+      <div class="col-label">Copilot Studio &mdash; Classic</div>
+      <div class="response-text"><span class="tag tag-partial">DATA COMPLETE, UNFORMATTED</span>
+"I found 10 on that" + raw JSON. All data present, needs formatting.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- Q5: CLIPS - MEDICAID -->
+<!-- ===================================================================== -->
+<div class="test-section">
+  <div class="test-header">Q5: Clips &mdash; "What's happening with Medicaid in North Carolina?"</div>
+  <div class="test-prompt"><strong>Capability:</strong> News Clips Search &nbsp;|&nbsp; <strong>Type:</strong> Clips query on healthcare policy</div>
+  <div class="columns">
+    <div class="column col-4o">
+      <div class="col-label">Raw API &mdash; GPT-4o</div>
+      <div class="response-text"><span class="tag tag-pass">PASS</span>
+3 clips:
+- Carolina Journal (Stein urges Medicaid rebase funding)
+- NC Newsline (Gov warns looming cuts)
+- Newsline (Stein calls for special session)
+
+Structured data with outlet, date, lede, URL.</div>
+    </div>
+    <div class="column col-5">
+      <div class="col-label">Raw API &mdash; GPT-5-chat</div>
+      <div class="response-text"><span class="tag tag-same">IDENTICAL</span>
+Same search results.</div>
+    </div>
+    <div class="column col-gen">
+      <div class="col-label">Copilot Studio &mdash; Generative</div>
+      <div class="response-text"><span class="tag tag-pass">ENHANCED</span>
+Comprehensive 7-point narrative:
+1. Funding Issues
+2. Reimbursement Rate Restorations
+3. Court Rulings
+4. Political Pressure
+5. Legislative Actions
+6. Impact on Providers
+7. Governor's Remarks
+
+Cited WRAL, HME News, WUNC, NC Newsline, NC Health News, Carolina Journal. Blended clips + remarks for a complete picture.</div>
+    </div>
+    <div class="column col-classic">
+      <div class="col-label">Copilot Studio &mdash; Classic</div>
+      <div class="response-text"><span class="tag tag-partial">DATA COMPLETE, UNFORMATTED</span>
+"I found 10 on that" + raw JSON. All data present.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- Q6: REMARKS - PUBLIC SAFETY -->
+<!-- ===================================================================== -->
+<div class="test-section">
+  <div class="test-header">Q6: Remarks &mdash; "What has the Governor said about public safety and law enforcement?"</div>
+  <div class="test-prompt"><strong>Capability:</strong> Remarks Search (RAG synthesis) &nbsp;|&nbsp; <strong>Type:</strong> Hybrid search + GPT synthesis on public safety themes</div>
+  <div class="columns">
+    <div class="column col-4o">
+      <div class="col-label">Raw API &mdash; GPT-4o</div>
+      <div class="response-text"><span class="tag tag-pass">PASS</span>
+Structured synthesis with themes:
+- Support for law enforcement
+- Violence prevention
+- Mental health
+- Gun safety
+- Reentry
+
+7+ direct quotes with date/event citations. Evolution tracked from March (salary focus) to October (holistic approach).</div>
+    </div>
+    <div class="column col-5">
+      <div class="col-label">Raw API &mdash; GPT-5-chat</div>
+      <div class="response-text"><span class="tag tag-pass">RICHER</span>
+Same themes plus more granular quote analysis. Bold section headers, explicit contextual analysis of each quote's significance.
+
+Evolution tracked with more detail than GPT-4o.</div>
+    </div>
+    <div class="column col-gen">
+      <div class="col-label">Copilot Studio &mdash; Generative</div>
+      <div class="response-text"><span class="tag tag-pass">EXCELLENT</span>
+6 themed sections:
+1. Support for Law Enforcement
+2. Violence Prevention
+3. Mental Health
+4. Gun Safety
+5. Reentry Support
+6. Acknowledgment
+
+All key quotes preserved with citations. Evolution section present (early = salary focus, October = systemic issues).
+
+Content quality comparable to direct API output.</div>
+    </div>
+    <div class="column col-classic">
+      <div class="col-label">Copilot Studio &mdash; Classic</div>
+      <div class="response-text"><span class="tag tag-partial">MIXED</span>
+Raw JSON source chunks displayed, then synthesis below. User saw chunks + synthesis together.
+
+Data was complete. Synthesis quality not separately visible from raw data in this test.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- Q7: REMARKS - EDUCATION -->
+<!-- ===================================================================== -->
+<div class="test-section">
+  <div class="test-header">Q7: Remarks &mdash; "What has the Governor said about education and teacher pay?"</div>
+  <div class="test-prompt"><strong>Capability:</strong> Remarks Search (RAG synthesis) &nbsp;|&nbsp; <strong>Type:</strong> Hybrid search + GPT synthesis on education policy</div>
+  <div class="columns">
+    <div class="column col-4o">
+      <div class="col-label">Raw API &mdash; GPT-4o</div>
+      <div class="response-text"><span class="tag tag-pass">PASS</span>
+Synthesis with direct quotes:
+- "second-lowest in the southeast"
+- "real pay raise"
+- Workforce development connection
+
+6+ quotes with citations. Evolution noted.</div>
+    </div>
+    <div class="column col-5">
+      <div class="col-label">Raw API &mdash; GPT-5-chat</div>
+      <div class="response-text"><span class="tag tag-pass">RICHER</span>
+Markdown evolution table, more granular quote-by-quote analysis, explicit connection between education and workforce pipeline.</div>
+    </div>
+    <div class="column col-gen">
+      <div class="col-label">Copilot Studio &mdash; Generative</div>
+      <div class="response-text"><span class="tag tag-pass">PASS</span>
+Good synthesis &mdash; 3 sections:
+1. Low Starting Pay
+2. Real Pay Raise
+3. Teachers as Inspirational Figures
+
+Plus Broader Context and Evolution sections.
+
+Key quotes preserved: "second-lowest in the southeast, lower than every one of our bordering states &mdash; even South Carolina," "we must give teachers a real pay raise!"
+
+Citations with dates. Evolution tracked.</div>
+    </div>
+    <div class="column col-classic">
+      <div class="col-label">Copilot Studio &mdash; Classic</div>
+      <div class="response-text"><span class="tag tag-pass">EXCELLENT</span>
+Synthesis shown (after raw JSON chunks). 5+ quotes with [#] numbered citations and date/event.
+
+Tracked evolution from March policy-driven "real pay raise" to December values-based "miracle of light" framing. Summary paragraph ties it together.
+
+Content quality comparable to or better than generative mode.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- SCORECARD -->
+<!-- ===================================================================== -->
+<div class="summary-box">
+  <h2>Scorecard</h2>
+  <table class="scorecard">
+    <tr>
+      <th>Question</th>
+      <th>Raw API &mdash; GPT-4o</th>
+      <th>Raw API &mdash; GPT-5-chat</th>
+      <th>Copilot Studio Generative</th>
+      <th>Copilot Studio Classic</th>
+    </tr>
+    <tr>
+      <td>Q1: Helene recovery (clips)</td>
+      <td class="highlight">3 clips, structured</td>
+      <td>Identical</td>
+      <td class="highlight">5 bullets, footnotes, blended</td>
+      <td class="warn">10 clips, raw JSON</td>
+    </tr>
+    <tr>
+      <td>Q2: Clean energy (remarks)</td>
+      <td class="highlight">7 quotes, 5 sections</td>
+      <td class="highlight">Richer: evolution table</td>
+      <td class="highlight">4 sections, quotes preserved</td>
+      <td class="warn">PASS after rephrase</td>
+    </tr>
+    <tr>
+      <td>Q3: Proofread</td>
+      <td class="highlight">5 corrections, 1 block</td>
+      <td class="highlight">5 individual items + "Governor"</td>
+      <td class="warn">Misrouted 1st try; lost change list</td>
+      <td>Not tested</td>
+    </tr>
+    <tr>
+      <td>Q4: Jobs/econ (clips)</td>
+      <td class="highlight">3 clips, structured</td>
+      <td>Identical</td>
+      <td class="highlight">7 sections, blended sources</td>
+      <td class="warn">10 clips, raw JSON</td>
+    </tr>
+    <tr>
+      <td>Q5: Medicaid (clips)</td>
+      <td class="highlight">3 clips, structured</td>
+      <td>Identical</td>
+      <td class="highlight">7-point narrative, 6 outlets cited</td>
+      <td class="warn">10 clips, raw JSON</td>
+    </tr>
+    <tr>
+      <td>Q6: Public safety (remarks)</td>
+      <td class="highlight">7+ quotes, themes</td>
+      <td class="highlight">Deeper contextual analysis</td>
+      <td class="highlight">6 sections, quotes preserved</td>
+      <td class="warn">Chunks + synthesis mixed</td>
+    </tr>
+    <tr>
+      <td>Q7: Education (remarks)</td>
+      <td class="highlight">6+ quotes, evolution</td>
+      <td class="highlight">Evolution table, pipeline analysis</td>
+      <td class="highlight">3 sections + evolution</td>
+      <td class="highlight">5+ quotes, numbered citations</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ===================================================================== -->
+<!-- KEY FINDINGS -->
+<!-- ===================================================================== -->
+<div class="summary-box">
+  <h2>Key Findings</h2>
+
+  <div class="finding">
+    <strong><span class="finding-num">1.</span> GPT-5-chat produces richer synthesis than GPT-4o.</strong>
+    The upgrade is most visible in remarks synthesis: more structured sections, markdown tables for evolution tracking, deeper contextual analysis of individual quotes. For clips queries, the difference is negligible since retrieval does not depend on the chat model. The GPT-5-chat backend is a clear upgrade for the highest-value use case (remarks analysis).
+  </div>
+
+  <div class="finding">
+    <strong><span class="finding-num">2.</span> Generative orchestration preserves content quality well.</strong>
+    Direct quotes, citations, thematic structure, and evolution tracking all survive the GPT-4.0 "last mile." The orchestrator adds value by blending clips + remarks into unified answers (Q1, Q4, Q5). Main losses: proofread change list gets flattened to a single summary, and occasional misrouting on first attempt (Q3). For remarks synthesis &mdash; the highest-value use case &mdash; quality degradation is minimal.
+  </div>
+
+  <div class="finding">
+    <strong><span class="finding-num">3.</span> Classic orchestration has higher fidelity when it works, but reliability is a problem.</strong>
+    The synthesis text comes through with full quotes and numbered citations (Q7, Q2 were both excellent). Q2 required rephrasing to match the topic trigger, exposing a sensitivity to prompt wording. Classic gives you control over what fields to display but requires careful trigger phrase engineering. Once routed correctly, content quality is comparable to the direct API output.
+  </div>
+
+  <div class="finding">
+    <strong><span class="finding-num">4.</span> The "last mile" problem is smaller than expected.</strong>
+    The concern was that Copilot Studio's GPT-4.0 orchestrator would degrade the backend output. For remarks synthesis (the highest-value use case), the quality degradation is minimal. Quotes are preserved, citations are maintained, thematic structure survives. The GPT-5-chat backend does the heavy analytical lifting; Copilot Studio presents it faithfully.
+  </div>
+
+  <div class="finding">
+    <strong><span class="finding-num">5.</span> Recommendation: GPT-5-chat backend + Generative orchestration as the default.</strong>
+    Use GPT-5-chat on the backend for the quality uplift on remarks synthesis. Generative orchestration is the right default &mdash; it handles routing, blends data sources, and presents results well. Consider classic topics only for specific high-fidelity use cases where you need exact control over the output template (e.g., proofread with itemized changes). Invest in prompt engineering for the proofread routing issue rather than switching to classic for all capabilities.
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- FOOTER -->
+<!-- ===================================================================== -->
+<p class="footer">
+  Generated 2026-03-30 | NC DIT AI Office | Test data in seed/test-*.json
+</p>
+
+</body>
+</html>

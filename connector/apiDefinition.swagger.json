@@ -11,7 +11,7 @@
   "host": "nc-comms-agent-dev-apim.azure-api.net",
   "basePath": "/comms",
   "schemes": ["https"],
-  "consumes": ["application/json"],
+  "consumes": ["application/json", "multipart/form-data"],
   "produces": ["application/json"],
   "securityDefinitions": {
     "apim_key": {
@@ -77,6 +77,44 @@
             "description": "Search results with optional AI synthesis",
             "schema": {
               "$ref": "#/definitions/RemarksQueryResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/transcribe": {
+      "post": {
+        "operationId": "TranscribeFile",
+        "summary": "Transcribe audio or video",
+        "description": "Upload an audio or video file and get a text transcript. Supports mp3, mp4, wav, webm, m4a, mpeg, mpga. Max 25MB.",
+        "consumes": ["multipart/form-data"],
+        "parameters": [
+          {
+            "name": "file",
+            "in": "formData",
+            "required": true,
+            "type": "file",
+            "description": "Audio or video file to transcribe (mp3, mp4, wav, webm, m4a, mpeg, mpga)"
+          },
+          {
+            "name": "language",
+            "in": "formData",
+            "required": false,
+            "type": "string",
+            "description": "Optional ISO 639-1 language hint (e.g. 'en', 'es')"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transcription result",
+            "schema": {
+              "$ref": "#/definitions/TranscribeResponse"
             }
           },
           "400": {
@@ -336,6 +374,23 @@
         "reason": {
           "type": "string",
           "description": "Brief explanation of the correction"
+        }
+      }
+    },
+    "TranscribeResponse": {
+      "type": "object",
+      "properties": {
+        "transcript": {
+          "type": "string",
+          "description": "Full transcription text"
+        },
+        "filename": {
+          "type": "string",
+          "description": "Original uploaded filename"
+        },
+        "fileSizeBytes": {
+          "type": "integer",
+          "description": "Size of the uploaded file in bytes"
         }
       }
     },
