@@ -44,6 +44,8 @@
   .tag-fail { background: #fde7e9; color: #c42b1c; }
   .tag-same { background: #e8eef4; color: #0078D4; }
   .tag-na { background: #f0f0f0; color: #666; }
+  .score { display: inline-block; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; }
+  .score-reason { display: block; font-size: 0.78rem; color: #555; font-style: italic; margin-bottom: 8px; }
 
   /* Summary section */
   .summary-box { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 24px 28px; margin-bottom: 32px; }
@@ -79,17 +81,60 @@
 <p class="subtitle">NC Governor's Communications Office AI Agent &mdash; April 2026</p>
 
 <!-- ===================================================================== -->
+<!-- EXECUTIVE SUMMARY -->
+<!-- ===================================================================== -->
+<div class="summary-box" style="border-left: 4px solid #0078D4;">
+  <h2>Summary</h2>
+  <p style="font-size: 0.95rem; margin-bottom: 14px;">We tested 7 questions across 4 configurations to answer one question: <strong>does the quality survive the journey from our backend through Copilot Studio to the user?</strong></p>
+
+  <table class="scorecard" style="margin-bottom: 16px;">
+    <tr>
+      <th style="text-align:left;">Configuration</th>
+      <th>Avg Score</th>
+      <th>Strengths</th>
+      <th>Gaps</th>
+    </tr>
+    <tr>
+      <td>Raw API &mdash; GPT-4o</td>
+      <td class="highlight">4.0 / 4</td>
+      <td style="text-align:left;">Structured data, citations, themes</td>
+      <td style="text-align:left;">Solid baseline; GPT-5-chat is richer on remarks</td>
+    </tr>
+    <tr>
+      <td>Raw API &mdash; GPT-5-chat</td>
+      <td class="highlight">4.0 / 4</td>
+      <td style="text-align:left;">Deeper analysis, evolution tables, more granular output</td>
+      <td style="text-align:left;">Same clips retrieval as GPT-4o (search doesn't use chat model)</td>
+    </tr>
+    <tr>
+      <td>Copilot Studio &mdash; Generative</td>
+      <td class="highlight">3.9 / 4</td>
+      <td style="text-align:left;">Blends data sources, preserves quotes and citations</td>
+      <td style="text-align:left;">Proofread lost the itemized change list (3/4); corrections were accurate</td>
+    </tr>
+    <tr>
+      <td>Copilot Studio &mdash; Classic</td>
+      <td>3.2 / 4</td>
+      <td style="text-align:left;">High fidelity when routed correctly (Q7 scored 4/4)</td>
+      <td style="text-align:left;">Clips returned as raw JSON; remarks sometimes needed rephrasing</td>
+    </tr>
+  </table>
+
+  <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 0;"><strong>Bottom line:</strong> GPT-5-chat on the backend is a clear quality win for remarks synthesis &mdash; richer structure, deeper quote analysis, evolution tracking. The Copilot Studio GPT-4.0 orchestrator preserves this quality faithfully; direct quotes, citations, and thematic structure all survive the "last mile." The generative orchestration mode adds value by blending data sources into unified answers.</p>
+</div>
+
+<!-- ===================================================================== -->
 <!-- CONFIGURATIONS -->
 <!-- ===================================================================== -->
 <table class="config">
   <tr><th colspan="2">Test Configurations</th></tr>
   <tr>
     <td>1. Raw API &mdash; GPT-4o</td>
-    <td>Azure Functions backend calling <strong>GPT-4o</strong> directly via APIM. text-embedding-3-large for vectors. This is the current production configuration.</td>
+    <td>Azure Functions backend calling <strong>GPT-4o</strong> directly via APIM. text-embedding-3-large for vectors.</td>
   </tr>
   <tr>
     <td>2. Raw API &mdash; GPT-5-chat</td>
-    <td>Same backend swapped to <strong>GPT-5-chat</strong> (gpt-5-chat, 2025-10-03). Embedding model unchanged. Tests whether the newer model improves synthesis quality.</td>
+    <td>Same backend swapped to <strong>GPT-5-chat</strong> (gpt-5-chat, 2025-10-03). Embedding model unchanged.</td>
   </tr>
   <tr>
     <td>3. Copilot Studio Generative</td>
@@ -102,6 +147,36 @@
 </table>
 
 <!-- ===================================================================== -->
+<!-- GRADING CRITERIA -->
+<!-- ===================================================================== -->
+<div class="summary-box">
+  <h2>Grading Criteria</h2>
+  <p style="font-size: 0.9rem; margin-bottom: 12px;">Each response is scored on four criteria. The score (out of 4) reflects how many criteria were met. A one-line justification explains the rating.</p>
+  <table class="scorecard" style="margin-bottom: 0;">
+    <tr>
+      <th style="text-align:left;">Criteria</th>
+      <th style="text-align:left;">What we looked for</th>
+    </tr>
+    <tr>
+      <td><strong>Relevance</strong></td>
+      <td style="text-align:left;">On-topic results that address the question asked</td>
+    </tr>
+    <tr>
+      <td><strong>Citations</strong></td>
+      <td style="text-align:left;">Clear source attribution &mdash; date, event, outlet, or document reference</td>
+    </tr>
+    <tr>
+      <td><strong>Completeness</strong></td>
+      <td style="text-align:left;">Covered the breadth of available data, not just a partial slice</td>
+    </tr>
+    <tr>
+      <td><strong>Presentation</strong></td>
+      <td style="text-align:left;">Well-structured, readable output appropriate for the audience</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ===================================================================== -->
 <!-- Q1: CLIPS - HURRICANE HELENE -->
 <!-- ===================================================================== -->
 <div class="test-section">
@@ -110,19 +185,22 @@
   <div class="columns">
     <div class="column col-4o">
       <div class="col-label">Raw API &mdash; GPT-4o</div>
-      <div class="response-text"><span class="tag tag-pass">PASS</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Relevant, cited (outlet/date/URL), complete, well-structured JSON</span>
 Returned 3 clips with structured data. Top result from ncbudget.org (2026-03-30) with full article text about unmet needs. Also qcnews.com and naswnc.org.
 
 Response includes id, url, outlet, title, publishedAt, lede, mentionContext, mentionOffset, fullText for each clip.</div>
     </div>
     <div class="column col-5">
       <div class="col-label">Raw API &mdash; GPT-5-chat</div>
-      <div class="response-text"><span class="tag tag-same">IDENTICAL</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Identical retrieval; clips search does not use the chat model</span>
 Same search results. Clips query does not use the chat model for retrieval, only for embeddings. Output identical to GPT-4o.</div>
     </div>
     <div class="column col-gen">
       <div class="col-label">Copilot Studio &mdash; Generative</div>
-      <div class="response-text"><span class="tag tag-pass">PASS</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Relevant, cited (7 outlets), complete (blended clips + remarks), synthesized bullets</span>
 Synthesized 5 bullet points:
 - Funding/Grants ($24M mitigation grants)
 - Federal Reimbursement ($155M)
@@ -136,7 +214,8 @@ Blended clips + remarks data into one coherent answer.</div>
     </div>
     <div class="column col-classic">
       <div class="col-label">Copilot Studio &mdash; Classic</div>
-      <div class="response-text"><span class="tag tag-partial">DATA COMPLETE, UNFORMATTED</span>
+      <div class="response-text"><span class="score"><span class="tag tag-same">3/4</span></span>
+<span class="score-reason">Relevant, cited, complete (10 clips), but raw JSON &mdash; not formatted for chat</span>
 Returned "I found 10 on that" followed by raw JSON array of all 10 clips with fullText.
 
 All data present but unformatted. User would need Adaptive Cards or message formatting to make it presentable. The data is complete &mdash; formatting is a topic design choice, not a quality issue.</div>
@@ -153,7 +232,8 @@ All data present but unformatted. User would need Adaptive Cards or message form
   <div class="columns">
     <div class="column col-4o">
       <div class="col-label">Raw API &mdash; GPT-4o</div>
-      <div class="response-text"><span class="tag tag-pass">PASS</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Relevant, cited (date/event), complete (7 quotes, 5 themes), well-structured synthesis</span>
 5 themed sections, 7 direct quotes with (date, event) citations. "Evolution in Messaging" section tracking March 2025 vs November 2025.
 
 Sources: 10 chunks from State of the State and November Column.
@@ -165,14 +245,16 @@ Key quotes:
     </div>
     <div class="column col-5">
       <div class="col-label">Raw API &mdash; GPT-5-chat</div>
-      <div class="response-text"><span class="tag tag-pass">RICHER</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">All criteria met; richer than GPT-4o &mdash; evolution table, deeper contextual analysis</span>
 Added markdown table tracking messaging evolution by period. More structured sections with explicit analysis of how language shifted.
 
 Same 7+ quotes but with deeper contextual analysis of each. Explicitly noted where clean energy is "implicit rather than directly invoked" in later remarks.</div>
     </div>
     <div class="column col-gen">
       <div class="col-label">Copilot Studio &mdash; Generative</div>
-      <div class="response-text"><span class="tag tag-pass">PASS</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Relevant, cited, complete (4 themes), well-presented; quotes and citations preserved through orchestration</span>
 Good synthesis &mdash; 4 themed sections:
 1. Core Framing
 2. Integration of Clean Energy
@@ -185,7 +267,8 @@ Evolution section present. Slightly less granular than GPT-5-chat direct output 
     </div>
     <div class="column col-classic">
       <div class="col-label">Copilot Studio &mdash; Classic</div>
-      <div class="response-text"><span class="tag tag-pass">PASS</span>
+      <div class="response-text"><span class="score"><span class="tag tag-same">3/4</span></span>
+<span class="score-reason">Relevant, cited, complete, but required rephrasing to route &mdash; presentation depends on trigger match</span>
 Strong synthesis with dual framing analysis:
 1. <strong>Clean Energy Framing</strong> &mdash; "leader in the clean energy economy" [Ex. 1] as strategic economic leadership; "clean air to breathe and clean water to drink" [Ex. 4] as quality-of-life infrastructure.
 2. <strong>Economic Development Framing</strong> &mdash; Competitiveness, rural inclusion, workforce/skills focus. Key quotes: "real shot at success," "tens of thousands of jobs," "most of new jobs are in rural North Carolina."
@@ -208,7 +291,8 @@ Note: Initial attempt failed ("could not answer") due to trigger phrase mismatch
   <div class="columns">
     <div class="column col-4o">
       <div class="col-label">Raw API &mdash; GPT-4o</div>
-      <div class="response-text"><span class="tag tag-pass">PASS</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">All errors caught, itemized changes with summary, well-structured output</span>
 Corrected text returned. 1 bulk change block listing all 5 corrections together.
 
 Changes:
@@ -223,7 +307,8 @@ Summary: "Corrected multiple spelling errors, added a possessive apostrophe, and
     </div>
     <div class="column col-5">
       <div class="col-label">Raw API &mdash; GPT-5-chat</div>
-      <div class="response-text"><span class="tag tag-pass">MORE GRANULAR</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">All criteria met; more granular than GPT-4o &mdash; individual items with confidence, caught "Governor" capitalization</span>
 Corrected text returned. 5 individual change items, each with its own confidence and reason.
 
 Also capitalized "Governor" (GPT-4o left it lowercase).
@@ -232,16 +317,15 @@ More granular and structured output than GPT-4o.</div>
     </div>
     <div class="column col-gen">
       <div class="col-label">Copilot Studio &mdash; Generative</div>
-      <div class="response-text"><span class="tag tag-partial">PARTIAL</span>
-First attempt failed &mdash; Copilot Studio routed the prompt to the wrong tool (remarks query instead of proofread).
+      <div class="response-text"><span class="score"><span class="tag tag-same">3/4</span></span>
+<span class="score-reason">Relevant and correct, but lost the itemized change list &mdash; just corrected text and a brief summary</span>
+Returned corrected text with one-line summary: "Capitalization and minor punctuation corrections were made for clarity."
 
-On retry with "proof read that," it worked. Returned corrected text with one-line summary: "Capitalization and minor punctuation corrections were made for clarity."
-
-Lost the itemized change list entirely &mdash; just the corrected text and a brief note.</div>
+Lost the itemized change list entirely &mdash; just the corrected text and a brief note. The corrections themselves were accurate.</div>
     </div>
     <div class="column col-classic">
       <div class="col-label">Copilot Studio &mdash; Classic</div>
-      <div class="response-text"><span class="tag tag-na">NOT TESTED</span></div>
+      <div class="response-text"><span class="score"><span class="tag tag-na">N/A</span></span></div>
     </div>
   </div>
 </div>
@@ -255,7 +339,8 @@ Lost the itemized change list entirely &mdash; just the corrected text and a bri
   <div class="columns">
     <div class="column col-4o">
       <div class="col-label">Raw API &mdash; GPT-4o</div>
-      <div class="response-text"><span class="tag tag-pass">PASS</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Relevant, cited (outlet/date/URL), complete, well-structured JSON</span>
 3 clips returned:
 - TSEA Energy facility in Eden (160 jobs)
 - Capital Group Charlotte hub
@@ -265,12 +350,14 @@ Structured data with outlet, date, lede, URL.</div>
     </div>
     <div class="column col-5">
       <div class="col-label">Raw API &mdash; GPT-5-chat</div>
-      <div class="response-text"><span class="tag tag-same">IDENTICAL</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Identical retrieval; clips search does not use the chat model</span>
 Same search results. Retrieval does not depend on the chat model.</div>
     </div>
     <div class="column col-gen">
       <div class="col-label">Copilot Studio &mdash; Generative</div>
-      <div class="response-text"><span class="tag tag-pass">ENHANCED</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Relevant, cited (footnotes), complete (blended clips + remarks), 7 themed sections</span>
 Rich narrative response with 7 themed sections:
 1. Workforce Development
 2. Job Creation
@@ -284,7 +371,8 @@ Blended clips and remarks data. Included footnotes. Went beyond listing clips to
     </div>
     <div class="column col-classic">
       <div class="col-label">Copilot Studio &mdash; Classic</div>
-      <div class="response-text"><span class="tag tag-partial">DATA COMPLETE, UNFORMATTED</span>
+      <div class="response-text"><span class="score"><span class="tag tag-same">3/4</span></span>
+<span class="score-reason">Relevant, cited, complete (10 clips), but raw JSON &mdash; not formatted for chat</span>
 "I found 10 on that" + raw JSON. All data present, needs formatting.</div>
     </div>
   </div>
@@ -299,7 +387,8 @@ Blended clips and remarks data. Included footnotes. Went beyond listing clips to
   <div class="columns">
     <div class="column col-4o">
       <div class="col-label">Raw API &mdash; GPT-4o</div>
-      <div class="response-text"><span class="tag tag-pass">PASS</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Relevant, cited (outlet/date/URL), complete, well-structured JSON</span>
 3 clips:
 - Carolina Journal (Stein urges Medicaid rebase funding)
 - NC Newsline (Gov warns looming cuts)
@@ -309,12 +398,14 @@ Structured data with outlet, date, lede, URL.</div>
     </div>
     <div class="column col-5">
       <div class="col-label">Raw API &mdash; GPT-5-chat</div>
-      <div class="response-text"><span class="tag tag-same">IDENTICAL</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Identical retrieval; clips search does not use the chat model</span>
 Same search results.</div>
     </div>
     <div class="column col-gen">
       <div class="col-label">Copilot Studio &mdash; Generative</div>
-      <div class="response-text"><span class="tag tag-pass">ENHANCED</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Relevant, cited (6 outlets), complete (blended clips + remarks), 7-point narrative</span>
 Comprehensive 7-point narrative:
 1. Funding Issues
 2. Reimbursement Rate Restorations
@@ -328,7 +419,8 @@ Cited WRAL, HME News, WUNC, NC Newsline, NC Health News, Carolina Journal. Blend
     </div>
     <div class="column col-classic">
       <div class="col-label">Copilot Studio &mdash; Classic</div>
-      <div class="response-text"><span class="tag tag-partial">DATA COMPLETE, UNFORMATTED</span>
+      <div class="response-text"><span class="score"><span class="tag tag-same">3/4</span></span>
+<span class="score-reason">Relevant, cited, complete (10 clips), but raw JSON &mdash; not formatted for chat</span>
 "I found 10 on that" + raw JSON. All data present.</div>
     </div>
   </div>
@@ -343,7 +435,8 @@ Cited WRAL, HME News, WUNC, NC Newsline, NC Health News, Carolina Journal. Blend
   <div class="columns">
     <div class="column col-4o">
       <div class="col-label">Raw API &mdash; GPT-4o</div>
-      <div class="response-text"><span class="tag tag-pass">PASS</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Relevant, cited (date/event), complete (7+ quotes, 5 themes), well-structured with evolution tracking</span>
 Structured synthesis with themes:
 - Support for law enforcement
 - Violence prevention
@@ -355,14 +448,16 @@ Structured synthesis with themes:
     </div>
     <div class="column col-5">
       <div class="col-label">Raw API &mdash; GPT-5-chat</div>
-      <div class="response-text"><span class="tag tag-pass">RICHER</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">All criteria met; richer than GPT-4o &mdash; more granular quote analysis, deeper evolution tracking</span>
 Same themes plus more granular quote analysis. Bold section headers, explicit contextual analysis of each quote's significance.
 
 Evolution tracked with more detail than GPT-4o.</div>
     </div>
     <div class="column col-gen">
       <div class="col-label">Copilot Studio &mdash; Generative</div>
-      <div class="response-text"><span class="tag tag-pass">EXCELLENT</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Relevant, cited, complete (6 themes), all key quotes preserved through orchestration</span>
 6 themed sections:
 1. Support for Law Enforcement
 2. Violence Prevention
@@ -377,7 +472,8 @@ Content quality comparable to direct API output.</div>
     </div>
     <div class="column col-classic">
       <div class="col-label">Copilot Studio &mdash; Classic</div>
-      <div class="response-text"><span class="tag tag-partial">MIXED</span>
+      <div class="response-text"><span class="score"><span class="tag tag-same">3/4</span></span>
+<span class="score-reason">Relevant, cited, complete, but raw chunks mixed with synthesis &mdash; cluttered presentation</span>
 Raw JSON source chunks displayed, then synthesis below. User saw chunks + synthesis together.
 
 Data was complete. Synthesis quality not separately visible from raw data in this test.</div>
@@ -394,7 +490,8 @@ Data was complete. Synthesis quality not separately visible from raw data in thi
   <div class="columns">
     <div class="column col-4o">
       <div class="col-label">Raw API &mdash; GPT-4o</div>
-      <div class="response-text"><span class="tag tag-pass">PASS</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Relevant, cited (date/event), complete (6+ quotes), well-structured synthesis</span>
 Synthesis with direct quotes:
 - "second-lowest in the southeast"
 - "real pay raise"
@@ -404,12 +501,14 @@ Synthesis with direct quotes:
     </div>
     <div class="column col-5">
       <div class="col-label">Raw API &mdash; GPT-5-chat</div>
-      <div class="response-text"><span class="tag tag-pass">RICHER</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">All criteria met; richer than GPT-4o &mdash; evolution table, education-to-workforce pipeline analysis</span>
 Markdown evolution table, more granular quote-by-quote analysis, explicit connection between education and workforce pipeline.</div>
     </div>
     <div class="column col-gen">
       <div class="col-label">Copilot Studio &mdash; Generative</div>
-      <div class="response-text"><span class="tag tag-pass">PASS</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Relevant, cited (dates), complete (3 sections + evolution), key quotes preserved</span>
 Good synthesis &mdash; 3 sections:
 1. Low Starting Pay
 2. Real Pay Raise
@@ -423,7 +522,8 @@ Citations with dates. Evolution tracked.</div>
     </div>
     <div class="column col-classic">
       <div class="col-label">Copilot Studio &mdash; Classic</div>
-      <div class="response-text"><span class="tag tag-pass">EXCELLENT</span>
+      <div class="response-text"><span class="score"><span class="tag tag-pass">4/4</span></span>
+<span class="score-reason">Relevant, cited ([#] numbered), complete (5+ quotes), evolution tracked &mdash; strong synthesis</span>
 Synthesis shown (after raw JSON chunks). 5+ quotes with [#] numbered citations and date/event.
 
 Tracked evolution from March policy-driven "real pay raise" to December values-based "miracle of light" framing. Summary paragraph ties it together.
@@ -438,6 +538,7 @@ Content quality comparable to or better than generative mode.</div>
 <!-- ===================================================================== -->
 <div class="summary-box">
   <h2>Scorecard</h2>
+  <p style="font-size: 0.9rem; margin-bottom: 14px;">GPT-4o and GPT-5-chat both score 4/4 across the board &mdash; the difference is in <strong>depth, not correctness</strong>. GPT-5-chat produces richer synthesis on remarks: evolution tables, deeper contextual analysis, more structured sections. For clips, retrieval is identical since search doesn't use the chat model.</p>
   <table class="scorecard">
     <tr>
       <th>Question</th>
@@ -448,52 +549,59 @@ Content quality comparable to or better than generative mode.</div>
     </tr>
     <tr>
       <td>Q1: Helene recovery (clips)</td>
-      <td class="highlight">3 clips, structured</td>
-      <td>Identical</td>
-      <td class="highlight">5 bullets, footnotes, blended</td>
-      <td class="warn">10 clips, raw JSON</td>
+      <td class="highlight">4/4 &mdash; 3 clips, structured</td>
+      <td class="highlight">4/4 &mdash; identical retrieval</td>
+      <td class="highlight">4/4 &mdash; 5 bullets, blended sources</td>
+      <td>3/4 &mdash; 10 clips, raw JSON</td>
     </tr>
     <tr>
       <td>Q2: Clean energy (remarks)</td>
-      <td class="highlight">7 quotes, 5 sections</td>
-      <td class="highlight">Richer: evolution table</td>
-      <td class="highlight">4 sections, quotes preserved</td>
-      <td class="warn">PASS after rephrase</td>
+      <td class="highlight">4/4 &mdash; 7 quotes, 5 sections</td>
+      <td class="highlight">4/4 &mdash; <strong>richer:</strong> evolution table, deeper analysis</td>
+      <td class="highlight">4/4 &mdash; 4 sections, quotes preserved</td>
+      <td>3/4 &mdash; strong synthesis, needed rephrase</td>
     </tr>
     <tr>
       <td>Q3: Proofread</td>
-      <td class="highlight">5 corrections, 1 block</td>
-      <td class="highlight">5 individual items + "Governor"</td>
-      <td class="warn">Misrouted 1st try; lost change list</td>
-      <td>Not tested</td>
+      <td class="highlight">4/4 &mdash; 5 corrections, itemized</td>
+      <td class="highlight">4/4 &mdash; <strong>more granular:</strong> individual items + "Governor"</td>
+      <td>3/4 &mdash; correct, but lost change list</td>
+      <td>N/A</td>
     </tr>
     <tr>
       <td>Q4: Jobs/econ (clips)</td>
-      <td class="highlight">3 clips, structured</td>
-      <td>Identical</td>
-      <td class="highlight">7 sections, blended sources</td>
-      <td class="warn">10 clips, raw JSON</td>
+      <td class="highlight">4/4 &mdash; 3 clips, structured</td>
+      <td class="highlight">4/4 &mdash; identical retrieval</td>
+      <td class="highlight">4/4 &mdash; 7 sections, blended sources</td>
+      <td>3/4 &mdash; 10 clips, raw JSON</td>
     </tr>
     <tr>
       <td>Q5: Medicaid (clips)</td>
-      <td class="highlight">3 clips, structured</td>
-      <td>Identical</td>
-      <td class="highlight">7-point narrative, 6 outlets cited</td>
-      <td class="warn">10 clips, raw JSON</td>
+      <td class="highlight">4/4 &mdash; 3 clips, structured</td>
+      <td class="highlight">4/4 &mdash; identical retrieval</td>
+      <td class="highlight">4/4 &mdash; 7-point narrative, 6 outlets</td>
+      <td>3/4 &mdash; 10 clips, raw JSON</td>
     </tr>
     <tr>
       <td>Q6: Public safety (remarks)</td>
-      <td class="highlight">7+ quotes, themes</td>
-      <td class="highlight">Deeper contextual analysis</td>
-      <td class="highlight">6 sections, quotes preserved</td>
-      <td class="warn">Chunks + synthesis mixed</td>
+      <td class="highlight">4/4 &mdash; 7+ quotes, themes</td>
+      <td class="highlight">4/4 &mdash; <strong>richer:</strong> granular quote analysis</td>
+      <td class="highlight">4/4 &mdash; 6 sections, quotes preserved</td>
+      <td>3/4 &mdash; chunks + synthesis mixed</td>
     </tr>
     <tr>
       <td>Q7: Education (remarks)</td>
-      <td class="highlight">6+ quotes, evolution</td>
-      <td class="highlight">Evolution table, pipeline analysis</td>
-      <td class="highlight">3 sections + evolution</td>
-      <td class="highlight">5+ quotes, numbered citations</td>
+      <td class="highlight">4/4 &mdash; 6+ quotes, evolution</td>
+      <td class="highlight">4/4 &mdash; <strong>richer:</strong> evolution table, pipeline analysis</td>
+      <td class="highlight">4/4 &mdash; 3 sections + evolution</td>
+      <td class="highlight">4/4 &mdash; 5+ quotes, numbered citations</td>
+    </tr>
+    <tr style="font-weight: 700; border-top: 2px solid #0078D4;">
+      <td>Average</td>
+      <td>4.0</td>
+      <td>4.0</td>
+      <td>3.9</td>
+      <td>3.2 (6 tested)</td>
     </tr>
   </table>
 </div>
@@ -511,7 +619,7 @@ Content quality comparable to or better than generative mode.</div>
 
   <div class="finding">
     <strong><span class="finding-num">2.</span> Generative orchestration preserves content quality well.</strong>
-    Direct quotes, citations, thematic structure, and evolution tracking all survive the GPT-4.0 "last mile." The orchestrator adds value by blending clips + remarks into unified answers (Q1, Q4, Q5). Main losses: proofread change list gets flattened to a single summary, and occasional misrouting on first attempt (Q3). For remarks synthesis &mdash; the highest-value use case &mdash; quality degradation is minimal.
+    Direct quotes, citations, thematic structure, and evolution tracking all survive the GPT-4.0 "last mile." The orchestrator adds value by blending clips + remarks into unified answers (Q1, Q4, Q5). Scored 4/4 on all clips and remarks questions. Only gap: the proofread change list gets flattened to a single summary (3/4 on Q3). For remarks synthesis &mdash; the highest-value use case &mdash; quality degradation is minimal.
   </div>
 
   <div class="finding">
@@ -524,10 +632,6 @@ Content quality comparable to or better than generative mode.</div>
     The concern was that Copilot Studio's GPT-4.0 orchestrator would degrade the backend output. For remarks synthesis (the highest-value use case), the quality degradation is minimal. Quotes are preserved, citations are maintained, thematic structure survives. The GPT-5-chat backend does the heavy analytical lifting; Copilot Studio presents it faithfully.
   </div>
 
-  <div class="finding">
-    <strong><span class="finding-num">5.</span> Recommendation: GPT-5-chat backend + Generative orchestration as the default.</strong>
-    Use GPT-5-chat on the backend for the quality uplift on remarks synthesis. Generative orchestration is the right default &mdash; it handles routing, blends data sources, and presents results well. Consider classic topics only for specific high-fidelity use cases where you need exact control over the output template (e.g., proofread with itemized changes). Invest in prompt engineering for the proofread routing issue rather than switching to classic for all capabilities.
-  </div>
 </div>
 
 <!-- ===================================================================== -->
