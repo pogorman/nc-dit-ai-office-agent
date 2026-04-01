@@ -107,6 +107,7 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web). Dashb
     presentation.html           — 5-slide demo deck (open in browser, F11 fullscreen)
     talk-track.html             — 1-page speaker guide with timing + demo moments
     video-processing-functionality.html — Video/audio transcription feature explainer
+    azure-technical-reference.html — Comprehensive Azure technical reference (resource inventory, Bicep, Functions, auth, data architecture, RBAC, deployment checklist, appendices)
   /md                           — Markdown documentation
     ARCHITECTURE.md
     FAQ.md
@@ -122,7 +123,11 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web). Dashb
   3-remarks-classic-orchestration.txt — Classic orchestration remarks test results
 ```
 
-## Recent Changes (2026-03-30)
+## Recent Changes (2026-04-01)
+- **Azure Technical Reference** — New comprehensive HTML document at `docs/html/azure-technical-reference.html`. Covers: resource inventory, all 8 Bicep modules, deep dives on all 8 Functions, shared module singletons and auth patterns, Cosmos containers and AI Search index schemas, identity/security model, APIM routing, Copilot Studio integration, dashboard SPA, cost profile. Includes 6 appendices: environment variables, RBAC role matrix, API endpoints, deployment checklist, seed scripts, file-by-file inventory.
+- **Docs updated** — README, FAQ, HOW-I-WAS-BUILT (Chapter 21), and CLAUDE.md updated to reference the new technical reference.
+
+## Changes (2026-03-30)
 - **GPT-5-chat deployed** — New `gpt-5-chat` (2025-10-03, GlobalStandard) and `gpt-5` (2025-08-07, GlobalStandard) deployments added to Azure OpenAI. Backend switched from GPT-4o to GPT-5-chat via `GPT4O_DEPLOYMENT_NAME` app setting. Richer synthesis: markdown tables, deeper quote analysis, evolution tracking.
 - **Reasoning model support** — `openai-client.ts` now detects reasoning models (`gpt-5*`, `o*`) and automatically uses `max_completion_tokens` instead of `max_tokens`, drops `temperature`, and bumps default token budget to 16384. Remarks synthesis bumped from 1500 to 8192 max tokens to accommodate reasoning overhead.
 - **Transcribe route added to connector** — `apiDefinition.swagger.json` now has 4 operations: QueryClips, QueryRemarks, ProofreadTranscript, TranscribeFile. Connector updated in Power Platform via `pac connector update`.

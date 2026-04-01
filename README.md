@@ -108,7 +108,7 @@ az deployment group create \
 │   ├── presentation.pptx         8-slide presentation PowerPoint
 │   ├── build-demo-pptx.py        Regenerate demo-questions.pptx
 │   ├── build-presentation-pptx.py Regenerate presentation.pptx
-│   ├── html/                 Printable HTML guides, presentation, talk track, demo UI
+│   ├── html/                 Printable HTML guides, presentation, talk track, demo UI, Azure technical reference
 │   ├── md/                   Markdown docs (ARCHITECTURE, FAQ, USER-GUIDE, etc.)
 │   └── pdf/                  PDF exports (for printed handouts)
 ├── demo-server.js            Express proxy for SPA → APIM (port 9090)
@@ -193,3 +193,5 @@ The Power Platform custom connector (`/connector/`) bridges Copilot Studio to AP
 | [Demo Questions (HTML)](./docs/html/demo-questions.html) | Sample prompts for live demo — 5 clips, 5 remarks, 2 proofread |
 | [Demo Questions (PPTX)](./docs/demo-questions.pptx) | PowerPoint version of demo questions |
 | [Talk Track](./docs/html/talk-track.html) | 1-page speaker guide with timing + demo moments |
+| [Azure Technical Reference](./docs/html/azure-technical-reference.html) | Comprehensive Azure reference: resource inventory, Bicep modules, Function deep dives, shared modules, data architecture, RBAC matrix, deployment checklist |
+| [Model Quality Comparison](./docs/model-quality-comparison.html) | 4-column comparison: GPT-4o vs GPT-5-chat vs Copilot Studio generative vs classic |

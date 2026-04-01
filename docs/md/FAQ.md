@@ -144,6 +144,9 @@ Two dedup bugs were found and fixed:
 ### How much does the web news search cost?
 The Azure OpenAI Responses API with Bing grounding costs ~$0.035 per call ($35 per 1,000 calls). With 5 queries per daily run, this costs ~$0.175/day or ~$5/month. No separate Bing Search resource is needed — web search is built into the existing Azure OpenAI resource.
 
+### Is there a technical reference for the Azure architecture?
+Yes — `docs/html/azure-technical-reference.html` is a comprehensive document covering every Azure resource, Bicep module, Function, shared module, data model, auth flow, APIM route, and cost estimate. It includes 6 appendices with environment variables, RBAC roles, API endpoints, a deployment checklist, seed scripts, and a file-by-file inventory. Open it in a browser for the formatted version.
+
 ### Is there a web demo outside of Teams?
 Yes — two options:
 1. **Dashboard** (`/dashboard`) — React SPA with operational visibility. Run `cd dashboard && npm run dev` and open `http://localhost:5173`.

@@ -697,4 +697,53 @@ A full snapshot of all 118 clips (title, date, outlet) was saved to `seed/clips-
 
 ---
 
+## Chapter 21: Azure Technical Reference + Onsite Prep
+
+**Date:** 2026-04-01
+
+### The Need
+
+With onsite meetings scheduled for April 1–2 with the NC Governor's Communications Office team (Luke, William, Sofya, Jeremy, Anna, Jason, I Hsieh), we needed a comprehensive technical reference document covering the full Azure footprint — something that could be handed to a technical reviewer and explain every resource, function, auth flow, and data path in the system.
+
+### What Was Built
+
+Created `docs/html/azure-technical-reference.html` — a full-length technical reference document with:
+
+- **Table of Contents** with 12 numbered sections + 6 appendices
+- **Executive Summary** — system overview, resource list, key design decisions
+- **Azure Resource Inventory** — all 8 services with SKUs and tiers
+- **Bicep IaC Walkthrough** — all 8 modules with dependency chain, deployment ordering, every resource configuration
+- **Function Deep Dives** — all 8 functions with triggers, data flows, key helper functions, Azure services touched. `clips-ingest.ts` gets the most detail as the most complex (416 lines, 2-source aggregation pipeline).
+- **Shared Modules** — singleton patterns, auth flows, the Responses API base URL quirk, reasoning model auto-detection in `getChatCompletion()`
+- **Data Architecture** — Cosmos containers with partition keys and volumes, AI Search index schemas (all fields with types/searchability), write-path and read-path flow diagrams
+- **Identity & Security** — zero-secrets-in-code model, managed identity chain diagram, network boundaries
+- **APIM Routing** — full 8-operation route table, global inbound policy (host key injection + rate limiting)
+- **Copilot Studio Integration** — connector config, generative orchestration, known GCC model limitation
+- **Dashboard SPA** — component breakdown, type sharing via `@shared` alias, dev proxy config
+- **Cost Profile** — per-service monthly estimates, $125–200/month total
+
+**Appendices:**
+- A: All 14 environment variables with sources and consumers
+- B: Complete RBAC role matrix with Azure role definition GUIDs
+- C: Full API endpoint reference (9 endpoints with request/response shapes)
+- D: 10-step deployment checklist (including the Storage public/private toggle)
+- E: Seed scripts and vector search configuration
+- F: File-by-file inventory (source, infra, npm deps)
+
+### Onsite Meeting Context
+
+The April 1–2 meetings are the first onsite since the March 26 demo. Key follow-ups from the original meeting:
+
+| Follow-up | Status |
+|---|---|
+| Web search expansion (5 parallel queries) | Done |
+| Video transcription (Whisper) | Done |
+| Model upgrade (GPT-5-chat backend) | Done |
+| Database separation (press releases vs external news) | Not started — discussion item |
+| Copilot Studio GCC model upgrade (GPT-4.0 → newer) | Blocked on Microsoft product team |
+
+The Azure Technical Reference was assembled specifically for this meeting — it gives the NC DIT team a single document they can use to understand, review, and eventually maintain the system.
+
+---
+
 *More chapters will be added as implementation progresses.*

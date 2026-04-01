@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NC Governor's Communications Agent — Azure Technical Reference</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #fff; color: #1a1a1a; line-height: 1.7; max-width: 1100px; margin: 0 auto; padding: 40px 32px 80px; }
+
+  /* Header */
+  .doc-header { border-bottom: 3px solid #0078D4; padding-bottom: 16px; margin-bottom: 32px; }
+  .doc-header h1 { font-size: 1.8rem; color: #0078D4; margin-bottom: 4px; }
+  .doc-header .subtitle { color: #555; font-size: 0.95rem; }
+  .doc-header .meta { color: #888; font-size: 0.82rem; margin-top: 8px; }
+
+  /* TOC */
+  .toc { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px 28px; margin-bottom: 40px; }
+  .toc h2 { font-size: 1.1rem; color: #0078D4; margin-bottom: 12px; border: none; padding: 0; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin-bottom: 4px; font-size: 0.9rem; }
+  .toc li a { color: #0078D4; text-decoration: none; }
+  .toc li a:hover { text-decoration: underline; }
+  .toc ol ol { margin-top: 4px; padding-left: 18px; }
+  .toc ol ol li { font-size: 0.85rem; color: #444; }
+
+  /* Sections */
+  h2 { font-size: 1.35rem; color: #0078D4; margin: 48px 0 16px; padding-bottom: 6px; border-bottom: 2px solid #e8e8e8; }
+  h3 { font-size: 1.1rem; color: #333; margin: 28px 0 10px; }
+  h4 { font-size: 0.95rem; color: #0078D4; margin: 20px 0 8px; }
+  p { margin-bottom: 12px; font-size: 0.92rem; }
+  ul, ol { margin: 8px 0 16px 24px; font-size: 0.92rem; }
+  li { margin-bottom: 4px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 0.85rem; }
+  th { background: #0078D4; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; white-space: nowrap; }
+  td { padding: 7px 12px; border: 1px solid #ddd; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafbfc; }
+  td:first-child { font-weight: 500; }
+  td code, th code { background: rgba(255,255,255,0.15); padding: 1px 4px; border-radius: 3px; font-size: 0.9em; }
+  td code { background: #f0f0f0; }
+
+  /* Code */
+  code { font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 0.88em; background: #f4f4f4; padding: 1px 5px; border-radius: 3px; }
+  pre { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; margin: 12px 0 20px; font-size: 0.82rem; line-height: 1.5; }
+  pre code { background: none; padding: 0; color: inherit; }
+
+  /* Callouts */
+  .callout { border-left: 4px solid #0078D4; background: #f0f6ff; padding: 12px 16px; margin: 16px 0; border-radius: 0 4px 4px 0; font-size: 0.9rem; }
+  .callout.warn { border-left-color: #d83b01; background: #fff5f0; }
+  .callout.success { border-left-color: #107c10; background: #f0fff0; }
+  .callout strong { display: block; margin-bottom: 4px; }
+
+  /* Diagrams (ASCII) */
+  .diagram { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px 20px; margin: 16px 0; overflow-x: auto; }
+  .diagram pre { background: transparent; color: #333; padding: 0; margin: 0; font-size: 0.8rem; line-height: 1.4; }
+
+  /* File reference */
+  .file-ref { font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 0.82em; color: #0078D4; background: #f0f6ff; padding: 1px 5px; border-radius: 3px; }
+
+  /* Print */
+  @media print {
+    body { padding: 20px; font-size: 10pt; }
+    .toc { break-after: page; }
+    h2 { break-before: page; }
+    pre { font-size: 8pt; }
+    table { font-size: 8pt; }
+  }
+
+  /* Appendix styling */
+  .appendix h2 { color: #444; border-bottom-color: #ccc; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- HEADER                                                        -->
+<!-- ============================================================ -->
+<div class="doc-header">
+  <h1>NC Governor's Communications Agent</h1>
+  <div class="subtitle">Azure Technical Reference</div>
+  <div class="meta">Prepared for NC DIT AI Office &middot; April 2026 &middot; v1.0</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TABLE OF CONTENTS                                             -->
+<!-- ============================================================ -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#summary">Executive Summary</a></li>
+    <li><a href="#resource-inventory">Azure Resource Inventory</a></li>
+    <li><a href="#infra">Infrastructure as Code (Bicep)</a>
+      <ol>
+        <li><a href="#infra-orchestration">Orchestration &amp; Naming</a></li>
+        <li><a href="#infra-openai">Azure OpenAI</a></li>
+        <li><a href="#infra-search">Azure AI Search</a></li>
+        <li><a href="#infra-cosmos">Cosmos DB</a></li>
+        <li><a href="#infra-storage">Storage Account</a></li>
+        <li><a href="#infra-keyvault">Key Vault</a></li>
+        <li><a href="#infra-networking">Networking &amp; Private Endpoints</a></li>
+        <li><a href="#infra-funcapp">Function App</a></li>
+        <li><a href="#infra-apim">API Management</a></li>
+        <li><a href="#infra-rbac">Role Assignments</a></li>
+      </ol>
+    </li>
+    <li><a href="#functions">Azure Functions — Deep Dive</a>
+      <ol>
+        <li><a href="#fn-clips-ingest">clips-ingest.ts — News Aggregation</a></li>
+        <li><a href="#fn-clips-query">clips-query.ts — Clip Search</a></li>
+        <li><a href="#fn-clips-digest">clips-digest.ts — Daily Digest (Stub)</a></li>
+        <li><a href="#fn-remarks-ingest">remarks-ingest.ts — Document Ingestion</a></li>
+        <li><a href="#fn-remarks-query">remarks-query.ts — Remarks RAG Search</a></li>
+        <li><a href="#fn-proofread">proofread.ts — Transcript Proofreading</a></li>
+        <li><a href="#fn-transcribe">transcribe.ts — Whisper Transcription</a></li>
+        <li><a href="#fn-dashboard">dashboard.ts — Dashboard API</a></li>
+      </ol>
+    </li>
+    <li><a href="#shared-modules">Shared Modules &amp; Singletons</a>
+      <ol>
+        <li><a href="#mod-openai">openai-client.ts</a></li>
+        <li><a href="#mod-search">search-client.ts</a></li>
+        <li><a href="#mod-cosmos">cosmos-client.ts</a></li>
+        <li><a href="#mod-types">types.ts — Data Models</a></li>
+      </ol>
+    </li>
+    <li><a href="#data-architecture">Data Architecture</a>
+      <ol>
+        <li><a href="#data-cosmos">Cosmos DB Containers</a></li>
+        <li><a href="#data-search">AI Search Indexes</a></li>
+        <li><a href="#data-flow">Data Flow Diagrams</a></li>
+      </ol>
+    </li>
+    <li><a href="#identity-security">Identity, Auth &amp; Security</a></li>
+    <li><a href="#apim-routing">API Management — Routing &amp; Policies</a></li>
+    <li><a href="#copilot-studio">Copilot Studio Integration</a></li>
+    <li><a href="#dashboard-spa">Dashboard SPA</a></li>
+    <li><a href="#cost">Cost Profile</a></li>
+    <li><a href="#conclusion">Conclusion &amp; Open Items</a></li>
+  </ol>
+  <p style="margin-top: 12px; font-size: 0.82rem; color: #888;"><strong>Appendices</strong></p>
+  <ol type="A" style="font-size: 0.85rem;">
+    <li><a href="#appendix-env">Environment Variables Reference</a></li>
+    <li><a href="#appendix-roles">Complete RBAC Role Matrix</a></li>
+    <li><a href="#appendix-endpoints">API Endpoint Reference</a></li>
+    <li><a href="#appendix-deploy">Deployment Checklist</a></li>
+    <li><a href="#appendix-seed">Seed Scripts &amp; Index Schemas</a></li>
+    <li><a href="#appendix-files">File-by-File Inventory</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- 1. EXECUTIVE SUMMARY                                          -->
+<!-- ============================================================ -->
+<h2 id="summary">1. Executive Summary</h2>
+
+<p>The NC Governor's Communications Agent is a serverless AI platform built for the NC Governor's Communications Office. It automates news monitoring, provides semantic search over historical speeches, proofreads transcripts, transcribes audio/video, and exposes an operational dashboard — all delivered through Microsoft Copilot Studio (in Teams and web) and a React SPA.</p>
+
+<p>The Azure footprint is consumption-first and zero-trust:</p>
+
+<ul>
+  <li><strong>8 Azure Functions</strong> on Flex Consumption (Node.js 20, TypeScript strict mode)</li>
+  <li><strong>Azure OpenAI</strong> with 4 model deployments (GPT-5-chat, GPT-4o, text-embedding-3-large, Whisper)</li>
+  <li><strong>Azure AI Search</strong> (Basic tier) for hybrid vector + keyword search across 2 indexes</li>
+  <li><strong>Cosmos DB</strong> (Serverless, NoSQL) with 4 containers</li>
+  <li><strong>API Management</strong> (Consumption tier) as the single auth boundary — no Function endpoints exposed directly</li>
+  <li><strong>VNet + Private Endpoints</strong> for Blob Storage and Cosmos DB</li>
+  <li><strong>Managed Identity everywhere</strong> — no API keys, connection strings, or secrets in application code</li>
+</ul>
+
+<p>Estimated steady-state cost: <strong>$125–200/month</strong>. All infrastructure is defined in Bicep under <span class="file-ref">/infra</span>.</p>
+
+
+<!-- ============================================================ -->
+<!-- 2. AZURE RESOURCE INVENTORY                                   -->
+<!-- ============================================================ -->
+<h2 id="resource-inventory">2. Azure Resource Inventory</h2>
+
+<table>
+  <tr>
+    <th>Service</th>
+    <th>Resource Name Pattern</th>
+    <th>SKU / Tier</th>
+    <th>Purpose</th>
+  </tr>
+  <tr>
+    <td>Azure OpenAI</td>
+    <td><code>nc-comms-agent-openai-dev</code></td>
+    <td>S0 (Standard)</td>
+    <td>LLM inference, embeddings, transcription, web search</td>
+  </tr>
+  <tr>
+    <td>Azure AI Search</td>
+    <td><code>nc-comms-agent-search-dev</code></td>
+    <td>Basic (1 replica, 1 partition)</td>
+    <td>Hybrid vector + keyword search</td>
+  </tr>
+  <tr>
+    <td>Cosmos DB</td>
+    <td><code>nc-comms-agent-cosmos-dev</code></td>
+    <td>Serverless (NoSQL)</td>
+    <td>Document storage (clips, remarks, runs)</td>
+  </tr>
+  <tr>
+    <td>Storage Account</td>
+    <td><code>nccommsstordev</code></td>
+    <td>Standard_LRS, StorageV2</td>
+    <td>Blob storage (remarks uploads, Function deployments)</td>
+  </tr>
+  <tr>
+    <td>Function App</td>
+    <td><code>nc-comms-agent-func-dev</code></td>
+    <td>Flex Consumption (FC1)</td>
+    <td>All compute (8 functions, 11 triggers)</td>
+  </tr>
+  <tr>
+    <td>API Management</td>
+    <td><code>nc-comms-agent-apim-dev</code></td>
+    <td>Consumption</td>
+    <td>Gateway, auth boundary, rate limiting</td>
+  </tr>
+  <tr>
+    <td>Key Vault</td>
+    <td><code>nc-comms-agent-kv-dev</code></td>
+    <td>Standard</td>
+    <td>Function host key (for APIM only)</td>
+  </tr>
+  <tr>
+    <td>Virtual Network</td>
+    <td><code>nc-comms-agent-vnet-dev</code></td>
+    <td>10.0.0.0/16</td>
+    <td>VNet integration + private endpoints</td>
+  </tr>
+</table>
+
+
+<!-- ============================================================ -->
+<!-- 3. INFRASTRUCTURE AS CODE                                     -->
+<!-- ============================================================ -->
+<h2 id="infra">3. Infrastructure as Code (Bicep)</h2>
+
+<p>All Azure resources are defined as modular Bicep files under <span class="file-ref">/infra</span>. The orchestrator (<span class="file-ref">infra/main.bicep</span>) deploys 8 modules with explicit dependency ordering.</p>
+
+<!-- 3.1 Orchestration -->
+<h3 id="infra-orchestration">3.1 Orchestration &amp; Naming</h3>
+
+<p><span class="file-ref">infra/main.bicep</span> and <span class="file-ref">infra/main.bicepparam</span></p>
+
+<table>
+  <tr><th>Parameter</th><th>Default</th><th>Notes</th></tr>
+  <tr><td><code>environmentName</code></td><td><code>dev</code></td><td>Suffixed to all resource names</td></tr>
+  <tr><td><code>location</code></td><td><code>eastus2</code></td><td>Single-region deployment</td></tr>
+  <tr><td><code>projectName</code></td><td><code>nc-comms-agent</code></td><td>Name prefix for all resources</td></tr>
+</table>
+
+<p><strong>Naming convention:</strong> <code>{projectName}-{resourceType}-{environmentName}</code> (e.g., <code>nc-comms-agent-func-dev</code>). Storage account uses compressed form (<code>nccommsstordev</code>) to meet the 24-char limit.</p>
+
+<p><strong>Module dependency chain:</strong></p>
+<div class="diagram"><pre>
+openai ─────┐
+aiSearch ────┤
+cosmosDb ────┤
+storage ─────┼──► functionApp ──► apim
+keyVault ────┤                      │
+networking ──┘                      │
+             └──────────────────────┴──► roleAssignments
+</pre></div>
+
+<!-- 3.2 Azure OpenAI -->
+<h3 id="infra-openai">3.2 Azure OpenAI</h3>
+
+<p><span class="file-ref">infra/modules/openai.bicep</span></p>
+
+<p>Deploys <code>Microsoft.CognitiveServices/accounts</code> (Kind: OpenAI, SKU: S0) with SystemAssigned managed identity. Public network access is enabled.</p>
+
+<table>
+  <tr><th>Deployment Name</th><th>Model</th><th>Version</th><th>SKU</th><th>Capacity</th><th>Purpose</th></tr>
+  <tr><td><code>gpt-4o</code></td><td>gpt-4o</td><td>2024-11-20</td><td>Standard</td><td>30K TPM</td><td>Chat completions (overridden at runtime by GPT4O_DEPLOYMENT_NAME)</td></tr>
+  <tr><td><code>text-embedding-3-large</code></td><td>text-embedding-3-large</td><td>1</td><td>Standard</td><td>120K TPM</td><td>3072-dimension vector embeddings</td></tr>
+  <tr><td><code>whisper</code></td><td>whisper</td><td>001</td><td>Standard</td><td>3 RPM</td><td>Audio/video transcription</td></tr>
+</table>
+
+<div class="callout">
+  <strong>Note:</strong> GPT-5-chat and GPT-5 deployments were added manually (not yet codified in Bicep). The Function App's <code>GPT4O_DEPLOYMENT_NAME</code> env var points to <code>gpt-5-chat</code> at runtime, overriding the Bicep-defined <code>gpt-4o</code> deployment. This is a known TODO.
+</div>
+
+<p>Deployments are chained sequentially (each depends on the previous) to avoid concurrent deployment errors.</p>
+
+<!-- 3.3 AI Search -->
+<h3 id="infra-search">3.3 Azure AI Search</h3>
+
+<p><span class="file-ref">infra/modules/ai-search.bicep</span></p>
+
+<p>Deploys <code>Microsoft.Search/searchServices</code> — Basic tier, 1 replica, 1 partition. RBAC-enforced auth (<code>aadAuthFailureMode: http401WithBearerChallenge</code>). Semantic search enabled at the service level.</p>
+
+<p>Indexes are <strong>not</strong> defined in Bicep — they're created and managed via <span class="file-ref">seed/create-search-indexes.ts</span>. See <a href="#data-search">Section 6.2</a> for index schemas.</p>
+
+<!-- 3.4 Cosmos DB -->
+<h3 id="infra-cosmos">3.4 Cosmos DB</h3>
+
+<p><span class="file-ref">infra/modules/cosmos-db.bicep</span></p>
+
+<p>Deploys <code>Microsoft.DocumentDB/databaseAccounts</code> — Serverless capacity mode, NoSQL API, Session consistency, single region (no geo-replication).</p>
+
+<table>
+  <tr><th>Container</th><th>Partition Key</th><th>Purpose</th></tr>
+  <tr><td><code>clips</code></td><td><code>/id</code></td><td>News clip documents (NewsClip)</td></tr>
+  <tr><td><code>remarks-metadata</code></td><td><code>/id</code></td><td>Remarks document metadata (one per upload)</td></tr>
+  <tr><td><code>remarks-chunks</code></td><td><code>/id</code></td><td>Chunked remarks text with embeddings</td></tr>
+  <tr><td><code>ingestion-state</code></td><td><code>/id</code></td><td>Ingestion pipeline run history (IngestionRun)</td></tr>
+</table>
+
+<p>Database name: <code>comms-agent</code>. Key-based auth is still enabled (<code>disableLocalAuth: false</code>) but all application code uses managed identity via <code>DefaultAzureCredential</code>.</p>
+
+<div class="callout warn">
+  <strong>Cosmos RBAC:</strong> Uses native <code>sqlRoleAssignments</code>, not ARM <code>roleAssignments</code>. This is a Cosmos-specific pattern — the built-in roles (<code>00000000-0000-0000-0000-000000000002</code> for Data Contributor) are assigned at the account scope in <span class="file-ref">role-assignments.bicep</span>.
+</div>
+
+<!-- 3.5 Storage -->
+<h3 id="infra-storage">3.5 Storage Account</h3>
+
+<p><span class="file-ref">infra/modules/storage.bicep</span></p>
+
+<p>Standard_LRS, StorageV2. Hardened security posture:</p>
+<ul>
+  <li>HTTPS only, TLS 1.2 minimum</li>
+  <li>Shared key access: <strong>disabled</strong> (RBAC only)</li>
+  <li>Public blob access: <strong>disabled</strong></li>
+  <li>Public network access: <strong>disabled</strong> (private endpoint only)</li>
+  <li>Network ACLs: default Deny, bypass AzureServices</li>
+</ul>
+
+<p><strong>Blob containers:</strong></p>
+<table>
+  <tr><th>Container</th><th>Purpose</th></tr>
+  <tr><td><code>remarks-uploads</code></td><td>Document uploads for remarks ingestion (blob trigger source)</td></tr>
+  <tr><td><code>deployments</code></td><td>Flex Consumption Function App deployment packages</td></tr>
+</table>
+
+<!-- 3.6 Key Vault -->
+<h3 id="infra-keyvault">3.6 Key Vault</h3>
+
+<p><span class="file-ref">infra/modules/key-vault.bicep</span></p>
+
+<p>Standard tier, RBAC authorization enabled, 90-day soft delete. Stores a single operational secret:</p>
+<ul>
+  <li><code>function-host-key</code> — The Function App's host key, used by APIM to authenticate backend calls. This is a <strong>post-deploy manual step</strong> (retrieve key from Function App, store in Key Vault, update APIM named value).</li>
+</ul>
+
+<!-- 3.7 Networking -->
+<h3 id="infra-networking">3.7 Networking &amp; Private Endpoints</h3>
+
+<p><span class="file-ref">infra/modules/networking.bicep</span></p>
+
+<div class="diagram"><pre>
+VNet: 10.0.0.0/16
+├── func-integration  10.0.1.0/24  (delegated: Microsoft.App/environments)
+│   └── Function App VNet integration
+└── private-endpoints 10.0.2.0/24  (no delegation)
+    ├── Storage Account (blob) ──► privatelink.blob.core.windows.net
+    └── Cosmos DB (document)   ──► (added via CLI, not yet in Bicep)
+</pre></div>
+
+<p>Private DNS zone <code>privatelink.blob.{storageSuffix}</code> is linked to the VNet for automatic resolution. The Function App's VNet integration (<code>WEBSITE_CONTENTOVERVNET=1</code>) ensures all outbound traffic to Storage goes through the private endpoint.</p>
+
+<div class="callout warn">
+  <strong>Known gap:</strong> The Cosmos DB private endpoint was added via Azure CLI and is not yet codified in Bicep. Needs to be added to <span class="file-ref">networking.bicep</span>.
+</div>
+
+<!-- 3.8 Function App -->
+<h3 id="infra-funcapp">3.8 Function App</h3>
+
+<p><span class="file-ref">infra/modules/function-app.bicep</span></p>
+
+<p>Flex Consumption plan (SKU: FC1) on Linux, Node.js 20. SystemAssigned managed identity.</p>
+
+<table>
+  <tr><th>Setting</th><th>Value</th><th>Why</th></tr>
+  <tr><td>Always-ready instances</td><td>1 (HTTP trigger group)</td><td>Eliminates cold-start timeouts from Copilot Studio (240s ConnectorTimeoutError)</td></tr>
+  <tr><td>Max instances</td><td>100</td><td>Auto-scale ceiling</td></tr>
+  <tr><td>Instance memory</td><td>2048 MB</td><td>Headroom for Readability parsing + embedding generation</td></tr>
+  <tr><td>Function timeout</td><td>10 minutes</td><td>clips-ingest scrapes ~20 articles with full text extraction</td></tr>
+  <tr><td>Timezone</td><td><code>America/New_York</code></td><td>Cron schedules in Eastern Time (DST-aware)</td></tr>
+  <tr><td>CORS origins</td><td><code>localhost:3000</code>, <code>localhost:7071</code>, <code>copilotstudio.microsoft.com</code></td><td>Dashboard dev, local Functions, Copilot Studio</td></tr>
+</table>
+
+<p>Deployment storage uses the <code>deployments</code> blob container with SystemAssigned identity auth (no storage keys).</p>
+
+<p>See <a href="#appendix-env">Appendix A</a> for the complete environment variable reference.</p>
+
+<!-- 3.9 APIM -->
+<h3 id="infra-apim">3.9 API Management</h3>
+
+<p><span class="file-ref">infra/modules/apim.bicep</span></p>
+
+<p>Consumption tier (capacity: 0, pay-per-call). SystemAssigned managed identity. Publisher: <code>NC DIT AI Office</code>.</p>
+
+<p>Single API definition: <code>comms-agent-api</code> at path <code>/comms</code>. All operations route to the Function App backend at <code>{functionAppBaseUrl}/api</code>.</p>
+
+<p><strong>Global inbound policy:</strong></p>
+<ul>
+  <li>Inject Function host key as <code>x-functions-key</code> header (from Key Vault named value)</li>
+  <li>Rate limit: 60 calls per minute per subscription key</li>
+</ul>
+
+<p>See <a href="#apim-routing">Section 8</a> for the full route table and <a href="#appendix-endpoints">Appendix C</a> for the endpoint reference.</p>
+
+<!-- 3.10 RBAC -->
+<h3 id="infra-rbac">3.10 Role Assignments</h3>
+
+<p><span class="file-ref">infra/modules/role-assignments.bicep</span></p>
+
+<p>Two managed identities receive RBAC grants:</p>
+
+<h4>Function App Identity</h4>
+<table>
+  <tr><th>Target Service</th><th>Role</th><th>Purpose</th></tr>
+  <tr><td>Azure OpenAI</td><td>Cognitive Services OpenAI User</td><td>Invoke GPT-5-chat, embeddings, Whisper, Responses API</td></tr>
+  <tr><td>AI Search</td><td>Search Index Data Reader</td><td>Read search indexes (query path)</td></tr>
+  <tr><td>AI Search</td><td>Search Index Data Contributor</td><td>Write/update indexes (ingestion path)</td></tr>
+  <tr><td>Cosmos DB</td><td>Built-in Data Contributor <em>(sqlRoleAssignment)</em></td><td>Read/write all containers</td></tr>
+  <tr><td>Storage Account</td><td>Storage Blob Data Owner</td><td>Read/write blobs + Flex Consumption deployment</td></tr>
+  <tr><td>Key Vault</td><td>Key Vault Secrets User</td><td>Read function host key</td></tr>
+</table>
+
+<h4>APIM Identity</h4>
+<table>
+  <tr><th>Target Service</th><th>Role</th><th>Purpose</th></tr>
+  <tr><td>Key Vault</td><td>Key Vault Secrets User</td><td>Read function host key for header injection</td></tr>
+</table>
+
+
+<!-- ============================================================ -->
+<!-- 4. AZURE FUNCTIONS — DEEP DIVE                                -->
+<!-- ============================================================ -->
+<h2 id="functions">4. Azure Functions — Deep Dive</h2>
+
+<p>Eight TypeScript functions across 8 files in <span class="file-ref">src/functions/</span>. All import shared singletons from <span class="file-ref">src/shared/</span>.</p>
+
+<!-- 4.1 clips-ingest -->
+<h3 id="fn-clips-ingest">4.1 clips-ingest.ts — News Aggregation</h3>
+
+<p><span class="file-ref">src/functions/clips-ingest.ts</span> &middot; 416 lines &middot; <strong>Most complex function</strong></p>
+
+<p><strong>Triggers:</strong></p>
+<ul>
+  <li><strong>Timer:</strong> <code>0 0 7 * * *</code> — daily at 7 AM ET, timeframe = "past week"</li>
+  <li><strong>HTTP POST:</strong> <code>/api/clips/refresh</code> — manual trigger, timeframe = "past 6 months"</li>
+</ul>
+
+<p><strong>Two-source aggregation pipeline:</strong></p>
+
+<div class="diagram"><pre>
+            ┌──────────────────┐     ┌───────────────────────────────┐
+            │  Gov Scraper     │     │  Web Search (5 queries)       │
+            │  governor.nc.gov │     │  via OpenAI Responses API     │
+            │  2 pages scraped │     │  w/ Bing grounding            │
+            └────────┬─────────┘     └──────────────┬────────────────┘
+                     │                               │
+                     └───────── Promise.all ─────────┘
+                                     │
+                              Merge + Dedup
+                            (SHA-256 of URL)
+                                     │
+                     ┌───────────────┼───────────────┐
+                     │               │               │
+               Fetch HTML    Extract Text    Generate Embedding
+              (10s timeout)  (Readability)   (title + lede)
+                     │               │               │
+                     └───────────────┼───────────────┘
+                                     │
+                          ┌──────────┴──────────┐
+                          │                     │
+                     Cosmos DB             AI Search
+                    (clips container)     (clips index)
+                          │
+                   ingestion-state
+                   (IngestionRun doc)
+</pre></div>
+
+<p><strong>Key functions:</strong></p>
+<table>
+  <tr><th>Function</th><th>What It Does</th></tr>
+  <tr><td><code>fetchGovListings()</code></td><td>Scrapes first 2 pages of governor.nc.gov press releases, parses <code>.views-row</code> elements via JSDOM</td></tr>
+  <tr><td><code>webSearchQueries(timeframe)</code></td><td>Generates 5 focused query strings (general, budget/education, Helene recovery, Medicaid/healthcare, law enforcement/economy). Each includes the <code>NO_GOV</code> instruction to avoid duplicating gov scraper results.</td></tr>
+  <tr><td><code>fetchWebNewsListings(timeframe)</code></td><td>Runs all 5 queries in parallel via <code>Promise.all</code>, each calling <code>webSearch()</code>. Deduplicates by URL, filters out governor.nc.gov links.</td></tr>
+  <tr><td><code>outletFromUrl(url)</code></td><td>Maps hostname to friendly outlet name via static <code>domainMap</code> (e.g., <code>wral.com</code> → "WRAL")</td></tr>
+  <tr><td><code>parseArticleContent(url)</code></td><td>Fetches full HTML (10s timeout), extracts clean text via Mozilla Readability, strips excessive whitespace</td></tr>
+  <tr><td><code>extractLede(text)</code></td><td>First paragraph with 40+ characters</td></tr>
+  <tr><td><code>extractMentionContext(text)</code></td><td>Finds "Governor Stein" / "Gov. Stein" / "Josh Stein" with 300 chars of surrounding context</td></tr>
+  <tr><td><code>processClip(listing)</code></td><td>Per-clip pipeline: dedup check (Cosmos read by SHA-256 ID) → fetch → parse → embed → upsert Cosmos + index Search</td></tr>
+  <tr><td><code>runIngestion(trigger, timeframe)</code></td><td>Orchestrates everything, logs <code>IngestionRun</code> with source breakdown <code>{ gov: N, web: N }</code></td></tr>
+</table>
+
+<p><strong>Web search cost:</strong> ~$0.175/day (5 queries &times; $0.035/call) = ~$5/month.</p>
+
+<!-- 4.2 clips-query -->
+<h3 id="fn-clips-query">4.2 clips-query.ts — Clip Search</h3>
+
+<p><span class="file-ref">src/functions/clips-query.ts</span> &middot; 114 lines</p>
+
+<p><strong>Trigger:</strong> HTTP POST <code>/api/clips/query</code></p>
+
+<p><strong>Request body:</strong> <code>{ query, dateFrom?, dateTo?, top? }</code></p>
+
+<p>Two modes:</p>
+<ul>
+  <li><strong>Latest mode</strong> (query is empty, "latest", or "today"): Wildcard search on AI Search ordered by <code>publishedAt DESC</code></li>
+  <li><strong>Search mode</strong>: Generates embedding of query → hybrid search (vector + BM25) on the <code>clips</code> index with optional OData date filters</li>
+</ul>
+
+<p><code>top</code> is clamped to a maximum of 50. Returns <code>{ clips: NewsClip[], count }</code>.</p>
+
+<!-- 4.3 clips-digest -->
+<h3 id="fn-clips-digest">4.3 clips-digest.ts — Daily Digest (Stub)</h3>
+
+<p><span class="file-ref">src/functions/clips-digest.ts</span> &middot; 115 lines</p>
+
+<p><strong>Trigger:</strong> Timer <code>0 0 8 * * 1-5</code> (8 AM weekdays)</p>
+
+<p>Queries Cosmos for clips published in the last 24 hours, generates an HTML table with outlet / title / lede / date columns. <strong>Email sending is not yet wired</strong> — the HTML is logged but not delivered. Intended integration: POST to a Logic App HTTP trigger that forwards via Outlook connector.</p>
+
+<!-- 4.4 remarks-ingest -->
+<h3 id="fn-remarks-ingest">4.4 remarks-ingest.ts — Document Ingestion</h3>
+
+<p><span class="file-ref">src/functions/remarks-ingest.ts</span> &middot; 207 lines</p>
+
+<p><strong>Trigger:</strong> Blob Storage (<code>remarks-uploads/{name}</code>)</p>
+
+<p><strong>Pipeline:</strong> Parse filename metadata → extract text → chunk by paragraph (200–1000 chars) → generate embedding per chunk → upsert to <code>remarks-metadata</code> + <code>remarks-chunks</code> containers.</p>
+
+<p><strong>Filename convention:</strong> <code>YYYY-MM-DD_event-name_venue.txt</code> — parsed via regex for automatic date, event, and venue extraction.</p>
+
+<table>
+  <tr><th>Format</th><th>Status</th></tr>
+  <tr><td><code>.txt</code></td><td>Fully implemented</td></tr>
+  <tr><td><code>.docx</code></td><td>TODO (needs <code>mammoth</code> package)</td></tr>
+  <tr><td><code>.pdf</code></td><td>TODO (needs <code>pdf-parse</code> package)</td></tr>
+</table>
+
+<div class="callout warn">
+  <strong>Known issue:</strong> Blob trigger is unreliable on Flex Consumption. Workaround: use <span class="file-ref">seed/load-remarks.ts</span> to manually process and index remarks files.
+</div>
+
+<!-- 4.5 remarks-query -->
+<h3 id="fn-remarks-query">4.5 remarks-query.ts — Remarks RAG Search</h3>
+
+<p><span class="file-ref">src/functions/remarks-query.ts</span> &middot; 138 lines</p>
+
+<p><strong>Trigger:</strong> HTTP POST <code>/api/remarks/query</code></p>
+
+<p><strong>Request body:</strong> <code>{ query, event?, dateFrom?, dateTo?, top?, synthesize? }</code></p>
+
+<p>This is the core RAG (Retrieval-Augmented Generation) function:</p>
+<ol>
+  <li>Embed the user's query</li>
+  <li>Hybrid search on the <code>remarks</code> index (vector + BM25, optional OData filters)</li>
+  <li>If <code>synthesize=true</code> (default): format top-K chunks with metadata, pass to GPT-5-chat with a system prompt instructing it to synthesize with direct quotes, citations (date + event), and messaging evolution tracking</li>
+</ol>
+
+<p>Returns <code>{ synthesis?, sources: RemarksChunk[], count }</code>. Synthesis temperature: 0.3 (conservative). Max tokens: 8192.</p>
+
+<!-- 4.6 proofread -->
+<h3 id="fn-proofread">4.6 proofread.ts — Transcript Proofreading</h3>
+
+<p><span class="file-ref">src/functions/proofread.ts</span> &middot; 193 lines</p>
+
+<p><strong>Trigger:</strong> HTTP POST <code>/api/proofread</code></p>
+
+<p><strong>Request body:</strong> <code>{ transcript, speakerLabels? }</code></p>
+
+<p>Sends transcript to GPT-5-chat with a 6-rule (or 7-rule with speaker labels) system prompt targeting ASR/OCR errors: homophones, capitalization, punctuation, number formatting, garbled text. Temperature: 0.2 (very conservative). Max input: 100,000 characters.</p>
+
+<p>Returns structured JSON: <code>{ corrected, changes: [{ original, corrected, confidence, reason }], summary }</code>. No data is stored — purely stateless transformation.</p>
+
+<!-- 4.7 transcribe -->
+<h3 id="fn-transcribe">4.7 transcribe.ts — Whisper Transcription</h3>
+
+<p><span class="file-ref">src/functions/transcribe.ts</span> &middot; 106 lines</p>
+
+<p><strong>Trigger:</strong> HTTP POST <code>/api/transcribe</code> (multipart/form-data)</p>
+
+<p><strong>Accepts:</strong> <code>file</code> field (mp3, mp4, wav, webm, m4a, mpeg, mpga) + optional <code>language</code> (ISO 639-1). Max file size: 25 MB (Whisper API limit).</p>
+
+<p>Converts uploaded file to buffer, calls <code>transcribeAudio()</code> helper, returns <code>{ transcript, filename, fileSizeBytes }</code>. No transcript is persisted — stateless.</p>
+
+<!-- 4.8 dashboard -->
+<h3 id="fn-dashboard">4.8 dashboard.ts — Dashboard API</h3>
+
+<p><span class="file-ref">src/functions/dashboard.ts</span> &middot; 177 lines</p>
+
+<p>Four read-only GET endpoints feeding the React dashboard. All query Cosmos DB directly (no AI Search).</p>
+
+<table>
+  <tr><th>Endpoint</th><th>Returns</th><th>Notes</th></tr>
+  <tr><td><code>GET /api/dashboard/stats</code></td><td><code>DashboardStats</code></td><td>5 parallel Cosmos queries: total clips, total remarks, outlet GROUP BY, latest clip date, latest run</td></tr>
+  <tr><td><code>GET /api/dashboard/clips</code></td><td>Paginated clips list</td><td>Params: offset, limit (max 50), outlet, dateFrom, dateTo. Excludes embedding/fullText/mentionContext from projection.</td></tr>
+  <tr><td><code>GET /api/dashboard/remarks</code></td><td>All remarks metadata</td><td>Ordered by date DESC</td></tr>
+  <tr><td><code>GET /api/dashboard/runs</code></td><td>Recent ingestion runs</td><td>Param: limit (max 100). Ordered by completedAt DESC.</td></tr>
+</table>
+
+<p>All queries use parameterized SQL (safe from injection). The stats endpoint runs 5 queries in parallel via <code>Promise.all</code>.</p>
+
+
+<!-- ============================================================ -->
+<!-- 5. SHARED MODULES                                             -->
+<!-- ============================================================ -->
+<h2 id="shared-modules">5. Shared Modules &amp; Singletons</h2>
+
+<p>Three client singletons in <span class="file-ref">src/shared/</span> provide all Azure SDK interactions. Every function imports these rather than creating its own clients.</p>
+
+<!-- 5.1 openai-client -->
+<h3 id="mod-openai">5.1 openai-client.ts</h3>
+
+<p><span class="file-ref">src/shared/openai-client.ts</span></p>
+
+<p>Singleton <code>AzureOpenAI</code> client with lazy initialization. Auth: <code>DefaultAzureCredential</code> → <code>getBearerTokenProvider</code> with scope <code>cognitiveservices.azure.com/.default</code>.</p>
+
+<table>
+  <tr><th>Export</th><th>Signature</th><th>What It Does</th></tr>
+  <tr>
+    <td><code>getChatCompletion</code></td>
+    <td><code>(systemPrompt, userPrompt, options?) → Promise&lt;string&gt;</code></td>
+    <td>Chat completions via <code>GPT4O_DEPLOYMENT_NAME</code>. <strong>Auto-detects reasoning models</strong> (<code>gpt-5*</code>, <code>o*</code> prefixes): uses <code>max_completion_tokens</code> instead of <code>max_tokens</code>, drops temperature, defaults to 16384 tokens.</td>
+  </tr>
+  <tr>
+    <td><code>getEmbedding</code></td>
+    <td><code>(text) → Promise&lt;number[]&gt;</code></td>
+    <td>3072-dimension vector via <code>EMBEDDING_DEPLOYMENT_NAME</code> (text-embedding-3-large)</td>
+  </tr>
+  <tr>
+    <td><code>webSearch</code></td>
+    <td><code>(query) → Promise&lt;WebSearchResult[]&gt;</code></td>
+    <td>Bing-grounded web search via Azure OpenAI Responses API. Uses <code>OpenAI</code> class (not <code>AzureOpenAI</code>) with <code>baseURL: ${endpoint}/openai/v1/</code>. Extracts URL citations from response annotations. <code>search_context_size: "high"</code>.</td>
+  </tr>
+  <tr>
+    <td><code>transcribeAudio</code></td>
+    <td><code>(buffer, filename, language?) → Promise&lt;string&gt;</code></td>
+    <td>Whisper via <code>WHISPER_DEPLOYMENT_NAME</code>. Converts Buffer to File via <code>toFile()</code>.</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <strong>Responses API pattern:</strong> The <code>webSearch()</code> function creates a <em>separate</em> <code>OpenAI</code> client (not the singleton <code>AzureOpenAI</code>) because the Responses API requires the <code>/openai/v1/</code> base URL path. The managed identity token is passed as the <code>apiKey</code> parameter.
+</div>
+
+<!-- 5.2 search-client -->
+<h3 id="mod-search">5.2 search-client.ts</h3>
+
+<p><span class="file-ref">src/shared/search-client.ts</span></p>
+
+<p>Per-index <code>SearchClient&lt;T&gt;</code> cache via <code>Map</code>. Auth: <code>DefaultAzureCredential</code>.</p>
+
+<table>
+  <tr><th>Export</th><th>Signature</th><th>What It Does</th></tr>
+  <tr>
+    <td><code>getSearchClient&lt;T&gt;</code></td>
+    <td><code>(indexName) → SearchClient&lt;T&gt;</code></td>
+    <td>Factory with caching. Returns cached client or creates new one for the given index.</td>
+  </tr>
+  <tr>
+    <td><code>hybridSearch&lt;T&gt;</code></td>
+    <td><code>(indexName, query, vector, options?) → Promise&lt;T[]&gt;</code></td>
+    <td>Combined BM25 keyword + vector (kNN on <code>embedding</code> field) search. Options: <code>{ filter?, top? }</code>. Default top: 5.</td>
+  </tr>
+</table>
+
+<!-- 5.3 cosmos-client -->
+<h3 id="mod-cosmos">5.3 cosmos-client.ts</h3>
+
+<p><span class="file-ref">src/shared/cosmos-client.ts</span></p>
+
+<p>Three-level singleton: CosmosClient → Database → Container cache (Map). Auth: <code>DefaultAzureCredential</code> via <code>aadCredentials</code> parameter.</p>
+
+<table>
+  <tr><th>Export</th><th>Signature</th><th>What It Does</th></tr>
+  <tr>
+    <td><code>getContainer</code></td>
+    <td><code>(containerName) → Container</code></td>
+    <td>Only public export. Returns cached Container reference for the given name.</td>
+  </tr>
+</table>
+
+<p>Database name defaults to <code>comms-agent</code> (configurable via <code>COSMOS_DB_DATABASE</code> env var). Container references are cached to avoid repeated lookups.</p>
+
+<!-- 5.4 types -->
+<h3 id="mod-types">5.4 types.ts — Data Models</h3>
+
+<p><span class="file-ref">src/shared/types.ts</span></p>
+
+<p>Central type definitions shared by Functions <em>and</em> the React dashboard (via <code>@shared</code> path alias in Vite).</p>
+
+<table>
+  <tr><th>Interface</th><th>Key Fields</th><th>Used By</th></tr>
+  <tr><td><code>NewsClip</code></td><td>id (SHA-256), url, outlet, title, publishedAt, lede, mentionContext, mentionOffset, fullText, embedding?</td><td>clips-ingest, clips-query, dashboard</td></tr>
+  <tr><td><code>RemarksChunk</code></td><td>id, remarkId, title, date, event, venue, chunkIndex, chunkText, topicTags?, embedding?</td><td>remarks-ingest, remarks-query</td></tr>
+  <tr><td><code>RemarksMetadata</code></td><td>id, title, date, event, venue, chunkCount?, sourceFile?</td><td>remarks-ingest, dashboard</td></tr>
+  <tr><td><code>ProofreadRequest</code></td><td>transcript, speakerLabels?</td><td>proofread</td></tr>
+  <tr><td><code>ProofreadResponse</code></td><td>corrected, changes[], summary</td><td>proofread</td></tr>
+  <tr><td><code>TranscribeResponse</code></td><td>transcript, filename, fileSizeBytes</td><td>transcribe</td></tr>
+  <tr><td><code>IngestionRun</code></td><td>id, trigger, startedAt, completedAt, durationMs, newCount, skippedCount, errorCount, sources: {gov, web}, status</td><td>clips-ingest, dashboard</td></tr>
+  <tr><td><code>DashboardStats</code></td><td>totalClips, totalRemarks, outletBreakdown, latestClipDate, latestRun?</td><td>dashboard</td></tr>
+</table>
+
+<p>All Cosmos-bound interfaces include <code>[key: string]: unknown</code> index signatures to satisfy the <code>@azure/cosmos</code> and <code>@azure/search-documents</code> generic constraints.</p>
+
+
+<!-- ============================================================ -->
+<!-- 6. DATA ARCHITECTURE                                          -->
+<!-- ============================================================ -->
+<h2 id="data-architecture">6. Data Architecture</h2>
+
+<!-- 6.1 Cosmos -->
+<h3 id="data-cosmos">6.1 Cosmos DB Containers</h3>
+
+<table>
+  <tr><th>Container</th><th>Document Type</th><th>Partition Key</th><th>ID Strategy</th><th>Approx. Volume</th></tr>
+  <tr><td><code>clips</code></td><td>NewsClip</td><td><code>/id</code></td><td>SHA-256(url)</td><td>~118 docs</td></tr>
+  <tr><td><code>remarks-metadata</code></td><td>RemarksMetadata</td><td><code>/id</code></td><td>Filename-derived</td><td>~7 docs</td></tr>
+  <tr><td><code>remarks-chunks</code></td><td>RemarksChunk</td><td><code>/id</code></td><td><code>{remarkId}-chunk-{NNN}</code></td><td>~26 docs</td></tr>
+  <tr><td><code>ingestion-state</code></td><td>IngestionRun</td><td><code>/id</code></td><td>ISO timestamp + trigger type</td><td>Growing daily</td></tr>
+</table>
+
+<div class="callout">
+  <strong>Dedup pattern:</strong> <code>clips-ingest</code> uses <code>container.item(id, id).read()</code> before upserting. Cosmos SDK v4 returns <code>{ statusCode: 404 }</code> instead of throwing, so the check is <code>statusCode === 200 && resource</code>.
+</div>
+
+<!-- 6.2 AI Search -->
+<h3 id="data-search">6.2 AI Search Indexes</h3>
+
+<p>Both indexes are created via <span class="file-ref">seed/create-search-indexes.ts</span>, not Bicep.</p>
+
+<h4>clips index (11 fields)</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Searchable</th><th>Filterable</th><th>Sortable</th></tr>
+  <tr><td><code>id</code></td><td>Edm.String (key)</td><td></td><td>Yes</td><td></td></tr>
+  <tr><td><code>url</code></td><td>Edm.String</td><td>Yes</td><td></td><td></td></tr>
+  <tr><td><code>outlet</code></td><td>Edm.String</td><td>Yes</td><td>Yes</td><td></td></tr>
+  <tr><td><code>title</code></td><td>Edm.String</td><td>Yes</td><td></td><td></td></tr>
+  <tr><td><code>publishedAt</code></td><td>Edm.DateTimeOffset</td><td></td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>lede</code></td><td>Edm.String</td><td>Yes</td><td></td><td></td></tr>
+  <tr><td><code>mentionContext</code></td><td>Edm.String</td><td>Yes</td><td></td><td></td></tr>
+  <tr><td><code>mentionOffset</code></td><td>Edm.Int32</td><td></td><td></td><td></td></tr>
+  <tr><td><code>fullText</code></td><td>Edm.String</td><td>Yes</td><td></td><td></td></tr>
+  <tr><td><code>ingestedAt</code></td><td>Edm.DateTimeOffset</td><td></td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>embedding</code></td><td>Collection(Edm.Single)</td><td colspan="3">3072 dimensions, HNSW vector search, cosine metric</td></tr>
+</table>
+
+<h4>remarks index (10 fields)</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Searchable</th><th>Filterable</th><th>Sortable</th></tr>
+  <tr><td><code>id</code></td><td>Edm.String (key)</td><td></td><td>Yes</td><td></td></tr>
+  <tr><td><code>remarkId</code></td><td>Edm.String</td><td></td><td>Yes</td><td></td></tr>
+  <tr><td><code>title</code></td><td>Edm.String</td><td>Yes</td><td></td><td></td></tr>
+  <tr><td><code>date</code></td><td>Edm.String</td><td></td><td>Yes</td><td>Yes</td></tr>
+  <tr><td><code>event</code></td><td>Edm.String</td><td>Yes</td><td>Yes</td><td></td></tr>
+  <tr><td><code>venue</code></td><td>Edm.String</td><td>Yes</td><td></td><td></td></tr>
+  <tr><td><code>chunkIndex</code></td><td>Edm.Int32</td><td></td><td></td><td>Yes</td></tr>
+  <tr><td><code>chunkText</code></td><td>Edm.String</td><td>Yes</td><td></td><td></td></tr>
+  <tr><td><code>topicTags</code></td><td>Collection(Edm.String)</td><td>Yes</td><td>Yes</td><td></td></tr>
+  <tr><td><code>embedding</code></td><td>Collection(Edm.Single)</td><td colspan="3">3072 dimensions, HNSW vector search, cosine metric</td></tr>
+</table>
+
+<p>Both indexes include semantic search configurations with title as the title field, content as the content field (lede/chunkText), and keyword fields where applicable.</p>
+
+<!-- 6.3 Data Flow -->
+<h3 id="data-flow">6.3 Data Flow Diagrams</h3>
+
+<h4>Ingestion Flows (Write Path)</h4>
+<div class="diagram"><pre>
+NEWS CLIPS:
+  Timer (7 AM) / HTTP POST ──► clips-ingest
+    ├── fetchGovListings()     ──► governor.nc.gov HTML scrape
+    ├── fetchWebNewsListings() ──► Azure OpenAI Responses API (5 queries, Bing grounding)
+    ├── processClip()          ──► Mozilla Readability (text extraction)
+    │                          ──► getEmbedding() (vector)
+    │                          ──► Cosmos DB clips container (upsert)
+    │                          ──► AI Search clips index (mergeOrUpload)
+    └── IngestionRun           ──► Cosmos DB ingestion-state container
+
+REMARKS:
+  Blob trigger / seed script ──► remarks-ingest / load-remarks.ts
+    ├── parseFilename()        ──► metadata from YYYY-MM-DD_event_venue.txt
+    ├── chunkText()            ──► paragraph-boundary chunking (200-1000 chars)
+    ├── getEmbedding()         ──► vector per chunk
+    ├── Cosmos DB              ──► remarks-metadata (1 doc) + remarks-chunks (N docs)
+    └── AI Search              ──► remarks index (N docs)
+</pre></div>
+
+<h4>Query Flows (Read Path)</h4>
+<div class="diagram"><pre>
+CLIPS QUERY:
+  Copilot Studio / API ──► APIM ──► clips-query
+    ├── getEmbedding(query)    ──► Azure OpenAI
+    ├── hybridSearch()         ──► AI Search (vector + BM25)
+    └── return clips[]
+
+REMARKS QUERY (RAG):
+  Copilot Studio / API ──► APIM ──► remarks-query
+    ├── getEmbedding(query)    ──► Azure OpenAI
+    ├── hybridSearch()         ──► AI Search (vector + BM25)
+    ├── getChatCompletion()    ──► GPT-5-chat (synthesize chunks → narrative)
+    └── return { synthesis, sources[] }
+
+PROOFREAD:
+  Copilot Studio / API ──► APIM ──► proofread
+    ├── getChatCompletion()    ──► GPT-5-chat (6-rule proofreading prompt)
+    └── return { corrected, changes[], summary }
+
+TRANSCRIBE:
+  Copilot Studio / API ──► APIM ──► transcribe
+    ├── transcribeAudio()      ──► Azure OpenAI Whisper
+    └── return { transcript, filename, fileSizeBytes }
+
+DASHBOARD:
+  React SPA ──► APIM ──► dashboard
+    └── Cosmos DB queries (no AI Search, no OpenAI)
+</pre></div>
+
+
+<!-- ============================================================ -->
+<!-- 7. IDENTITY, AUTH & SECURITY                                  -->
+<!-- ============================================================ -->
+<h2 id="identity-security">7. Identity, Auth &amp; Security</h2>
+
+<p>The system follows a <strong>zero-secrets-in-code</strong> model. Every Azure service interaction uses managed identity.</p>
+
+<h3>Authentication Flow</h3>
+<div class="diagram"><pre>
+Function App (SystemAssigned MI)
+  │
+  ├── Azure OpenAI ───── DefaultAzureCredential → getBearerTokenProvider
+  │                      scope: cognitiveservices.azure.com/.default
+  │
+  ├── AI Search ──────── DefaultAzureCredential (direct)
+  │
+  ├── Cosmos DB ──────── DefaultAzureCredential via aadCredentials param
+  │
+  ├── Blob Storage ───── Identity-based (AzureWebJobsStorage__accountName)
+  │
+  └── Key Vault ──────── DefaultAzureCredential (Key Vault Secrets User role)
+
+APIM (SystemAssigned MI)
+  │
+  └── Key Vault ──────── Reads function-host-key, injects as x-functions-key header
+</pre></div>
+
+<h3>Security Boundaries</h3>
+<table>
+  <tr><th>Boundary</th><th>Mechanism</th></tr>
+  <tr><td>External → APIM</td><td>Subscription key (<code>Ocp-Apim-Subscription-Key</code> header). Rate limited to 60 calls/min.</td></tr>
+  <tr><td>APIM → Function App</td><td>Function host key injected by APIM from Key Vault</td></tr>
+  <tr><td>Function App → Azure Services</td><td>Managed identity + RBAC (no keys, no connection strings)</td></tr>
+  <tr><td>Network</td><td>VNet integration + private endpoints for Storage and Cosmos DB. Public endpoints remain for OpenAI, AI Search, Key Vault, APIM.</td></tr>
+</table>
+
+<div class="callout">
+  <strong>No secrets in code.</strong> The only secret in the system is the Function host key, which lives in Key Vault and is only accessed by APIM's managed identity. All other service auth is token-based via <code>DefaultAzureCredential</code>.
+</div>
+
+
+<!-- ============================================================ -->
+<!-- 8. APIM ROUTING                                               -->
+<!-- ============================================================ -->
+<h2 id="apim-routing">8. API Management — Routing &amp; Policies</h2>
+
+<p>APIM serves as the single entry point for all external callers (Copilot Studio, Dashboard, direct API). Base path: <code>/comms</code>.</p>
+
+<table>
+  <tr><th>Operation</th><th>Method</th><th>APIM URL</th><th>Backend URL</th><th>Consumer</th></tr>
+  <tr><td>QueryClips</td><td>POST</td><td><code>/comms/clips/query</code></td><td><code>/api/clips/query</code></td><td>Copilot Studio, API</td></tr>
+  <tr><td>QueryRemarks</td><td>POST</td><td><code>/comms/remarks/query</code></td><td><code>/api/remarks/query</code></td><td>Copilot Studio, API</td></tr>
+  <tr><td>Proofread</td><td>POST</td><td><code>/comms/proofread</code></td><td><code>/api/proofread</code></td><td>Copilot Studio, API</td></tr>
+  <tr><td>Transcribe</td><td>POST</td><td><code>/comms/transcribe</code></td><td><code>/api/transcribe</code></td><td>Copilot Studio, API</td></tr>
+  <tr><td>DashboardStats</td><td>GET</td><td><code>/comms/dashboard/stats</code></td><td><code>/api/dashboard/stats</code></td><td>React Dashboard</td></tr>
+  <tr><td>DashboardClips</td><td>GET</td><td><code>/comms/dashboard/clips</code></td><td><code>/api/dashboard/clips</code></td><td>React Dashboard</td></tr>
+  <tr><td>DashboardRemarks</td><td>GET</td><td><code>/comms/dashboard/remarks</code></td><td><code>/api/dashboard/remarks</code></td><td>React Dashboard</td></tr>
+  <tr><td>DashboardRuns</td><td>GET</td><td><code>/comms/dashboard/runs</code></td><td><code>/api/dashboard/runs</code></td><td>React Dashboard</td></tr>
+</table>
+
+<p><strong>Global inbound policy (applied to all operations):</strong></p>
+<pre><code>&lt;inbound&gt;
+  &lt;set-header name="x-functions-key" exists-action="override"&gt;
+    &lt;value&gt;{{function-host-key}}&lt;/value&gt;
+  &lt;/set-header&gt;
+  &lt;rate-limit calls="60" renewal-period="60" /&gt;
+&lt;/inbound&gt;</code></pre>
+
+
+<!-- ============================================================ -->
+<!-- 9. COPILOT STUDIO INTEGRATION                                 -->
+<!-- ============================================================ -->
+<h2 id="copilot-studio">9. Copilot Studio Integration</h2>
+
+<p>The agent is delivered via Microsoft Copilot Studio in the <code>og-ai</code> GCC environment, accessible in Teams and web.</p>
+
+<h3>Custom Connector</h3>
+<p>Defined in <span class="file-ref">connector/apiDefinition.swagger.json</span> (OpenAPI 2.0). Deployed to Power Platform via <code>pac connector update</code>.</p>
+
+<table>
+  <tr><th>Setting</th><th>Value</th></tr>
+  <tr><td>Auth</td><td>API Key (<code>Ocp-Apim-Subscription-Key</code> header)</td></tr>
+  <tr><td>Host</td><td>APIM gateway URL</td></tr>
+  <tr><td>Base path</td><td><code>/comms</code></td></tr>
+  <tr><td>Operations</td><td>QueryClips, QueryRemarks, ProofreadTranscript, TranscribeFile</td></tr>
+</table>
+
+<h3>Orchestration</h3>
+<p>Copilot Studio uses <strong>generative orchestration</strong> — no manual topic routing. The OpenAPI descriptions in the connector drive tool selection. The orchestrator (GPT-4.0 in GCC) decides which connector action to invoke based on user intent.</p>
+
+<div class="callout warn">
+  <strong>GCC model limitation:</strong> Copilot Studio in GCC is restricted to GPT-4.0 for orchestration. The backend uses GPT-5-chat for synthesis/proofread, but the orchestrator's response quality is limited. Escalation to Microsoft product team in progress (Luke + state officials).
+</div>
+
+<h3>Known Gaps</h3>
+<ul>
+  <li><strong>File upload:</strong> TranscribeFile operation requires <code>Activity.Attachments</code> wiring in generative mode (not yet working). Classic orchestration needs an "Ask a Question (File type)" node (not yet tested).</li>
+  <li><strong>clips/refresh:</strong> Not yet added to the connector (manual refresh is API-only today).</li>
+</ul>
+
+
+<!-- ============================================================ -->
+<!-- 10. DASHBOARD SPA                                             -->
+<!-- ============================================================ -->
+<h2 id="dashboard-spa">10. Dashboard SPA</h2>
+
+<p><span class="file-ref">/dashboard</span> — React 19 + Vite 8 + Tailwind CSS v4. No routing library, no state management, no charting library.</p>
+
+<table>
+  <tr><th>Tab</th><th>Component</th><th>Data Source</th><th>Features</th></tr>
+  <tr><td>Overview</td><td><code>StatsPanel</code></td><td><code>GET /dashboard/stats</code></td><td>Stat cards, outlet breakdown bars, latest run status. Auto-refresh every 60s.</td></tr>
+  <tr><td>Clips</td><td><code>ClipsFeed</code></td><td><code>GET /dashboard/clips</code></td><td>Paginated list (20/page), outlet dropdown filter, date range filter.</td></tr>
+  <tr><td>Remarks</td><td><code>RemarksList</code></td><td><code>GET /dashboard/remarks</code></td><td>Table: title, date, event, venue, chunk count.</td></tr>
+  <tr><td>Runs</td><td><code>RunsHistory</code></td><td><code>GET /dashboard/runs</code></td><td>Run list with status badges, source breakdown, duration, trigger type.</td></tr>
+</table>
+
+<p><strong>Type sharing:</strong> Dashboard imports from <span class="file-ref">src/shared/types.ts</span> via the <code>@shared</code> path alias configured in <span class="file-ref">dashboard/vite.config.ts</span>. One set of types for backend and frontend.</p>
+
+<p><strong>Dev proxy:</strong> Vite proxies <code>/api</code> requests to APIM (rewriting to <code>/comms</code>) or directly to the local Function App, injecting the appropriate auth header.</p>
+
+<p><strong>Status:</strong> Dev-only (<code>npm run dev</code>). Production build + hosting is a TODO.</p>
+
+
+<!-- ============================================================ -->
+<!-- 11. COST PROFILE                                              -->
+<!-- ============================================================ -->
+<h2 id="cost">11. Cost Profile</h2>
+
+<table>
+  <tr><th>Service</th><th>Monthly Estimate</th><th>Cost Driver</th></tr>
+  <tr><td>Azure Functions (Flex Consumption + 1 always-ready)</td><td>$34–45</td><td>Always-ready instance ($0.046/hr) + execution</td></tr>
+  <tr><td>Azure AI Search (Basic)</td><td>~$70</td><td>Fixed tier cost (1 replica, 1 partition)</td></tr>
+  <tr><td>Azure OpenAI (all models)</td><td>$35–85</td><td>Chat ($0.01–0.03/1K tokens), embeddings ($0.00013/1K), Whisper ($0.006/min), web search (~$5/mo for 5 daily queries)</td></tr>
+  <tr><td>Cosmos DB (Serverless)</td><td>$5–20</td><td>RU consumption (reads heavy, writes in daily batches)</td></tr>
+  <tr><td>API Management (Consumption)</td><td>~$3.50/1M calls</td><td>Pay-per-call, minimal at current volume</td></tr>
+  <tr><td>Storage + VNet + Private Endpoints</td><td>~$5</td><td>Minimal blob storage, PE fixed cost</td></tr>
+  <tr><td>Key Vault</td><td>&lt;$1</td><td>Minimal secret reads</td></tr>
+  <tr><td><strong>Total</strong></td><td><strong>$125–200</strong></td><td></td></tr>
+</table>
+
+<p>AI Search (Basic tier at ~$70/month) is the single largest fixed cost. All other services are consumption-based and scale with usage.</p>
+
+
+<!-- ============================================================ -->
+<!-- 12. CONCLUSION                                                -->
+<!-- ============================================================ -->
+<h2 id="conclusion">12. Conclusion &amp; Open Items</h2>
+
+<h3>What's Working</h3>
+<ul>
+  <li>End-to-end clip ingestion: 118 articles across 40+ outlets, 2-source pipeline (gov scraper + 5-query web search), daily timer + manual refresh</li>
+  <li>Remarks RAG search: 7 documents / 26+ chunks with hybrid search and GPT-5-chat synthesis</li>
+  <li>Transcript proofreading: Stateless, structured output with change tracking and confidence levels</li>
+  <li>Whisper transcription: Working via API; connector updated</li>
+  <li>Dashboard: 4 tabs, live data, auto-refresh, paginated clips with filters</li>
+  <li>Security posture: Managed identity everywhere, VNet + private endpoints, no secrets in code</li>
+  <li>Copilot Studio: Generative orchestration with 4 connector actions in GCC</li>
+</ul>
+
+<h3>Open Items</h3>
+<table>
+  <tr><th>Item</th><th>Priority</th><th>Notes</th></tr>
+  <tr><td>Database separation (press releases vs. external news)</td><td>High</td><td>Customer request from Luke. Separate Cosmos containers and/or AI Search indexes.</td></tr>
+  <tr><td>Copilot Studio GCC model upgrade</td><td>High</td><td>Blocked on Microsoft product team. GPT-4.0 orchestrator limits response quality.</td></tr>
+  <tr><td>Codify GPT-5/GPT-5-chat deployments in Bicep</td><td>Medium</td><td>Currently manual. Add to <span class="file-ref">infra/modules/openai.bicep</span>.</td></tr>
+  <tr><td>Cosmos DB private endpoint in Bicep</td><td>Medium</td><td>Added via CLI, needs codification in <span class="file-ref">networking.bicep</span>.</td></tr>
+  <tr><td>Copilot Studio file upload (Transcribe)</td><td>Medium</td><td>Activity.Attachments wiring in generative mode. Classic mode untested.</td></tr>
+  <tr><td>.docx / .pdf remarks extraction</td><td>Low</td><td>Needs <code>mammoth</code> and <code>pdf-parse</code> packages.</td></tr>
+  <tr><td>Blob trigger reliability on Flex Consumption</td><td>Low</td><td>Workaround: seed scripts. May need Event Grid trigger.</td></tr>
+  <tr><td>Daily digest email delivery</td><td>Low</td><td>HTML generated, needs Logic App or SendGrid integration.</td></tr>
+  <tr><td>Dashboard production hosting</td><td>Low</td><td>Currently dev-only. Could deploy to Static Web Apps or Container Apps.</td></tr>
+  <tr><td>clips/refresh route in connector</td><td>Low</td><td>Manual refresh is API-only today.</td></tr>
+</table>
+
+
+<!-- ============================================================ -->
+<!-- APPENDICES                                                    -->
+<!-- ============================================================ -->
+
+<div class="appendix">
+
+<h2 id="appendix-env">Appendix A: Environment Variables Reference</h2>
+
+<table>
+  <tr><th>Variable</th><th>Example Value</th><th>Set By</th><th>Used By</th></tr>
+  <tr><td><code>AZURE_OPENAI_ENDPOINT</code></td><td><code>https://nc-comms-agent-openai-dev.openai.azure.com</code></td><td>Bicep</td><td>openai-client.ts</td></tr>
+  <tr><td><code>GPT4O_DEPLOYMENT_NAME</code></td><td><code>gpt-5-chat</code></td><td>Bicep (overridden manually)</td><td>openai-client.ts (chat + web search)</td></tr>
+  <tr><td><code>EMBEDDING_DEPLOYMENT_NAME</code></td><td><code>text-embedding-3-large</code></td><td>Bicep</td><td>openai-client.ts</td></tr>
+  <tr><td><code>WHISPER_DEPLOYMENT_NAME</code></td><td><code>whisper</code></td><td>Bicep</td><td>openai-client.ts</td></tr>
+  <tr><td><code>AZURE_AI_SEARCH_ENDPOINT</code></td><td><code>https://nc-comms-agent-search-dev.search.windows.net</code></td><td>Bicep</td><td>search-client.ts</td></tr>
+  <tr><td><code>AZURE_SEARCH_INDEX_CLIPS</code></td><td><code>clips</code></td><td>Bicep</td><td>clips-query.ts, clips-ingest.ts</td></tr>
+  <tr><td><code>AZURE_SEARCH_INDEX_REMARKS</code></td><td><code>remarks</code></td><td>Bicep</td><td>remarks-query.ts</td></tr>
+  <tr><td><code>COSMOS_DB_ENDPOINT</code></td><td><code>https://nc-comms-agent-cosmos-dev.documents.azure.com:443</code></td><td>Bicep</td><td>cosmos-client.ts</td></tr>
+  <tr><td><code>COSMOS_DB_DATABASE</code></td><td><code>comms-agent</code></td><td>Bicep</td><td>cosmos-client.ts</td></tr>
+  <tr><td><code>KEY_VAULT_URL</code></td><td><code>https://nc-comms-agent-kv-dev.vault.azure.net</code></td><td>Bicep</td><td>(future use)</td></tr>
+  <tr><td><code>STORAGE_ACCOUNT_NAME</code></td><td><code>nccommsstordev</code></td><td>Bicep</td><td>(blob operations)</td></tr>
+  <tr><td><code>AzureWebJobsStorage__accountName</code></td><td><code>nccommsstordev</code></td><td>Bicep</td><td>Functions runtime</td></tr>
+  <tr><td><code>WEBSITE_TIME_ZONE</code></td><td><code>America/New_York</code></td><td>Bicep</td><td>Cron schedules (DST-aware)</td></tr>
+  <tr><td><code>FUNCTIONS_EXTENSION_VERSION</code></td><td><code>~4</code></td><td>Bicep</td><td>Functions runtime</td></tr>
+</table>
+
+
+<h2 id="appendix-roles">Appendix B: Complete RBAC Role Matrix</h2>
+
+<table>
+  <tr><th>Principal</th><th>Target</th><th>Role</th><th>Role Definition ID</th></tr>
+  <tr><td>Function App MI</td><td>Azure OpenAI</td><td>Cognitive Services OpenAI User</td><td><code>5e0bd9bd-7b93-4f28-af87-19fc36ad61bd</code></td></tr>
+  <tr><td>Function App MI</td><td>AI Search</td><td>Search Index Data Reader</td><td><code>1407120a-92aa-4202-b7e9-c0e197c71c8f</code></td></tr>
+  <tr><td>Function App MI</td><td>AI Search</td><td>Search Index Data Contributor</td><td><code>8ebe5a00-799e-43f5-93ac-243d3dce84a7</code></td></tr>
+  <tr><td>Function App MI</td><td>Cosmos DB</td><td>Built-in Data Contributor (sqlRole)</td><td><code>00000000-0000-0000-0000-000000000002</code></td></tr>
+  <tr><td>Function App MI</td><td>Storage Account</td><td>Storage Blob Data Owner</td><td><code>b7e6dc6d-f1e8-4753-8033-0f276bb0955b</code></td></tr>
+  <tr><td>Function App MI</td><td>Key Vault</td><td>Key Vault Secrets User</td><td><code>4633458b-17de-408a-b874-0445c86b69e6</code></td></tr>
+  <tr><td>APIM MI</td><td>Key Vault</td><td>Key Vault Secrets User</td><td><code>4633458b-17de-408a-b874-0445c86b69e6</code></td></tr>
+</table>
+
+
+<h2 id="appendix-endpoints">Appendix C: API Endpoint Reference</h2>
+
+<p>All endpoints are accessed via APIM at <code>https://{apim-gateway}/comms/...</code> with <code>Ocp-Apim-Subscription-Key</code> header.</p>
+
+<table>
+  <tr><th>Method</th><th>Path</th><th>Auth</th><th>Request Body</th><th>Response</th></tr>
+  <tr>
+    <td>POST</td><td><code>/clips/query</code></td><td>Sub key</td>
+    <td><code>{ query, dateFrom?, dateTo?, top? }</code></td>
+    <td><code>{ clips: NewsClip[], count }</code></td>
+  </tr>
+  <tr>
+    <td>POST</td><td><code>/clips/refresh</code></td><td>Sub key</td>
+    <td>(empty)</td>
+    <td><code>{ newCount, skippedCount, errorCount, totalCount, sources: {gov, web} }</code></td>
+  </tr>
+  <tr>
+    <td>POST</td><td><code>/remarks/query</code></td><td>Sub key</td>
+    <td><code>{ query, event?, dateFrom?, dateTo?, top?, synthesize? }</code></td>
+    <td><code>{ synthesis?, sources: RemarksChunk[], count }</code></td>
+  </tr>
+  <tr>
+    <td>POST</td><td><code>/proofread</code></td><td>Sub key</td>
+    <td><code>{ transcript, speakerLabels? }</code></td>
+    <td><code>{ corrected, changes: [{original, corrected, confidence, reason}], summary }</code></td>
+  </tr>
+  <tr>
+    <td>POST</td><td><code>/transcribe</code></td><td>Sub key</td>
+    <td>multipart/form-data: <code>file</code> + <code>language?</code></td>
+    <td><code>{ transcript, filename, fileSizeBytes }</code></td>
+  </tr>
+  <tr>
+    <td>GET</td><td><code>/dashboard/stats</code></td><td>Sub key</td>
+    <td>—</td>
+    <td><code>DashboardStats</code></td>
+  </tr>
+  <tr>
+    <td>GET</td><td><code>/dashboard/clips</code></td><td>Sub key</td>
+    <td>Query: <code>offset, limit, outlet, dateFrom, dateTo</code></td>
+    <td><code>{ clips[], total, offset, limit }</code></td>
+  </tr>
+  <tr>
+    <td>GET</td><td><code>/dashboard/remarks</code></td><td>Sub key</td>
+    <td>—</td>
+    <td><code>{ remarks: RemarksMetadata[], count }</code></td>
+  </tr>
+  <tr>
+    <td>GET</td><td><code>/dashboard/runs</code></td><td>Sub key</td>
+    <td>Query: <code>limit</code></td>
+    <td><code>{ runs: IngestionRun[], count }</code></td>
+  </tr>
+</table>
+
+
+<h2 id="appendix-deploy">Appendix D: Deployment Checklist</h2>
+
+<ol>
+  <li><strong>Bicep deploy:</strong> <code>az deployment group create -g {rg} -f infra/main.bicep -p infra/main.bicepparam</code></li>
+  <li><strong>Wait for RBAC propagation</strong> (~2–5 minutes for Cosmos sqlRoleAssignment to take effect)</li>
+  <li><strong>Create AI Search indexes:</strong> <code>npx tsx seed/create-search-indexes.ts</code></li>
+  <li><strong>Flip Storage to public</strong> (temporarily, for local seeding): <code>az storage account update -n nccommsstordev -g {rg} --public-network-access Enabled</code></li>
+  <li><strong>Seed data:</strong>
+    <ul>
+      <li><code>npx tsx seed/load-clips.ts</code></li>
+      <li><code>npx tsx seed/index-clips-to-search.ts</code></li>
+      <li><code>npx tsx seed/load-remarks.ts seed/remarks/{file}.txt</code> (repeat per file)</li>
+    </ul>
+  </li>
+  <li><strong>Deploy Function App:</strong> <code>npm ci --omit=dev && npm run build && func azure functionapp publish nc-comms-agent-func-dev</code>
+    <br><em>Kill zombie func.exe if archive hangs.</em></li>
+  <li><strong>Flip Storage back to private:</strong> <code>az storage account update -n nccommsstordev -g {rg} --public-network-access Disabled</code></li>
+  <li><strong>Retrieve Function host key</strong> and store in Key Vault as <code>function-host-key</code></li>
+  <li><strong>Update APIM named value</strong> to reference Key Vault secret</li>
+  <li><strong>Update Copilot Studio connector:</strong> <code>pac connector update --api-definition connector/apiDefinition.swagger.json --api-properties connector/apiProperties.json</code></li>
+</ol>
+
+
+<h2 id="appendix-seed">Appendix E: Seed Scripts &amp; Index Schemas</h2>
+
+<table>
+  <tr><th>Script</th><th>Command</th><th>Purpose</th></tr>
+  <tr><td><code>create-search-indexes.ts</code></td><td><code>npx tsx seed/create-search-indexes.ts</code></td><td>Create/update both AI Search indexes (clips + remarks) with vector search + semantic config</td></tr>
+  <tr><td><code>load-clips.ts</code></td><td><code>npx tsx seed/load-clips.ts</code></td><td>Load clips from <code>seed/clips.json</code> into Cosmos DB with embeddings</td></tr>
+  <tr><td><code>index-clips-to-search.ts</code></td><td><code>npx tsx seed/index-clips-to-search.ts</code></td><td>Push all clips from Cosmos DB to AI Search index (batch of 1000)</td></tr>
+  <tr><td><code>load-remarks.ts</code></td><td><code>npx tsx seed/load-remarks.ts &lt;path&gt;</code></td><td>Process .txt file → chunk → embed → Cosmos + AI Search</td></tr>
+  <tr><td><code>dump-clips.ts</code></td><td><code>npx tsx seed/dump-clips.ts</code></td><td>Dump all clips from Cosmos as Date | Outlet | Title table</td></tr>
+</table>
+
+<p><strong>Vector search configuration</strong> (both indexes):</p>
+<ul>
+  <li>Algorithm: HNSW</li>
+  <li>Metric: Cosine</li>
+  <li>Dimensions: 3072 (text-embedding-3-large)</li>
+  <li>Field name: <code>embedding</code></li>
+  <li>Vector profile applied to embedding field</li>
+</ul>
+
+
+<h2 id="appendix-files">Appendix F: File-by-File Inventory</h2>
+
+<h4>Source Code (<code>src/</code>)</h4>
+<table>
+  <tr><th>File</th><th>Lines</th><th>Trigger</th><th>Azure Services</th></tr>
+  <tr><td><code>functions/clips-ingest.ts</code></td><td>416</td><td>Timer + HTTP POST</td><td>OpenAI (web search + embedding), Cosmos DB, AI Search</td></tr>
+  <tr><td><code>functions/clips-query.ts</code></td><td>114</td><td>HTTP POST</td><td>OpenAI (embedding), AI Search</td></tr>
+  <tr><td><code>functions/clips-digest.ts</code></td><td>115</td><td>Timer</td><td>Cosmos DB</td></tr>
+  <tr><td><code>functions/remarks-ingest.ts</code></td><td>207</td><td>Blob trigger</td><td>OpenAI (embedding), Cosmos DB</td></tr>
+  <tr><td><code>functions/remarks-query.ts</code></td><td>138</td><td>HTTP POST</td><td>OpenAI (embedding + chat), AI Search</td></tr>
+  <tr><td><code>functions/proofread.ts</code></td><td>193</td><td>HTTP POST</td><td>OpenAI (chat)</td></tr>
+  <tr><td><code>functions/transcribe.ts</code></td><td>106</td><td>HTTP POST</td><td>OpenAI (Whisper)</td></tr>
+  <tr><td><code>functions/dashboard.ts</code></td><td>177</td><td>HTTP GET (x4)</td><td>Cosmos DB</td></tr>
+  <tr><td><code>shared/openai-client.ts</code></td><td>—</td><td>Module</td><td>Azure OpenAI (all models)</td></tr>
+  <tr><td><code>shared/search-client.ts</code></td><td>—</td><td>Module</td><td>Azure AI Search</td></tr>
+  <tr><td><code>shared/cosmos-client.ts</code></td><td>—</td><td>Module</td><td>Cosmos DB</td></tr>
+  <tr><td><code>shared/types.ts</code></td><td>—</td><td>Types</td><td>—</td></tr>
+</table>
+
+<h4>Infrastructure (<code>infra/</code>)</h4>
+<table>
+  <tr><th>File</th><th>Resource(s)</th></tr>
+  <tr><td><code>main.bicep</code></td><td>Orchestrator (all modules)</td></tr>
+  <tr><td><code>main.bicepparam</code></td><td>Dev environment parameters</td></tr>
+  <tr><td><code>modules/openai.bicep</code></td><td>Azure OpenAI + 3 model deployments</td></tr>
+  <tr><td><code>modules/ai-search.bicep</code></td><td>Azure AI Search (Basic)</td></tr>
+  <tr><td><code>modules/cosmos-db.bicep</code></td><td>Cosmos DB + database + 4 containers</td></tr>
+  <tr><td><code>modules/storage.bicep</code></td><td>Storage Account + 2 blob containers</td></tr>
+  <tr><td><code>modules/key-vault.bicep</code></td><td>Key Vault (RBAC mode)</td></tr>
+  <tr><td><code>modules/networking.bicep</code></td><td>VNet + 2 subnets + blob private endpoint + DNS zone</td></tr>
+  <tr><td><code>modules/function-app.bicep</code></td><td>Function App (Flex Consumption) + App Service Plan</td></tr>
+  <tr><td><code>modules/apim.bicep</code></td><td>API Management + API definition + 8 operations</td></tr>
+  <tr><td><code>modules/role-assignments.bicep</code></td><td>7 RBAC role assignments (Function App + APIM)</td></tr>
+</table>
+
+<h4>NPM Dependencies (Root)</h4>
+<table>
+  <tr><th>Package</th><th>Version</th><th>Purpose</th></tr>
+  <tr><td><code>@azure/cosmos</code></td><td>4.9.2</td><td>Cosmos DB client</td></tr>
+  <tr><td><code>@azure/functions</code></td><td>4.11.2</td><td>Azure Functions v4 SDK</td></tr>
+  <tr><td><code>@azure/identity</code></td><td>4.13.1</td><td>DefaultAzureCredential</td></tr>
+  <tr><td><code>@azure/keyvault-secrets</code></td><td>4.10.0</td><td>Key Vault integration</td></tr>
+  <tr><td><code>@azure/openai</code></td><td>2.0.0</td><td>Azure OpenAI client</td></tr>
+  <tr><td><code>@azure/search-documents</code></td><td>12.2.0</td><td>AI Search client</td></tr>
+  <tr><td><code>@azure/storage-blob</code></td><td>12.31.0</td><td>Blob Storage client</td></tr>
+  <tr><td><code>@mozilla/readability</code></td><td>0.6.0</td><td>Article text extraction</td></tr>
+  <tr><td><code>jsdom</code></td><td>29.0.1</td><td>DOM parsing for Readability</td></tr>
+  <tr><td><code>openai</code></td><td>6.32.0</td><td>OpenAI SDK (Responses API + Whisper)</td></tr>
+</table>
+
+</div>
+
+</body>
+</html>
