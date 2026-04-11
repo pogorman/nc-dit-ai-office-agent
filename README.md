@@ -1,5 +1,7 @@
 # NC DIT AI Office Agent
 
+> **Project shelved (2026-04-11).** Azure resources in `rg-nc-comms-agent-dev` have been stopped/deleted to eliminate idle costs. Data is intact. See [`how-to-regen-az-rg.md`](./how-to-regen-az-rg.md) for restart instructions.
+
 AI-powered tool for the North Carolina Governor's Communications Office that automates news clip monitoring and provides semantic search over historical remarks — delivered as a conversational agent in Microsoft Teams via Copilot Studio, with a React dashboard for operational visibility.
 
 ## Capabilities

@@ -1,5 +1,15 @@
 # NC DIT AI Office Agent — Claude Code Instructions
 
+## Environment Status — SHELVED (2026-04-11)
+
+Azure resources in `rg-nc-comms-agent-dev` are in sleep mode to eliminate idle costs:
+- **Function App** — stopped (`az functionapp stop`)
+- **AI Search (Basic)** — deleted (can't be paused; ~$75/mo idle)
+- **Private endpoints** (Blob Storage + Cosmos DB) — deleted (~$15/mo idle)
+- **Still running (≈$0 idle):** Cosmos DB (Serverless), Blob Storage, Azure OpenAI, APIM (Consumption), Key Vault, VNet
+
+All data is intact in Cosmos DB and Blob Storage. AI Search indexes are derived and can be reseeded. See `how-to-regen-az-rg.md` in the project root for full restart instructions.
+
 ## Project Overview
 Serverless AI platform for NC Governor's Communications Office. Five capabilities:
 1. **News Clips** — automated monitoring for Governor Stein mentions (timer-triggered ingestion + query)
