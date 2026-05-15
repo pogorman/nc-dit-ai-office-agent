@@ -1,14 +1,16 @@
 # NC DIT AI Office Agent — Claude Code Instructions
 
-## Environment Status — SHELVED (2026-04-11)
+## Environment Status — ACTIVE (resurrected 2026-05-15)
 
-Azure resources in `rg-nc-comms-agent-dev` are in sleep mode to eliminate idle costs:
-- **Function App** — stopped (`az functionapp stop`)
-- **AI Search (Basic)** — deleted (can't be paused; ~$75/mo idle)
-- **Private endpoints** (Blob Storage + Cosmos DB) — deleted (~$15/mo idle)
-- **Still running (≈$0 idle):** Cosmos DB (Serverless), Blob Storage, Azure OpenAI, APIM (Consumption), Key Vault, VNet
+Resources brought back up after the 2026-04-11 shelving. Currently running:
+- **Function App** (`nc-comms-agent-dev-func`) — Running, deployment package from 2026-03-30
+- **AI Search Basic** — recreated in **eastus** (eastus2 was capacity-exhausted; service URL is region-independent so no app settings changed)
+- **Blob Storage PE** — recreated, IP `10.2.2.6`
+- **Cosmos DB PE** — recreated
+- AI Search indexes reseeded: 229 clips, 43 remarks chunks
+- End-to-end verified through APIM (clips/query + remarks/query)
 
-All data is intact in Cosmos DB and Blob Storage. AI Search indexes are derived and can be reseeded. See `how-to-regen-az-rg.md` in the project root for full restart instructions.
+If you need to shelve/resurrect again, see `how-to-regen-az-rg.md` — that doc was overhauled on 2026-05-15 to capture the gotchas (cross-RG DNS A record, Function App needs stop+start not restart, Bicep redeploy fails, etc.).
 
 ## Project Overview
 Serverless AI platform for NC Governor's Communications Office. Five capabilities:
@@ -132,6 +134,11 @@ Agent experience delivered via **Microsoft Copilot Studio** (Teams / web). Dashb
   3-classic-orchestration-clips-questions.txt — Classic orchestration clips test results
   3-remarks-classic-orchestration.txt — Classic orchestration remarks test results
 ```
+
+## Recent Changes (2026-05-15) — Resurrected from shelving
+- **Environment back online** — restarted Function App, recreated AI Search (now in `eastus` due to `eastus2` capacity exhaustion), recreated Blob and Cosmos private endpoints, regranted RBAC, reseeded indexes (229 clips, 43 remarks chunks). End-to-end verified through APIM.
+- **`how-to-regen-az-rg.md` rewritten** — captures everything that wasn't in the original guide: Bicep redeploy fails (VNet peering blocks address-space update, Cosmos partition-key drift, eastus2 capacity); AI Search RBAC must be re-granted on the new service; Cosmos firewall must allowlist your IP for seeding (not just Storage); the blob private DNS A record lives cross-RG in `rg-philly-profiteering` and must be updated to the new PE IP or every function returns 404; Function App needs **stop+start, not restart** to reload the deployment package.
+- **AI Search now in `eastus`** — service URLs are region-independent (`{name}.search.windows.net`), so `AZURE_AI_SEARCH_ENDPOINT` did not change. No app-setting updates needed.
 
 ## Recent Changes (2026-04-01)
 - **Azure Technical Reference** — New comprehensive HTML document at `docs/html/azure-technical-reference.html`. Covers: resource inventory, all 8 Bicep modules, deep dives on all 8 Functions, shared module singletons and auth patterns, Cosmos containers and AI Search index schemas, identity/security model, APIM routing, Copilot Studio integration, dashboard SPA, cost profile. Includes 6 appendices: environment variables, RBAC role matrix, API endpoints, deployment checklist, seed scripts, file-by-file inventory.
